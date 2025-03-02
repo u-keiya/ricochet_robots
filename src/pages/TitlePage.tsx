@@ -9,16 +9,17 @@ const TitlePage: FC = () => {
       <h1 className="text-4xl font-bold mb-8 text-gray-800">リコシェロボット</h1>
       <div className="space-y-4">
         <button 
-          className="btn btn-primary w-48"
+          className="btn btn-secondary w-48"
           onClick={() => navigate('/online')}
-        >
-          みんなで遊ぶ
-        </button>
-        <button 
-          className="btn btn-secondary w-48" 
           disabled
         >
-          CPUと遊ぶ (Coming Soon)
+          みんなで遊ぶ (Coming Soon)
+        </button>
+        <button 
+          className="btn btn-primary w-48"
+          onClick={() => navigate('/single')}
+        >
+          一人で遊ぶ
         </button>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { FC } from 'react';
-import { Cell } from '../../types/game';
+import { Cell, RobotColor } from '../../types/game';
+import { getSymbolDisplay } from '../../utils/cardGenerator';
 
 interface BoardCellProps {
   cell: Cell;
@@ -12,19 +13,19 @@ export const BoardCell: FC<BoardCellProps> = ({ cell, x, y, size }) => {
   const cellSize = `${size}px`;
 
   const getWallClasses = () => {
-    const classes: string[] = ['absolute'];
+    const classes: string[] = ['absolute inset-0'];
     
     if (cell.walls.top) {
-      classes.push('border-t-2 border-gray-800');
+      classes.push('border-t-4 border-gray-800');
     }
     if (cell.walls.right) {
-      classes.push('border-r-2 border-gray-800');
+      classes.push('border-r-4 border-gray-800');
     }
     if (cell.walls.bottom) {
-      classes.push('border-b-2 border-gray-800');
+      classes.push('border-b-4 border-gray-800');
     }
     if (cell.walls.left) {
-      classes.push('border-l-2 border-gray-800');
+      classes.push('border-l-4 border-gray-800');
     }
 
     return classes.join(' ');
@@ -34,19 +35,25 @@ export const BoardCell: FC<BoardCellProps> = ({ cell, x, y, size }) => {
     if (!cell.isTarget) return '';
     
     const baseClasses = 'absolute inset-2 rounded-full flex items-center justify-center';
-    const colorClasses = {
+    const colorClasses: Record<RobotColor | 'multi', string> = {
       red: 'bg-red-500',
       blue: 'bg-blue-500',
       yellow: 'bg-yellow-500',
       green: 'bg-green-500',
+      multi: 'bg-gradient-to-r from-red-500 via-blue-500 to-green-500',
     };
 
     return `${baseClasses} ${cell.targetColor ? colorClasses[cell.targetColor] : 'bg-purple-500'}`;
   };
 
+  const getTargetSymbol = () => {
+    if (!cell.isTarget || !cell.targetSymbol) return null;
+    return getSymbolDisplay(cell.targetSymbol as any);
+  };
+
   return (
     <div 
-      className="relative"
+      className="relative border border-gray-200"
       style={{ 
         width: cellSize, 
         height: cellSize,
@@ -64,8 +71,8 @@ export const BoardCell: FC<BoardCellProps> = ({ cell, x, y, size }) => {
       {cell.isTarget && (
         <div className={getTargetClasses()}>
           {cell.targetSymbol && (
-            <span className="text-white font-bold">
-              {cell.targetSymbol}
+            <span className="text-white font-bold text-lg">
+              {getTargetSymbol()}
             </span>
           )}
         </div>

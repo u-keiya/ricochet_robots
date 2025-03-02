@@ -9,15 +9,14 @@ interface GameBoardProps {
   isPlayerTurn?: boolean;
 }
 
-const CELL_SIZE = 40; // セルのサイズ（ピクセル）
-const BOARD_SIZE = 16; // ボードの大きさ（セル数）
-
 const GameBoard: FC<GameBoardProps> = ({ board, onRobotMove, isPlayerTurn = false }) => {
   const [selectedRobot, setSelectedRobot] = useState<RobotType | null>(null);
+  const containerSize = Math.min(window.innerWidth * 0.8, 640); // レスポンシブ対応
+  const cellSize = containerSize / board.size;
 
   const handleRobotClick = (robot: RobotType) => {
     if (!isPlayerTurn) return;
-    setSelectedRobot(robot);
+    setSelectedRobot(prev => prev?.color === robot.color ? null : robot);
   };
 
   const handleDirectionClick = (direction: Direction) => {
@@ -38,22 +37,28 @@ const GameBoard: FC<GameBoardProps> = ({ board, onRobotMove, isPlayerTurn = fals
     ];
 
     const position = {
-      left: `${selectedRobot.position.x * CELL_SIZE}px`,
-      top: `${selectedRobot.position.y * CELL_SIZE}px`,
+      left: `${selectedRobot.position.x * cellSize + cellSize / 2}px`,
+      top: `${selectedRobot.position.y * cellSize + cellSize / 2}px`,
     };
 
     return (
       <div
-        className="absolute"
+        className="absolute z-30"
         style={position}
       >
         {directions.map(({ direction, transform, icon }) => (
           <button
             key={direction}
-            className="absolute bg-white rounded-full w-8 h-8 flex items-center justify-center
-                     shadow-md hover:bg-gray-100 transition-colors cursor-pointer"
+            className={`
+              absolute p-2 rounded-full
+              bg-white shadow-lg
+              hover:bg-gray-100 transition-colors
+              transform
+              ${isPlayerTurn ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}
+            `}
             style={{ transform }}
             onClick={() => handleDirectionClick(direction)}
+            disabled={!isPlayerTurn}
           >
             {icon}
           </button>
@@ -63,17 +68,21 @@ const GameBoard: FC<GameBoardProps> = ({ board, onRobotMove, isPlayerTurn = fals
   };
 
   return (
-    <div className="relative select-none"
-         style={{
-           width: CELL_SIZE * BOARD_SIZE,
-           height: CELL_SIZE * BOARD_SIZE,
-         }}>
-      {/* ボードのグリッド */}
-      <div className="absolute inset-0 grid"
-           style={{
-             gridTemplateColumns: `repeat(${BOARD_SIZE}, ${CELL_SIZE}px)`,
-             gridTemplateRows: `repeat(${BOARD_SIZE}, ${CELL_SIZE}px)`,
-           }}>
+    <div 
+      className="relative bg-white rounded-lg shadow-lg overflow-hidden"
+      style={{
+        width: containerSize,
+        height: containerSize,
+      }}
+    >
+      {/* ボードグリッド */}
+      <div 
+        className="absolute inset-0 grid"
+        style={{
+          gridTemplateColumns: `repeat(${board.size}, ${cellSize}px)`,
+          gridTemplateRows: `repeat(${board.size}, ${cellSize}px)`,
+        }}
+      >
         {board.cells.map((row, y) =>
           row.map((cell, x) => (
             <BoardCell
@@ -81,7 +90,7 @@ const GameBoard: FC<GameBoardProps> = ({ board, onRobotMove, isPlayerTurn = fals
               cell={cell}
               x={x}
               y={y}
-              size={CELL_SIZE}
+              size={cellSize}
             />
           ))
         )}
@@ -92,13 +101,13 @@ const GameBoard: FC<GameBoardProps> = ({ board, onRobotMove, isPlayerTurn = fals
         <Robot
           key={robot.color}
           robot={robot}
-          size={CELL_SIZE}
+          size={cellSize}
           isSelected={selectedRobot?.color === robot.color}
           onClick={() => handleRobotClick(robot)}
         />
       ))}
 
-      {/* 方向矢印 */}
+      {/* 移動方向の矢印 */}
       {renderDirectionArrows()}
     </div>
   );

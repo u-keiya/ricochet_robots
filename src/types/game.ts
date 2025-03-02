@@ -7,6 +7,9 @@ export type Position = {
 // ロボットの色を表す型
 export type RobotColor = 'red' | 'blue' | 'yellow' | 'green';
 
+// ゲームモードを表す型
+export type GameMode = 'single' | 'multi';
+
 // ロボットを表す型
 export type Robot = {
   color: RobotColor;
@@ -36,7 +39,7 @@ export type Cell = {
     left: boolean;
   };
   isTarget?: boolean;
-  targetColor?: RobotColor;
+  targetColor?: RobotColor | 'multi';
   targetSymbol?: string;
 };
 
@@ -54,12 +57,14 @@ export type Card = {
   position: Position;
 };
 
+// ゲームのフェーズを表す型
+export type GamePhase = 'waiting' | 'declaration' | 'movement' | 'finished';
+
 // ゲームの状態を表す型
 export type GameState = {
   board: Board;
   currentCard?: Card;
-  currentPlayer?: string;
-  phase: 'waiting' | 'declaration' | 'movement' | 'finished';
+  phase: GamePhase;
   timer: number;
   declarations: Record<string, number>;
   moveHistory: Position[];

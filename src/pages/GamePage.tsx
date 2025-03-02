@@ -1,7 +1,8 @@
-import { FC, useEffect } from 'react';
+import { FC } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import GameBoard from '../components/GameBoard/GameBoard';
 import useGameState from '../hooks/useGameState';
+import { GameMode } from '../types/game';
 
 interface Player {
   id: string;
@@ -12,21 +13,13 @@ interface Player {
 const GamePage: FC = () => {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
-  const { gameState, moveRobot, declareMoves } = useGameState(roomId || '');
+  const { gameState, moveRobot, declareMoves } = useGameState('multi' as GameMode);
 
   // 仮の初期プレイヤーリスト
   const players: Player[] = [
     { id: '1', name: 'プレイヤー1', points: 0 },
     { id: '2', name: 'プレイヤー2', points: 0 },
   ];
-
-  // TODO: WebSocket接続の管理
-  useEffect(() => {
-    // WebSocket接続の確立
-    return () => {
-      // WebSocket接続の切断
-    };
-  }, [roomId]);
 
   const handleStartGame = () => {
     // TODO: WebSocket通信でゲーム開始を通知
@@ -100,23 +93,6 @@ const GamePage: FC = () => {
               <div className="text-sm space-y-1">
                 <p>フェーズ: {gameState.phase}</p>
                 <p>残り時間: {gameState.timer}秒</p>
-              </div>
-            </div>
-
-            {/* 手数宣言 */}
-            <div className="bg-white rounded-lg shadow p-4">
-              <h2 className="text-lg font-bold mb-2">手数宣言</h2>
-              <div className="flex flex-wrap gap-2">
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(moves => (
-                  <button
-                    key={moves}
-                    className="btn btn-secondary px-3 py-1"
-                    onClick={() => handleDeclareMoves(moves)}
-                    disabled={gameState.phase !== 'declaration'}
-                  >
-                    {moves}
-                  </button>
-                ))}
               </div>
             </div>
 
