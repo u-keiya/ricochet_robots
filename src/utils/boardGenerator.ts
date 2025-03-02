@@ -1,4 +1,5 @@
 import { Board, Cell, Position, RobotColor } from '../types/game';
+import { BoardPattern, WallDirection } from '../types/board';
 
 const createEmptyCell = (): Cell => ({
   type: 'empty',
@@ -15,15 +16,21 @@ const createEmptyBoard = (size: number): Board => ({
     Array(size).fill(null).map(() => createEmptyCell())
   ),
   robots: [
-    { color: 'red', position: { x: 0, y: 0 } },
-    { color: 'blue', position: { x: size - 1, y: 0 } },
-    { color: 'yellow', position: { x: 0, y: size - 1 } },
-    { color: 'green', position: { x: size - 1, y: size - 1 } }
+    { color: 'red', position: generateRandomPosition(size) },
+    { color: 'blue', position: generateRandomPosition(size) },
+    { color: 'yellow', position: generateRandomPosition(size) },
+    { color: 'green', position: generateRandomPosition(size) }
   ],
   size,
 });
 
-// 一時的な簡易ボード生成（後で本格的な実装に置き換え）
+// ランダムな位置を生成（ロボットの初期配置用）
+const generateRandomPosition = (size: number): Position => ({
+  x: Math.floor(Math.random() * size),
+  y: Math.floor(Math.random() * size),
+});
+
+// 一時的な実装（後でパターンベースの実装に置き換え）
 export const generateBoard = (size: number = 16): Board => {
   const board = createEmptyBoard(size);
   
@@ -42,7 +49,7 @@ export const generateBoard = (size: number = 16): Board => {
   // ランダムに内部の壁を生成
   for (let y = 1; y < size - 1; y++) {
     for (let x = 1; x < size - 1; x++) {
-      if (Math.random() < 0.2) { // 20%の確率で壁を設置
+      if (Math.random() < 0.2) {
         const wall = Math.random() < 0.5 ? 'right' : 'bottom';
         board.cells[y][x].walls[wall] = true;
         
@@ -55,21 +62,6 @@ export const generateBoard = (size: number = 16): Board => {
       }
     }
   }
-
-  // ロボットの初期位置をランダムに設定
-  const positions: Position[] = [];
-  board.robots.forEach(robot => {
-    let position: Position;
-    do {
-      position = {
-        x: Math.floor(Math.random() * size),
-        y: Math.floor(Math.random() * size),
-      };
-    } while (positions.some(p => p.x === position.x && p.y === position.y));
-    
-    robot.position = position;
-    positions.push(position);
-  });
 
   // 中央付近にターゲット位置を設定
   const centerArea = {
@@ -87,6 +79,58 @@ export const generateBoard = (size: number = 16): Board => {
   board.cells[targetY][targetX].isTarget = true;
 
   return board;
+};
+
+// ボードパターンから実際のボードを生成
+export const generateBoardFromPattern = (pattern: BoardPattern): Board => {
+  const board = createEmptyBoard(pattern.size);
+
+  // 壁を設置
+  pattern.walls.forEach(wallPos => {
+    const cell = board.cells[wallPos.y][wallPos.x];
+    wallPos.walls.forEach(wall => {
+      cell.walls[wall] = true;
+
+      // 隣接するセルの対応する壁も設置
+      const adjacentPos = getAdjacentPosition(wallPos.x, wallPos.y, wall);
+      if (adjacentPos && 
+          adjacentPos.x >= 0 && adjacentPos.x < pattern.size &&
+          adjacentPos.y >= 0 && adjacentPos.y < pattern.size) {
+        const oppositeWall = getOppositeWall(wall);
+        board.cells[adjacentPos.y][adjacentPos.x].walls[oppositeWall] = true;
+      }
+    });
+  });
+
+  // ターゲットを設置
+  pattern.targets.forEach(target => {
+    const cell = board.cells[target.y][target.x];
+    cell.isTarget = true;
+    cell.targetColor = target.color;
+    cell.targetSymbol = target.symbol;
+  });
+
+  return board;
+};
+
+// 隣接するセルの位置を取得
+const getAdjacentPosition = (x: number, y: number, wall: WallDirection): Position | null => {
+  switch (wall) {
+    case 'top': return { x, y: y - 1 };
+    case 'right': return { x: x + 1, y };
+    case 'bottom': return { x, y: y + 1 };
+    case 'left': return { x: x - 1, y };
+  }
+};
+
+// 反対側の壁を取得
+const getOppositeWall = (wall: WallDirection): WallDirection => {
+  switch (wall) {
+    case 'top': return 'bottom';
+    case 'right': return 'left';
+    case 'bottom': return 'top';
+    case 'left': return 'right';
+  }
 };
 
 // 指定された色のロボットが目標位置に到達したかチェック
@@ -108,4 +152,52 @@ export const checkGoal = (
 
   return robot.position.x === targetCell.x && 
          robot.position.y === targetCell.y;
+};
+
+// 複数のボードパターンをマージして1つのボードを生成
+export const mergeBoards = (patterns: BoardPattern[], size: number = 16): Board => {
+  if (patterns.length !== 4) {
+    throw new Error('Exactly 4 board patterns are required for merging');
+  }
+
+  const quarterSize = size / 2;
+  const mergedBoard = createEmptyBoard(size);
+
+  // 各パターンを適切な位置にマージ
+  patterns.forEach((pattern, index) => {
+    const offsetX = (index % 2) * quarterSize;
+    const offsetY = Math.floor(index / 2) * quarterSize;
+
+    // 壁を転送
+    pattern.walls.forEach(wallPos => {
+      const newX = wallPos.x + offsetX;
+      const newY = wallPos.y + offsetY;
+      if (newX < size && newY < size) {
+        const cell = mergedBoard.cells[newY][newX];
+        wallPos.walls.forEach(wall => {
+          cell.walls[wall] = true;
+        });
+      }
+    });
+
+    // ターゲットを転送
+    pattern.targets.forEach(target => {
+      const newX = target.x + offsetX;
+      const newY = target.y + offsetY;
+      if (newX < size && newY < size) {
+        const cell = mergedBoard.cells[newY][newX];
+        cell.isTarget = true;
+        cell.targetColor = target.color;
+        cell.targetSymbol = target.symbol;
+      }
+    });
+  });
+
+  // ランダムな位置にロボットを配置
+  mergedBoard.robots = mergedBoard.robots.map(robot => ({
+    ...robot,
+    position: generateRandomPosition(size)
+  }));
+
+  return mergedBoard;
 };

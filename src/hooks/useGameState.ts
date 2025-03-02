@@ -1,11 +1,12 @@
 import { useState, useCallback, useEffect } from 'react';
 import { GameState, Direction, Robot, Position, Card } from '../types/game';
-import { generateBoard, checkGoal } from '../utils/boardGenerator';
+import { generateBoardFromPattern, checkGoal, mergeBoards } from '../utils/boardGenerator';
 import { CardDeck } from '../utils/cardGenerator';
+import { PatternLoader } from '../utils/patternLoader';
 
 export const useGameState = (mode: 'single' | 'multi') => {
   const [gameState, setGameState] = useState<GameState>(() => ({
-    board: generateBoard(),
+    board: mergeBoards(new PatternLoader().getRandomPatterns()),
     phase: 'waiting',
     timer: 60,
     declarations: {},
@@ -13,19 +14,25 @@ export const useGameState = (mode: 'single' | 'multi') => {
   }));
 
   const [cardDeck, setCardDeck] = useState<CardDeck>(() => new CardDeck());
+  const [patternLoader, setPatternLoader] = useState<PatternLoader>(() => new PatternLoader());
 
   // ゲームをリセット
   const resetGame = useCallback(() => {
+    if (patternLoader.isAllPatternsUsed()) {
+      patternLoader.resetUsedPatterns();
+    }
+    
     setGameState({
-      board: generateBoard(),
+      board: mergeBoards(patternLoader.getRandomPatterns()),
       phase: 'waiting',
       timer: 60,
       declarations: {},
       moveHistory: [],
     });
+
     const newDeck = new CardDeck();
     setCardDeck(newDeck);
-  }, []);
+  }, [patternLoader]);
 
   // 次のカードを引く
   const drawNextCard = useCallback(() => {
@@ -142,7 +149,7 @@ export const useGameState = (mode: 'single' | 'multi') => {
     });
   }, [isValidMove]);
 
-  // シングルプレイヤーモード用の手数宣言
+  // 手数を宣言
   const declareMoves = useCallback((playerId: string, moves: number) => {
     setGameState(prev => ({
       ...prev,
@@ -182,6 +189,8 @@ export const useGameState = (mode: 'single' | 'multi') => {
     drawNextCard,
     remainingCards: cardDeck.getRemaining(),
     totalCards: cardDeck.getTotalCards(),
+    usedPatterns: patternLoader.getUsedPatternIds(),
+    unusedPatternCount: patternLoader.getUnusedPatternCount(),
   };
 };
 
