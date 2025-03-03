@@ -1,5 +1,6 @@
 import { FC } from 'react';
 import { Cell, RobotColor } from '../../types/game';
+import { ReflectorDirection } from '../../types/board';
 import { getSymbolDisplay } from '../../utils/cardGenerator';
 
 interface BoardCellProps {
@@ -46,6 +47,32 @@ export const BoardCell: FC<BoardCellProps> = ({ cell, x, y, size }) => {
     return `${baseClasses} ${cell.targetColor ? colorClasses[cell.targetColor] : 'bg-purple-500'}`;
   };
 
+  const getReflectorClasses = () => {
+    if (!cell.reflector) return '';
+
+    const baseClasses = 'absolute inset-0 flex items-center justify-center';
+    const colorClasses: Record<RobotColor, string> = {
+      red: 'text-red-500',
+      blue: 'text-blue-500',
+      yellow: 'text-yellow-500',
+      green: 'text-green-500',
+    };
+
+    return `${baseClasses} ${colorClasses[cell.reflector.color]}`;
+  };
+
+  const renderReflector = () => {
+    if (!cell.reflector) return null;
+
+    return (
+      <div className={getReflectorClasses()}>
+        <span className="text-4xl transform rotate-0" style={{ fontSize: `${size * 0.8}px` }}>
+          {cell.reflector.direction}
+        </span>
+      </div>
+    );
+  };
+
   const getTargetSymbol = () => {
     if (!cell.isTarget || !cell.targetSymbol) return null;
     return getSymbolDisplay(cell.targetSymbol as any);
@@ -66,6 +93,9 @@ export const BoardCell: FC<BoardCellProps> = ({ cell, x, y, size }) => {
       
       {/* 壁 */}
       <div className={getWallClasses()} />
+      
+      {/* 反射板 */}
+      {renderReflector()}
       
       {/* ターゲット */}
       {cell.isTarget && (

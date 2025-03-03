@@ -16,6 +16,12 @@ export type Robot = {
   position: Position;
 };
 
+// セルの反射板を表す型
+export type Reflector = {
+  color: RobotColor;
+  direction: '／' | '＼';
+};
+
 // セルの種類を表す型
 export type CellType = 
   | 'empty'           // 通常の空きマス
@@ -41,6 +47,7 @@ export type Cell = {
   isTarget?: boolean;
   targetColor?: RobotColor | 'multi';
   targetSymbol?: string;
+  reflector?: Reflector;  // 反射板の情報を追加
 };
 
 // ボードを表す型

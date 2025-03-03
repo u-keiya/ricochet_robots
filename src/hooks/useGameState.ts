@@ -1,12 +1,12 @@
 import { useState, useCallback, useEffect } from 'react';
-import { GameState, Direction, Robot, Position, Card } from '../types/game';
-import { generateBoardFromPattern, checkGoal, mergeBoards } from '../utils/boardGenerator';
+import { GameState, Direction, Robot, Position, Card, RobotColor } from '../types/game';
+import { generateBoardFromPattern, calculateReflection } from '../utils/boardGenerator';
 import { CardDeck } from '../utils/cardGenerator';
-import { PatternLoader } from '../utils/patternLoader';
+import { SAMPLE_BOARD } from '../types/board';
 
 export const useGameState = (mode: 'single' | 'multi') => {
   const [gameState, setGameState] = useState<GameState>(() => ({
-    board: mergeBoards(new PatternLoader().getRandomPatterns()),
+    board: generateBoardFromPattern(SAMPLE_BOARD),
     phase: 'waiting',
     timer: 60,
     declarations: {},
@@ -14,25 +14,81 @@ export const useGameState = (mode: 'single' | 'multi') => {
   }));
 
   const [cardDeck, setCardDeck] = useState<CardDeck>(() => new CardDeck());
-  const [patternLoader, setPatternLoader] = useState<PatternLoader>(() => new PatternLoader());
+
+  // ロボットの移動が有効かチェック
+  const isValidMove = useCallback((robot: Robot, direction: Direction): Position | null => {
+    const { x, y } = robot.position;
+    const board = gameState.board;
+    
+    let newPos: Position = { x, y };
+    let currentDirection = direction;
+    
+    const moves = {
+      up: { x: 0, y: -1 },
+      right: { x: 1, y: 0 },
+      down: { x: 0, y: 1 },
+      left: { x: -1, y: 0 },
+    };
+
+    // 移動可能な限り移動を続ける
+    while (true) {
+      const currentCell = board.cells[newPos.y][newPos.x];
+      
+      // 現在の方向の壁をチェック
+      if (currentDirection === 'up' && currentCell.walls.top) break;
+      if (currentDirection === 'right' && currentCell.walls.right) break;
+      if (currentDirection === 'down' && currentCell.walls.bottom) break;
+      if (currentDirection === 'left' && currentCell.walls.left) break;
+
+      // 次の位置を計算
+      const nextX = newPos.x + moves[currentDirection].x;
+      const nextY = newPos.y + moves[currentDirection].y;
+
+      // ボード外チェック
+      if (nextX < 0 || nextX >= board.size || nextY < 0 || nextY >= board.size) {
+        break;
+      }
+
+      // 他のロボットとの衝突チェック
+      if (board.robots.some(r => r.position.x === nextX && r.position.y === nextY)) {
+        break;
+      }
+
+      // 次のセルの壁をチェック
+      const nextCell = board.cells[nextY][nextX];
+      if (currentDirection === 'up' && nextCell.walls.bottom) break;
+      if (currentDirection === 'right' && nextCell.walls.left) break;
+      if (currentDirection === 'down' && nextCell.walls.top) break;
+      if (currentDirection === 'left' && nextCell.walls.right) break;
+
+      // 移動を適用
+      newPos = { x: nextX, y: nextY };
+
+      // 反射板のチェック
+      if (nextCell.reflector && nextCell.reflector.color !== robot.color) {
+        currentDirection = calculateReflection(currentDirection, nextCell.reflector.direction);
+      } else {
+        // 反射がない場合は現在のセルで移動終了
+        break;
+      }
+    }
+
+    // 元の位置と同じ場合は移動無効
+    return newPos.x === x && newPos.y === y ? null : newPos;
+  }, [gameState.board]);
 
   // ゲームをリセット
   const resetGame = useCallback(() => {
-    if (patternLoader.isAllPatternsUsed()) {
-      patternLoader.resetUsedPatterns();
-    }
-    
     setGameState({
-      board: mergeBoards(patternLoader.getRandomPatterns()),
+      board: generateBoardFromPattern(SAMPLE_BOARD),
       phase: 'waiting',
       timer: 60,
       declarations: {},
       moveHistory: [],
     });
-
     const newDeck = new CardDeck();
     setCardDeck(newDeck);
-  }, [patternLoader]);
+  }, []);
 
   // 次のカードを引く
   const drawNextCard = useCallback(() => {
@@ -71,55 +127,8 @@ export const useGameState = (mode: 'single' | 'multi') => {
     return card;
   }, [cardDeck]);
 
-  // ロボットの移動が有効かチェック
-  const isValidMove = useCallback((robot: Robot, direction: Direction): Position | null => {
-    const { x, y } = robot.position;
-    const board = gameState.board;
-    
-    let newPos: Position = { x, y };
-    const moves = {
-      up: { x: 0, y: -1 },
-      right: { x: 1, y: 0 },
-      down: { x: 0, y: 1 },
-      left: { x: -1, y: 0 },
-    };
-
-    // 移動方向の壁をチェック
-    let canMove = true;
-    while (canMove) {
-      const nextX = newPos.x + moves[direction].x;
-      const nextY = newPos.y + moves[direction].y;
-
-      // ボード外チェック
-      if (nextX < 0 || nextX >= board.size || nextY < 0 || nextY >= board.size) {
-        break;
-      }
-
-      // 他のロボットとの衝突チェック
-      const hasRobot = board.robots.some(r => 
-        r.position.x === nextX && r.position.y === nextY
-      );
-      if (hasRobot) {
-        break;
-      }
-
-      // 壁のチェック
-      const currentCell = board.cells[newPos.y][newPos.x];
-      const nextCell = board.cells[nextY][nextX];
-
-      if (direction === 'up' && (currentCell.walls.top || nextCell.walls.bottom)) break;
-      if (direction === 'right' && (currentCell.walls.right || nextCell.walls.left)) break;
-      if (direction === 'down' && (currentCell.walls.bottom || nextCell.walls.top)) break;
-      if (direction === 'left' && (currentCell.walls.left || nextCell.walls.right)) break;
-
-      newPos = { x: nextX, y: nextY };
-    }
-
-    return newPos.x === x && newPos.y === y ? null : newPos;
-  }, [gameState.board]);
-
   // ロボットを移動
-  const moveRobot = useCallback((robotColor: Robot['color'], direction: Direction) => {
+  const moveRobot = useCallback((robotColor: RobotColor, direction: Direction) => {
     setGameState(prev => {
       const robot = prev.board.robots.find(r => r.color === robotColor);
       if (!robot) return prev;
@@ -136,20 +145,15 @@ export const useGameState = (mode: 'single' | 'multi') => {
         )
       };
 
-      // ゴール判定
-      const isGoal = prev.currentCard && 
-        checkGoal(newBoard, prev.currentCard.color);
-
       return {
         ...prev,
         board: newBoard,
         moveHistory: [...prev.moveHistory, newPosition],
-        phase: isGoal ? 'waiting' : prev.phase
       };
     });
   }, [isValidMove]);
 
-  // 手数を宣言
+  // シングルプレイヤーモード用の手数宣言
   const declareMoves = useCallback((playerId: string, moves: number) => {
     setGameState(prev => ({
       ...prev,
@@ -160,37 +164,14 @@ export const useGameState = (mode: 'single' | 'multi') => {
     }));
   }, []);
 
-  // タイマー管理
-  const startTimer = useCallback(() => {
-    if (mode === 'single') return; // シングルプレイヤーモードではタイマーを使用しない
-
-    const timer = setInterval(() => {
-      setGameState(prev => {
-        if (prev.timer <= 0) {
-          clearInterval(timer);
-          return prev;
-        }
-        return {
-          ...prev,
-          timer: prev.timer - 1
-        };
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [mode]);
-
   return {
     gameState,
     moveRobot,
     declareMoves,
-    startTimer,
     resetGame,
     drawNextCard,
     remainingCards: cardDeck.getRemaining(),
     totalCards: cardDeck.getTotalCards(),
-    usedPatterns: patternLoader.getUsedPatternIds(),
-    unusedPatternCount: patternLoader.getUnusedPatternCount(),
   };
 };
 
