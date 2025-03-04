@@ -2,18 +2,40 @@ import { useState, useCallback, useEffect } from 'react';
 import { GameState, Direction, Robot, Position, Card, RobotColor } from '../types/game';
 import { generateBoardFromPattern, calculateReflection } from '../utils/boardGenerator';
 import { CardDeck } from '../utils/cardGenerator';
-import { SAMPLE_BOARD } from '../types/board';
+import BoardLoader from '../utils/boardLoader';
 
 export const useGameState = (mode: 'single' | 'multi') => {
-  const [gameState, setGameState] = useState<GameState>(() => ({
-    board: generateBoardFromPattern(SAMPLE_BOARD),
-    phase: 'waiting',
-    timer: 60,
-    declarations: {},
-    moveHistory: [],
-  }));
+  const [gameState, setGameState] = useState<GameState>(() => {
+    const boardLoader = BoardLoader.getInstance();
+    const randomBoards = boardLoader.getRandomBoardSet(1); // 現在は1つのボードのみ使用
+    const pattern = randomBoards[0];
+    return {
+      board: generateBoardFromPattern(pattern),
+      phase: 'waiting',
+      timer: 60,
+      declarations: {},
+      moveHistory: [],
+    };
+  });
 
   const [cardDeck, setCardDeck] = useState<CardDeck>(() => new CardDeck());
+
+  // ゲームをリセット
+  const resetGame = useCallback(() => {
+    const boardLoader = BoardLoader.getInstance();
+    const randomBoards = boardLoader.getRandomBoardSet(1);
+    const pattern = randomBoards[0];
+    
+    setGameState({
+      board: generateBoardFromPattern(pattern),
+      phase: 'waiting',
+      timer: 60,
+      declarations: {},
+      moveHistory: [],
+    });
+    const newDeck = new CardDeck();
+    setCardDeck(newDeck);
+  }, []);
 
   // ロボットの移動が有効かチェック
   const isValidMove = useCallback((robot: Robot, direction: Direction): Position | null => {
@@ -76,19 +98,6 @@ export const useGameState = (mode: 'single' | 'multi') => {
     // 元の位置と同じ場合は移動無効
     return newPos.x === x && newPos.y === y ? null : newPos;
   }, [gameState.board]);
-
-  // ゲームをリセット
-  const resetGame = useCallback(() => {
-    setGameState({
-      board: generateBoardFromPattern(SAMPLE_BOARD),
-      phase: 'waiting',
-      timer: 60,
-      declarations: {},
-      moveHistory: [],
-    });
-    const newDeck = new CardDeck();
-    setCardDeck(newDeck);
-  }, []);
 
   // 次のカードを引く
   const drawNextCard = useCallback(() => {

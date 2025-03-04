@@ -1,0 +1,34 @@
+{
+  "boards": [
+    {
+      "boardId": "A1",
+      "size": 16,
+      "walls": [
+        {"x": 0, "y": 0, "walls": ["right", "bottom"]},
+        {"x": 2, "y": 3, "walls": ["left", "top"]}
+      ],
+      "reflectors": [
+        {
+          "x": 3,
+          "y": 4,
+          "color": "red",
+          "direction": "／"
+        },
+        {
+          "x": 5,
+          "y": 6,
+          "color": "blue",
+          "direction": "＼"
+        }
+      ],
+      "targets": [
+        {
+          "x": 2,
+          "y": 3,
+          "color": "red",
+          "symbol": "moon"
+        }
+      ]
+    }
+  ]
+}
