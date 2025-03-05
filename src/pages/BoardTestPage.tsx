@@ -4,24 +4,28 @@ import { BoardPattern } from '../types/board';
 import BoardLoader from '../utils/boardLoader';
 import GameBoard from '../components/GameBoard/GameBoard';
 import { generateBoardFromPattern } from '../utils/boardGenerator';
+import { rotateBoard, createCompositeBoardPattern } from '../utils/boardRotation';
 
 const BoardTestPage: FC = () => {
   const navigate = useNavigate();
   const [boardPatterns, setBoardPatterns] = useState<{[key: string]: BoardPattern[]}>({});
+  const [selectedBoards, setSelectedBoards] = useState<{[key: string]: BoardPattern | null}>({
+    topLeft: null,
+    topRight: null,
+    bottomLeft: null,
+    bottomRight: null,
+  });
+  const [compositeBoard, setCompositeBoard] = useState<BoardPattern | null>(null);
   const [validationResult, setValidationResult] = useState<{
     valid: boolean;
     errors: string[];
   }>({ valid: true, errors: [] });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     try {
       console.log('BoardTestPage: Initializing...');
       const loader = BoardLoader.getInstance();
-      loader.debugPrintState(); // デバッグ情報を出力
-
-      const patterns = ['A', 'B', 'C', 'D'];
+      const patterns = ['A', 'C', 'D'];
       const groupedPatterns: {[key: string]: BoardPattern[]} = {};
 
       patterns.forEach(pattern => {
@@ -33,45 +37,37 @@ const BoardTestPage: FC = () => {
 
       console.log('All patterns loaded:', groupedPatterns);
       setBoardPatterns(groupedPatterns);
-
-      const validation = loader.validateAllBoards();
-      console.log('Validation result:', validation);
-      setValidationResult(validation);
-      
-      setLoading(false);
+      setValidationResult(loader.validateAllBoards());
     } catch (err) {
       console.error('Error in BoardTestPage:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error occurred');
-      setLoading(false);
+      setValidationResult({
+        valid: false,
+        errors: [(err as Error).message]
+      });
     }
   }, []);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-100 p-8 flex items-center justify-center">
-        <p className="text-xl">Loading board patterns...</p>
-      </div>
-    );
-  }
+  // ボードの選択を処理
+  const handleBoardSelect = (position: keyof typeof selectedBoards, board: BoardPattern) => {
+    setSelectedBoards(prev => ({
+      ...prev,
+      [position]: board
+    }));
+  };
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-100 p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            <h2 className="font-bold">エラーが発生しました：</h2>
-            <p>{error}</p>
-          </div>
-          <button
-            className="btn btn-secondary"
-            onClick={() => navigate('/')}
-          >
-            戻る
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // 複合ボードを作成
+  const handleCreateComposite = () => {
+    const { topLeft, topRight, bottomLeft, bottomRight } = selectedBoards;
+    if (topLeft && topRight && bottomLeft && bottomRight) {
+      const composite = createCompositeBoardPattern(
+        topLeft,
+        topRight,
+        bottomLeft,
+        bottomRight
+      );
+      setCompositeBoard(composite);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
@@ -86,20 +82,6 @@ const BoardTestPage: FC = () => {
           </button>
         </div>
 
-        {/* デバッグ情報 */}
-        <div className="bg-gray-200 p-4 mb-8 rounded">
-          <h2 className="font-bold mb-2">デバッグ情報:</h2>
-          <pre className="text-sm overflow-auto">
-            {JSON.stringify({
-              patternsLoaded: Object.keys(boardPatterns),
-              boardCounts: Object.entries(boardPatterns).map(([pattern, boards]) => 
-                `${pattern}: ${boards.length} boards`
-              ),
-              validationStatus: validationResult,
-            }, null, 2)}
-          </pre>
-        </div>
-
         {/* バリデーション結果 */}
         {!validationResult.valid && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -112,6 +94,59 @@ const BoardTestPage: FC = () => {
           </div>
         )}
 
+        {/* 複合ボードプレビュー */}
+        {compositeBoard && (
+          <div className="mb-8 bg-white rounded-lg shadow-lg p-4">
+            <h2 className="text-xl font-bold mb-4">複合ボード プレビュー</h2>
+            <div className="aspect-square w-full max-w-2xl mx-auto">
+              <GameBoard
+                board={generateBoardFromPattern(compositeBoard)}
+                isPlayerTurn={false}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ボード選択UI */}
+        <div className="mb-8 bg-white rounded-lg shadow-lg p-4">
+          <h2 className="text-xl font-bold mb-4">ボード選択</h2>
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            {['topLeft', 'topRight', 'bottomLeft', 'bottomRight'].map((position) => (
+              <div key={position} className="border p-4 rounded-lg">
+                <h3 className="font-semibold mb-2">{position}</h3>
+                <select
+                  className="w-full p-2 border rounded"
+                  onChange={(e) => {
+                    const [pattern, index] = e.target.value.split('-');
+                    const board = boardPatterns[pattern]?.[parseInt(index)];
+                    if (board) {
+                      handleBoardSelect(position as keyof typeof selectedBoards, board);
+                    }
+                  }}
+                >
+                  <option value="">選択してください</option>
+                  {Object.entries(boardPatterns).map(([pattern, boards]) => (
+                    <optgroup key={pattern} label={`Pattern ${pattern}`}>
+                      {boards.map((board, index) => (
+                        <option key={`${pattern}-${index}`} value={`${pattern}-${index}`}>
+                          {`${pattern}-${index}`}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+              </div>
+            ))}
+          </div>
+          <button
+            className="btn btn-primary w-full"
+            onClick={handleCreateComposite}
+            disabled={!Object.values(selectedBoards).every(Boolean)}
+          >
+            複合ボードを作成
+          </button>
+        </div>
+
         {/* パターンごとのボード表示 */}
         {Object.entries(boardPatterns).map(([pattern, boards]) => (
           <div key={pattern} className="mb-8">
@@ -120,29 +155,18 @@ const BoardTestPage: FC = () => {
               {boards.map((board) => (
                 <div key={board.boardId} className="bg-white rounded-lg shadow-lg p-4">
                   <h3 className="text-lg font-semibold mb-4">{board.boardId}</h3>
-                  <div className="aspect-square mb-4">
-                    <GameBoard
-                      board={generateBoardFromPattern(board)}
-                      isPlayerTurn={false}
-                    />
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <p>壁の数: {board.walls.length}</p>
-                    <p>反射板の数: {board.reflectors.length}</p>
-                    <p>ターゲットの数: {board.targets.length}</p>
-                    <div className="mt-2">
-                      <h4 className="font-semibold">ターゲット詳細:</h4>
-                      <ul className="list-disc list-inside">
-                        {board.targets.map((target, index) => (
-                          <li key={index}>
-                            {target.symbol === 'vortex' 
-                              ? 'Vortex (任意の色)'
-                              : `${target.color} - ${target.symbol}`}
-                            at ({target.x}, {target.y})
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    {[0, 90, 180, 270].map((rotation) => (
+                      <div key={rotation} className="space-y-2">
+                        <p className="text-sm font-medium">{rotation}° 回転</p>
+                        <div className="aspect-square">
+                          <GameBoard
+                            board={generateBoardFromPattern(rotateBoard(board, rotation))}
+                            isPlayerTurn={false}
+                          />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}
