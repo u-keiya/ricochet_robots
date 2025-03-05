@@ -88,14 +88,28 @@ export const useGameState = (mode: 'single' | 'multi') => {
   const declareMoves = useCallback((moves: number) => {
     setGameState(prev => {
       if (!prev.singlePlayer.isDeclarationPhase) return prev;
-      if (moves > prev.singlePlayer.maxDeclaredMoves && prev.singlePlayer.maxDeclaredMoves > 0) return prev;
+
+      // 現在の宣言値より小さい値を選択した場合、その値が新しい上限となる
+      const currentDeclared = prev.singlePlayer.declaredMoves;
+      const newMaxMoves = currentDeclared === 0 
+        ? moves  // 初回の宣言
+        : Math.min(  // 2回目以降の宣言
+            moves, 
+            currentDeclared,
+            prev.singlePlayer.maxDeclaredMoves || Infinity
+          );
+
+      // 宣言された値が現在の上限を超えている場合は変更しない
+      if (moves > prev.singlePlayer.maxDeclaredMoves && prev.singlePlayer.maxDeclaredMoves > 0) {
+        return prev;
+      }
 
       return {
         ...prev,
         singlePlayer: {
           ...prev.singlePlayer,
           declaredMoves: moves,
-          maxDeclaredMoves: prev.singlePlayer.maxDeclaredMoves || moves
+          maxDeclaredMoves: newMaxMoves
         }
       };
     });
