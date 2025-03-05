@@ -80,7 +80,7 @@ export const isValidBoardPattern = (pattern: any): pattern is BoardPattern => {
   }
 
   // サイズチェック
-  if (pattern.size !== 16) {
+  if (pattern.size !== 8) { // 16から8に変更
     console.error('Invalid board size:', pattern.size);
     return false;
   }

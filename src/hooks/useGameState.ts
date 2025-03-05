@@ -1,16 +1,25 @@
 import { useState, useCallback, useEffect } from 'react';
 import { GameState, Direction, Robot, Position, Card, RobotColor } from '../types/game';
-import { generateBoardFromPattern, calculateReflection } from '../utils/boardGenerator';
-import { CardDeck } from '../utils/cardGenerator';
+import { generateBoardFromPattern } from '../utils/boardGenerator';
+import { createCompositeBoardPattern } from '../utils/boardRotation';
 import BoardLoader from '../utils/boardLoader';
+import { CardDeck } from '../utils/cardGenerator';
 
 export const useGameState = (mode: 'single' | 'multi') => {
   const [gameState, setGameState] = useState<GameState>(() => {
-    const boardLoader = BoardLoader.getInstance();
-    const randomBoards = boardLoader.getRandomBoardSet(1); // 現在は1つのボードのみ使用
-    const pattern = randomBoards[0];
+    const loader = BoardLoader.getInstance();
+    const selectedBoards = loader.getRandomGameBoards();
+    
+    // 4つのボードを取得して組み合わせる
+    const compositeBoard = createCompositeBoardPattern(
+      selectedBoards[0],
+      selectedBoards[1],
+      selectedBoards[2],
+      selectedBoards[3]
+    );
+
     return {
-      board: generateBoardFromPattern(pattern),
+      board: generateBoardFromPattern(compositeBoard),
       phase: 'waiting',
       timer: 60,
       declarations: {},
@@ -22,12 +31,17 @@ export const useGameState = (mode: 'single' | 'multi') => {
 
   // ゲームをリセット
   const resetGame = useCallback(() => {
-    const boardLoader = BoardLoader.getInstance();
-    const randomBoards = boardLoader.getRandomBoardSet(1);
-    const pattern = randomBoards[0];
-    
+    const loader = BoardLoader.getInstance();
+    const selectedBoards = loader.getRandomGameBoards();
+    const compositeBoard = createCompositeBoardPattern(
+      selectedBoards[0],
+      selectedBoards[1],
+      selectedBoards[2],
+      selectedBoards[3]
+    );
+
     setGameState({
-      board: generateBoardFromPattern(pattern),
+      board: generateBoardFromPattern(compositeBoard),
       phase: 'waiting',
       timer: 60,
       declarations: {},
@@ -182,6 +196,29 @@ export const useGameState = (mode: 'single' | 'multi') => {
     remainingCards: cardDeck.getRemaining(),
     totalCards: cardDeck.getTotalCards(),
   };
+};
+
+// 反射による新しい移動方向を計算
+const calculateReflection = (
+  direction: Direction,
+  reflectorDirection: '／' | '＼'
+): Direction => {
+  const reflectionMap = {
+    '／': {
+      'up': 'right',
+      'right': 'up',
+      'down': 'left',
+      'left': 'down'
+    },
+    '＼': {
+      'up': 'left',
+      'left': 'up',
+      'down': 'right',
+      'right': 'down'
+    }
+  } as const;
+
+  return reflectionMap[reflectorDirection][direction];
 };
 
 export default useGameState;

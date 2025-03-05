@@ -18,7 +18,7 @@ const rotateReflectorDirection = (direction: ReflectorDirection, rotation: numbe
   return direction;
 };
 
-// 座標を回転
+// 座標を回転（8x8ボード用）
 const rotatePosition = (x: number, y: number, size: number, rotation: number): [number, number] => {
   switch (rotation) {
     case 90:
@@ -39,7 +39,7 @@ export const rotateBoard = (board: BoardPattern, rotation: number): BoardPattern
     return board;
   }
 
-  const size = board.size;
+  const size = board.size; // 8x8
   const rotatedBoard: BoardPattern = {
     ...board,
     walls: [],
@@ -82,7 +82,7 @@ export const rotateBoard = (board: BoardPattern, rotation: number): BoardPattern
   return rotatedBoard;
 };
 
-// 4つのボードを2x2で配置して1つの大きなボードを作成
+// 4つのボードを2x2で配置して1つの大きなボードを作成（16x16）
 export const createCompositeBoardPattern = (
   topLeft: BoardPattern,
   topRight: BoardPattern,
@@ -94,7 +94,7 @@ export const createCompositeBoardPattern = (
   const rotatedBottomRight = rotateBoard(bottomRight, 180);
   const rotatedBottomLeft = rotateBoard(bottomLeft, 270);
 
-  // 新しいボードサイズ（元のサイズの2倍）
+  // 新しいボードサイズ（8x8 → 16x16）
   const newSize = topLeft.size * 2;
 
   // 座標変換のヘルパー関数
@@ -103,7 +103,7 @@ export const createCompositeBoardPattern = (
     y: number, 
     quadrant: 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight'
   ): [number, number] => {
-    const halfSize = topLeft.size;
+    const halfSize = topLeft.size; // 8
     switch (quadrant) {
       case 'topLeft':     return [x, y];
       case 'topRight':    return [x + halfSize, y];
@@ -115,7 +115,7 @@ export const createCompositeBoardPattern = (
   // 新しいボードパターンを作成
   const composite: BoardPattern = {
     boardId: 'composite',
-    size: newSize,
+    size: newSize, // 16
     walls: [
       ...topLeft.walls.map(w => {
         const [newX, newY] = transformCoordinates(w.x, w.y, 'topLeft');

@@ -79,7 +79,7 @@ class BoardLoader {
   public validateBoard(board: BoardPattern | RawBoardPattern): boolean {
     try {
       // 基本的なバリデーション
-      if (board.size !== 16) {
+      if (board.size !== 8) {
         console.warn(`Invalid board ${board.boardId}: invalid size`);
         return false;
       }
