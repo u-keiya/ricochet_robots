@@ -21,7 +21,7 @@ class BoardLoader {
     return `boards_${pattern}` as keyof RawBoardSet;
   }
 
-  // パターン（A,C,D）のボードセットを取得
+  // パターン（A,B,C,D）のボードセットを取得
   public getBoardSetByPattern(pattern: string): BoardPattern[] {
     const key = this.getPatternKey(pattern);
     console.log(`Getting boards for pattern ${pattern} with key ${key}`);
@@ -48,7 +48,7 @@ class BoardLoader {
 
   // 各パターンから1つずつランダムに選んで組み合わせる
   public getRandomGameBoards(): BoardPattern[] {
-    const patterns = ['A', 'C', 'D'];
+    const patterns = ['A', 'B', 'C', 'D'];
     const selectedBoards: BoardPattern[] = [];
 
     patterns.forEach(pattern => {
@@ -125,7 +125,7 @@ class BoardLoader {
     const errors: string[] = [];
     console.log('Validating all boards...');
     
-    const patterns = ['A', 'C', 'D'];
+    const patterns = ['A', 'B', 'C', 'D'];
     patterns.forEach(pattern => {
       const key = this.getPatternKey(pattern);
       const boards = this.boardData[key];
@@ -150,7 +150,7 @@ class BoardLoader {
   // デバッグ用：現在のボードコレクションの状態を出力
   public debugPrintState(): void {
     console.log('Current BoardLoader state:');
-    const patterns = ['A', 'C', 'D'];
+    const patterns = ['A', 'B', 'C', 'D'];
     patterns.forEach(pattern => {
       const key = this.getPatternKey(pattern);
       const boards = this.boardData[key];

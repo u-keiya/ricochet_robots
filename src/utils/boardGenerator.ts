@@ -1,5 +1,5 @@
 import { Board, Cell, Robot, Position, RobotColor, Direction } from '../types/game';
-import { BoardPattern, WallPosition, ReflectorPosition } from '../types/board';
+import { BoardPattern } from '../types/board';
 
 const createEmptyCell = (): Cell => ({
   type: 'empty',
@@ -10,6 +10,49 @@ const createEmptyCell = (): Cell => ({
     left: false,
   },
 });
+
+// 指定された位置にロボットを配置可能かチェック
+const isValidRobotPosition = (
+  x: number,
+  y: number,
+  board: Board,
+  existingPositions: Position[]
+): boolean => {
+  // ボード範囲外チェック
+  if (x < 0 || x >= board.size || y < 0 || y >= board.size) {
+    return false;
+  }
+
+  // 他のロボットとの重複チェック
+  if (existingPositions.some(p => p.x === x && p.y === y)) {
+    return false;
+  }
+
+  // ターゲット上の配置を禁止
+  const cell = board.cells[y][x];
+  if (cell.isTarget) {
+    return false;
+  }
+
+  return true;
+};
+
+// ランダムな有効な位置を生成
+const generateValidPosition = (
+  board: Board,
+  existingPositions: Position[],
+  maxAttempts: number = 100
+): Position | null => {
+  for (let i = 0; i < maxAttempts; i++) {
+    const x = Math.floor(Math.random() * board.size);
+    const y = Math.floor(Math.random() * board.size);
+    
+    if (isValidRobotPosition(x, y, board, existingPositions)) {
+      return { x, y };
+    }
+  }
+  return null;
+};
 
 // ボードパターンからボードを生成
 export const generateBoardFromPattern = (pattern: BoardPattern): Board => {
@@ -23,7 +66,7 @@ export const generateBoardFromPattern = (pattern: BoardPattern): Board => {
   };
 
   // 壁を設置
-  pattern.walls.forEach((wallPos: WallPosition) => {
+  pattern.walls.forEach(wallPos => {
     const cell = board.cells[wallPos.y][wallPos.x];
     wallPos.walls.forEach(direction => {
       cell.walls[direction] = true;
@@ -45,8 +88,9 @@ export const generateBoardFromPattern = (pattern: BoardPattern): Board => {
   });
 
   // 反射板を設置
-  pattern.reflectors.forEach((reflector: ReflectorPosition) => {
-    board.cells[reflector.y][reflector.x].reflector = {
+  pattern.reflectors.forEach(reflector => {
+    const cell = board.cells[reflector.y][reflector.x];
+    cell.reflector = {
       color: reflector.color,
       direction: reflector.direction,
     };
@@ -60,22 +104,16 @@ export const generateBoardFromPattern = (pattern: BoardPattern): Board => {
     cell.targetSymbol = target.symbol;
   });
 
-  // ロボットの初期位置をランダムに設定
+  // ロボットをランダムに配置
   const robotColors: RobotColor[] = ['red', 'blue', 'yellow', 'green'];
   const positions: Position[] = [];
 
   robotColors.forEach(color => {
-    let position: Position;
-    do {
-      position = {
-        x: Math.floor(Math.random() * pattern.size),
-        y: Math.floor(Math.random() * pattern.size),
-      };
-    } while (
-      positions.some(p => p.x === position.x && p.y === position.y) ||
-      board.cells[position.y][position.x].isTarget ||
-      board.cells[position.y][position.x].reflector
-    );
+    const position = generateValidPosition(board, positions);
+    if (!position) {
+      console.error('Failed to find valid robot position');
+      return;
+    }
     
     positions.push(position);
     board.robots.push({ color, position });
