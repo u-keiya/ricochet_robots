@@ -1,4 +1,4 @@
-import { FC, memo } from 'react';
+import { FC, memo, useMemo } from 'react';
 import { Board, RobotColor, Direction } from '../../types/game';
 import { BoardCell } from './BoardCell';
 import Robot from './Robot';
@@ -26,11 +26,47 @@ const GameBoard: FC<GameBoardProps> = memo(({ board, isPlayerTurn, onRobotMove }
     onRobotMove(board.robots[0].color, direction);
   };
 
-  // セルサイズを計算（px単位）
-  const cellSize = Math.floor(Math.min(
-    document.documentElement.clientWidth / (board.size * 1.5),
-    document.documentElement.clientHeight / (board.size * 1.2)
-  ));
+  // セルサイズを固定値で設定
+  const cellSize = 40; // px単位
+  const boardSize = board.size * cellSize;
+
+  // セル配列をメモ化
+  const cells = useMemo(() => {
+    return board.cells.map((row, y) =>
+      row.map((cell, x) => (
+        <BoardCell
+          key={`${x}-${y}`}
+          cell={cell}
+          x={x}
+          y={y}
+          size={cellSize}
+        />
+      ))
+    );
+  }, [board.cells, cellSize]);
+
+  // ロボット配列をメモ化
+  const robots = useMemo(() => {
+    return board.robots.map((robot) => (
+      <Robot
+        key={robot.color}
+        color={robot.color}
+        position={robot.position}
+        boardSize={board.size}
+        isActive={isPlayerTurn}
+        onMove={isPlayerTurn ? onRobotMove : undefined}
+        style={{
+          zIndex: 10,
+          width: `${cellSize}px`,
+          height: `${cellSize}px`,
+          position: 'absolute',
+          left: `${robot.position.x * cellSize}px`,
+          top: `${robot.position.y * cellSize}px`,
+          transition: 'all 0.2s ease-in-out',
+        }}
+      />
+    ));
+  }, [board.robots, board.size, cellSize, isPlayerTurn, onRobotMove]);
 
   return (
     <div 
@@ -39,52 +75,24 @@ const GameBoard: FC<GameBoardProps> = memo(({ board, isPlayerTurn, onRobotMove }
       onKeyDown={handleKeyDown}
     >
       <div 
-        className="relative"
+        className="relative bg-white rounded-lg shadow-lg"
         style={{
-          width: `${cellSize * board.size}px`,
-          height: `${cellSize * board.size}px`,
+          width: `${boardSize}px`,
+          height: `${boardSize}px`,
         }}
       >
         {/* ボードのセル */}
         <div 
-          className="absolute inset-0 grid gap-0"
+          className="absolute inset-0 grid"
           style={{
             gridTemplateColumns: `repeat(${board.size}, ${cellSize}px)`,
           }}
         >
-          {board.cells.map((row, y) =>
-            row.map((cell, x) => (
-              <BoardCell
-                key={`${x}-${y}`}
-                cell={cell}
-                x={x}
-                y={y}
-                size={cellSize}
-              />
-            ))
-          )}
+          {cells}
         </div>
 
         {/* ロボット */}
-        {board.robots.map((robot) => (
-          <Robot
-            key={robot.color}
-            color={robot.color}
-            position={robot.position}
-            boardSize={board.size}
-            isActive={isPlayerTurn}
-            onMove={isPlayerTurn ? onRobotMove : undefined}
-            style={{
-              zIndex: 10,
-              width: `${cellSize}px`,
-              height: `${cellSize}px`,
-              position: 'absolute',
-              left: `${robot.position.x * cellSize}px`,
-              top: `${robot.position.y * cellSize}px`,
-              transition: 'all 0.2s ease-in-out',
-            }}
-          />
-        ))}
+        {robots}
       </div>
     </div>
   );

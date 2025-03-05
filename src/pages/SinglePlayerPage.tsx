@@ -5,8 +5,9 @@ import GameBoard from '../components/GameBoard/GameBoard';
 import GameInfo from '../components/GameInfo';
 import { DeclarationCardList } from '../components/DeclarationCard';
 
-const SIDE_PANEL_WIDTH = "320px";
-const DECLARATION_HEIGHT = "140px";
+const SIDE_PANEL_WIDTH = 320; // px
+const DECLARATION_HEIGHT = 140; // px
+const BOARD_SCALE = 0.85; // スケーリング係数
 
 const SinglePlayerPage: FC = () => {
   const navigate = useNavigate();
@@ -18,17 +19,36 @@ const SinglePlayerPage: FC = () => {
     remainingCards,
   } = useGameState('single');
 
+  // 盤面のスケーリングを計算
+  const getBoardScale = () => {
+    const maxWidth = window.innerWidth - SIDE_PANEL_WIDTH - 48; // padding考慮
+    const maxHeight = window.innerHeight - (gameState.phase === 'declaration' ? DECLARATION_HEIGHT : 0) - 48;
+    const baseSize = gameState.board.size * 40; // GameBoardの基本サイズ (40px * board.size)
+    
+    const scaleX = maxWidth / baseSize;
+    const scaleY = maxHeight / baseSize;
+    return Math.min(scaleX, scaleY, 1) * BOARD_SCALE;
+  };
+
+  const scale = getBoardScale();
+
   return (
     <div className="h-screen w-screen bg-gray-100 flex relative overflow-hidden">
       {/* メインエリア（ボード表示部分） */}
       <div 
         className="flex-1 flex items-center justify-center"
         style={{ 
-          marginRight: SIDE_PANEL_WIDTH,
-          paddingBottom: gameState.phase === 'declaration' ? DECLARATION_HEIGHT : '0'
+          marginRight: `${SIDE_PANEL_WIDTH}px`,
+          paddingBottom: gameState.phase === 'declaration' ? `${DECLARATION_HEIGHT}px` : '0'
         }}
       >
-        <div className="relative bg-white rounded-lg shadow-lg p-4">
+        <div 
+          className="relative bg-white rounded-lg shadow-lg p-4"
+          style={{
+            transform: `scale(${scale})`,
+            transformOrigin: 'center center'
+          }}
+        >
           <GameBoard 
             board={gameState.board}
             isPlayerTurn={gameState.phase === 'playing'}
@@ -40,7 +60,7 @@ const SinglePlayerPage: FC = () => {
       {/* 右サイドパネル */}
       <div 
         className="fixed right-0 top-0 h-full bg-white shadow-lg p-6 flex flex-col"
-        style={{ width: SIDE_PANEL_WIDTH }}
+        style={{ width: `${SIDE_PANEL_WIDTH}px` }}
       >
         <GameInfo
           score={gameState.singlePlayer.score}
@@ -68,8 +88,8 @@ const SinglePlayerPage: FC = () => {
         <div 
           className="fixed bottom-0 left-0 bg-white shadow-lg rounded-t-lg overflow-hidden z-10"
           style={{ 
-            width: `calc(100% - ${SIDE_PANEL_WIDTH})`,
-            height: DECLARATION_HEIGHT
+            width: `calc(100% - ${SIDE_PANEL_WIDTH}px)`,
+            height: `${DECLARATION_HEIGHT}px`
           }}
         >
           <div className="w-full h-full flex justify-center items-center">
