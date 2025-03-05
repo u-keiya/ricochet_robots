@@ -56,12 +56,12 @@ export const BoardCell: FC<BoardCellProps> = ({ cell, x, y, size }) => {
   const getReflectorClasses = () => {
     if (!cell.reflector) return '';
 
-    const baseClasses = 'absolute inset-0 flex items-center justify-center';
+    const baseClasses = 'absolute inset-0 flex items-center justify-center font-bold';
     const colorClasses: Record<RobotColor, string> = {
-      red: 'text-red-500',
-      blue: 'text-blue-500',
-      yellow: 'text-yellow-500',
-      green: 'text-green-500',
+      red: 'text-red-600',
+      blue: 'text-blue-600',
+      yellow: 'text-yellow-600',
+      green: 'text-green-600',
     };
 
     return `${baseClasses} ${colorClasses[cell.reflector.color]}`;
@@ -72,9 +72,19 @@ export const BoardCell: FC<BoardCellProps> = ({ cell, x, y, size }) => {
 
     return (
       <div className={getReflectorClasses()}>
-        <span className="text-4xl transform rotate-0" style={{ fontSize: `${size * 0.8}px` }}>
-          {cell.reflector.direction}
-        </span>
+        {/* 反射板の太さを調整するために2重に表示 */}
+        <div className="absolute inset-0 flex items-center justify-center" 
+             style={{ fontSize: `${size * 0.9}px` }}>
+          <span className="transform rotate-0 select-none">
+            {cell.reflector.direction}
+          </span>
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center" 
+             style={{ fontSize: `${size * 0.9}px`, opacity: 0.5 }}>
+          <span className="transform rotate-0 select-none blur-[1px]">
+            {cell.reflector.direction}
+          </span>
+        </div>
       </div>
     );
   };
