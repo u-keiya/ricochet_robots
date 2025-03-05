@@ -6,7 +6,8 @@ import GameInfo from '../components/GameInfo';
 import { DeclarationCardList } from '../components/DeclarationCard';
 
 const SIDE_PANEL_WIDTH = "320px";
-const BOARD_SIZE = "min(70vh, calc(100vw - 400px))";
+const BOARD_SIZE = "min(65vh, calc(100vw - 400px))";
+const DECLARATION_HEIGHT = "140px";
 
 const SinglePlayerPage: FC = () => {
   const navigate = useNavigate();
@@ -19,14 +20,17 @@ const SinglePlayerPage: FC = () => {
   } = useGameState('single');
 
   return (
-    <div className="h-screen w-screen bg-gray-100 flex relative">
+    <div className="h-screen w-screen bg-gray-100 flex relative overflow-hidden">
       {/* メインエリア（ボード表示部分） */}
       <div 
-        className="flex-1 flex flex-col items-center justify-center"
-        style={{ marginRight: SIDE_PANEL_WIDTH }}
+        className="flex-1 flex flex-col items-center pt-8"
+        style={{ 
+          marginRight: SIDE_PANEL_WIDTH,
+          paddingBottom: gameState.phase === 'declaration' ? DECLARATION_HEIGHT : '0'
+        }}
       >
         <div 
-          className="relative" 
+          className="relative bg-white rounded-lg shadow-lg p-4" 
           style={{ 
             width: BOARD_SIZE,
             height: BOARD_SIZE,
@@ -69,19 +73,18 @@ const SinglePlayerPage: FC = () => {
       {/* 下部の宣言カード選択エリア */}
       {gameState.phase === 'declaration' && (
         <div 
-          className="fixed bottom-0 bg-white shadow-lg rounded-t-lg overflow-hidden"
+          className="fixed bottom-0 left-0 bg-white shadow-lg rounded-t-lg overflow-hidden z-10"
           style={{ 
-            left: "0",
             width: `calc(100% - ${SIDE_PANEL_WIDTH})`,
-            height: "20vh",
+            height: DECLARATION_HEIGHT
           }}
         >
-          <div className="w-full h-full flex justify-center">
+          <div className="w-full h-full flex justify-center items-center">
             <DeclarationCardList
               selectedNumber={gameState.singlePlayer.declaredMoves}
               maxNumber={gameState.singlePlayer.maxDeclaredMoves}
               onSelect={declareMoves}
-              className="h-full flex-shrink-0"
+              className="h-full"
             />
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import { FC, useState } from 'react';
 
 interface DeclarationCardProps {
   number: number;
@@ -32,7 +32,18 @@ const DeclarationCard: FC<DeclarationCardProps> = ({
   );
 };
 
-export default DeclarationCard;
+// 矢印SVGコンポーネント
+const ChevronLeft: FC = () => (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+  </svg>
+);
+
+const ChevronRight: FC = () => (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+  </svg>
+);
 
 // 宣言カード一覧コンポーネント
 interface DeclarationCardListProps {
@@ -48,17 +59,65 @@ export const DeclarationCardList: FC<DeclarationCardListProps> = ({
   onSelect,
   className = '',
 }) => {
+  const [startIndex, setStartIndex] = useState(0);
+  const visibleCount = 5;
+  const totalNumbers = 20;
+
+  const handlePrevClick = () => {
+    setStartIndex(Math.max(0, startIndex - 1));
+  };
+
+  const handleNextClick = () => {
+    setStartIndex(Math.min(totalNumbers - visibleCount, startIndex + 1));
+  };
+
   return (
-    <div className={`flex p-4 space-x-4 min-w-max ${className}`}>
-      {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
-        <DeclarationCard
-          key={num}
-          number={num}
-          isSelected={selectedNumber === num}
-          isDisabled={num > maxNumber && maxNumber > 0}
-          onClick={onSelect}
-        />
-      ))}
+    <div className={`flex items-center justify-center space-x-4 p-4 ${className}`}>
+      {/* 左矢印 */}
+      <button
+        className={`p-2 rounded-full ${
+          startIndex === 0 
+            ? 'text-gray-300 cursor-not-allowed' 
+            : 'text-gray-600 hover:bg-gray-100'
+        }`}
+        onClick={handlePrevClick}
+        disabled={startIndex === 0}
+      >
+        <ChevronLeft />
+      </button>
+
+      {/* カード表示エリア */}
+      <div className="flex space-x-4">
+        {Array.from({ length: visibleCount }, (_, i) => {
+          const number = startIndex + i + 1;
+          if (number > totalNumbers) return null;
+          return (
+            <DeclarationCard
+              key={number}
+              number={number}
+              isSelected={selectedNumber === number}
+              isDisabled={(
+                maxNumber > 0 && 
+                number > Math.max(selectedNumber, maxNumber)
+              )}
+              onClick={onSelect}
+            />
+          );
+        })}
+      </div>
+
+      {/* 右矢印 */}
+      <button
+        className={`p-2 rounded-full ${
+          startIndex >= totalNumbers - visibleCount 
+            ? 'text-gray-300 cursor-not-allowed' 
+            : 'text-gray-600 hover:bg-gray-100'
+        }`}
+        onClick={handleNextClick}
+        disabled={startIndex >= totalNumbers - visibleCount}
+      >
+        <ChevronRight />
+      </button>
     </div>
   );
 };

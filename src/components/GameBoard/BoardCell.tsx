@@ -1,6 +1,5 @@
-import { FC } from 'react';
-import { Cell, RobotColor } from '../../types/game';
-import { getSymbolDisplay } from '../../utils/cardGenerator';
+import { FC, memo } from 'react';
+import { Cell } from '../../types/game';
 
 interface BoardCellProps {
   cell: Cell;
@@ -9,7 +8,7 @@ interface BoardCellProps {
   size: number;
 }
 
-export const BoardCell: FC<BoardCellProps> = ({ cell, x, y, size }) => {
+export const BoardCell: FC<BoardCellProps> = memo(({ cell, x, y, size }) => {
   const cellSize = `${size}px`;
 
   const getWallClasses = () => {
@@ -37,17 +36,17 @@ export const BoardCell: FC<BoardCellProps> = ({ cell, x, y, size }) => {
     const baseClasses = 'absolute inset-2 rounded-full flex items-center justify-center';
     
     // Vortex用の特別なスタイル
-    if (cell.targetSymbol === 'vortex') {
+    if (cell.targetSymbol === '✧') {
       return `${baseClasses} bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 animate-pulse`;
     }
 
-    const colorClasses: Record<NonNullable<Cell['targetColor']>, string> = {
+    const colorClasses: Record<string, string> = {
       red: 'bg-red-500',
       blue: 'bg-blue-500',
       yellow: 'bg-yellow-500',
       green: 'bg-green-500',
       multi: 'bg-gradient-to-r from-red-500 via-blue-500 to-green-500',
-      colors: 'bg-gradient-to-r from-purple-500 via-pink-500 to-red-500', // vortex用
+      colors: 'bg-gradient-to-r from-purple-500 via-pink-500 to-red-500',
     };
 
     return `${baseClasses} ${cell.targetColor ? colorClasses[cell.targetColor] : 'bg-purple-500'}`;
@@ -57,7 +56,7 @@ export const BoardCell: FC<BoardCellProps> = ({ cell, x, y, size }) => {
     if (!cell.reflector) return '';
 
     const baseClasses = 'absolute inset-0 flex items-center justify-center font-bold';
-    const colorClasses: Record<RobotColor, string> = {
+    const colorClasses: Record<string, string> = {
       red: 'text-red-600',
       blue: 'text-blue-600',
       yellow: 'text-yellow-600',
@@ -72,7 +71,7 @@ export const BoardCell: FC<BoardCellProps> = ({ cell, x, y, size }) => {
 
     return (
       <div className={getReflectorClasses()}>
-        {/* 反射板の太さを調整するために2重に表示 */}
+        {/* 反射板を二重に表示して太さを出す */}
         <div className="absolute inset-0 flex items-center justify-center" 
              style={{ fontSize: `${size * 0.9}px` }}>
           <span className="transform rotate-0 select-none">
@@ -92,13 +91,13 @@ export const BoardCell: FC<BoardCellProps> = ({ cell, x, y, size }) => {
   const renderTargetSymbol = () => {
     if (!cell.isTarget || !cell.targetSymbol) return null;
 
-    const symbolClasses = cell.targetSymbol === 'vortex'
-      ? 'text-white font-bold text-lg animate-spin'
-      : 'text-white font-bold text-lg';
+    const symbolClasses = cell.targetSymbol === '✧'
+      ? 'text-white font-bold text-2xl animate-spin'
+      : 'text-white font-bold text-2xl';
 
     return (
       <span className={symbolClasses}>
-        {getSymbolDisplay(cell.targetSymbol as any)}
+        {cell.targetSymbol}
       </span>
     );
   };
@@ -130,6 +129,8 @@ export const BoardCell: FC<BoardCellProps> = ({ cell, x, y, size }) => {
       )}
     </div>
   );
-};
+});
+
+BoardCell.displayName = 'BoardCell';
 
 export default BoardCell;

@@ -1,50 +1,89 @@
-import { FC } from 'react';
-import { Robot as RobotType } from '../../types/game';
+import { FC, CSSProperties } from 'react';
+import { RobotColor, Direction, Position } from '../../types/game';
 
-interface RobotProps {
-  robot: RobotType;
-  size: number;
-  isSelected: boolean;
-  onClick?: () => void;
+export interface RobotProps {
+  color: RobotColor;
+  position: Position;
+  boardSize: number;
+  isActive: boolean;
+  onMove?: (color: RobotColor, direction: Direction) => void;
+  style?: CSSProperties;
 }
 
-const robotColors = {
-  red: 'bg-red-500 hover:bg-red-600 border-red-700',
-  blue: 'bg-blue-500 hover:bg-blue-600 border-blue-700',
-  yellow: 'bg-yellow-500 hover:bg-yellow-600 border-yellow-700',
-  green: 'bg-green-500 hover:bg-green-600 border-green-700',
-};
+const Robot: FC<RobotProps> = ({
+  color,
+  position,
+  boardSize,
+  isActive,
+  onMove,
+  style
+}) => {
+  // セルサイズに基づいて位置を計算
+  const getPositionStyle = (): CSSProperties => {
+    const cellSize = 100 / boardSize;
+    return {
+      position: 'absolute',
+      left: `${position.x * cellSize}%`,
+      top: `${position.y * cellSize}%`,
+      width: `${cellSize}%`,
+      height: `${cellSize}%`,
+      transform: 'translate(0, 0)',
+      transition: 'all 0.2s ease-in-out',
+      cursor: isActive ? 'pointer' : 'default',
+      ...style
+    };
+  };
 
-export const Robot: FC<RobotProps> = ({ robot, size, isSelected, onClick }) => {
-  const position = {
-    left: `${robot.position.x * size + size / 2}px`,
-    top: `${robot.position.y * size + size / 2}px`,
+  // 色に基づいてスタイルを生成
+  const getColorStyle = (): string => {
+    const colorMap: Record<RobotColor, string> = {
+      red: 'bg-red-500 hover:bg-red-600',
+      blue: 'bg-blue-500 hover:bg-blue-600',
+      green: 'bg-green-500 hover:bg-green-600',
+      yellow: 'bg-yellow-500 hover:bg-yellow-600'
+    };
+    return colorMap[color];
+  };
+
+  // 移動ハンドラー
+  const handleClick = () => {
+    if (!isActive || !onMove) return;
+  };
+
+  // キーボード操作
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isActive || !onMove) return;
+
+    const direction: Direction | undefined = {
+      'ArrowUp': 'up',
+      'ArrowRight': 'right',
+      'ArrowDown': 'down',
+      'ArrowLeft': 'left',
+    }[e.key] as Direction;
+
+    if (direction) {
+      e.preventDefault();
+      onMove(color, direction);
+    }
   };
 
   return (
     <div
+      role="button"
+      tabIndex={isActive ? 0 : -1}
       className={`
-        absolute 
-        rounded-full 
-        transform -translate-x-1/2 -translate-y-1/2
-        transition-all duration-200 ease-in-out
-        cursor-pointer
-        border-4
-        shadow-lg
-        ${robotColors[robot.color]}
-        ${isSelected ? 'ring-4 ring-white ring-opacity-50 scale-110' : ''}
+        rounded-full shadow-lg
+        transform transition-transform
+        ${getColorStyle()}
+        ${isActive ? 'hover:scale-110' : ''}
       `}
-      style={{
-        ...position,
-        width: `${size * 0.8}px`,
-        height: `${size * 0.8}px`,
-        zIndex: isSelected ? 20 : 10,
-      }}
-      onClick={onClick}
+      style={getPositionStyle()}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
     >
-      {/* ロボットの内側の装飾 */}
-      <div className="absolute inset-2 rounded-full bg-white bg-opacity-30" />
-      <div className="absolute inset-4 rounded-full bg-white bg-opacity-20" />
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="w-2/3 h-2/3 rounded-full bg-white bg-opacity-30" />
+      </div>
     </div>
   );
 };

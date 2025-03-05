@@ -1,86 +1,44 @@
-import { FC, useState } from 'react';
-import { Board, Robot as RobotType, Direction } from '../../types/game';
-import BoardCell from './BoardCell';
+import { FC, memo } from 'react';
+import { Board, RobotColor, Direction } from '../../types/game';
+import { BoardCell } from './BoardCell';
 import Robot from './Robot';
 
 interface GameBoardProps {
   board: Board;
-  onRobotMove?: (robotColor: RobotType['color'], direction: Direction) => void;
-  isPlayerTurn?: boolean;
+  isPlayerTurn: boolean;
+  onRobotMove?: (color: RobotColor, direction: Direction) => void;
 }
 
-const GameBoard: FC<GameBoardProps> = ({ board, onRobotMove, isPlayerTurn = false }) => {
-  const [selectedRobot, setSelectedRobot] = useState<RobotType | null>(null);
-  const containerSize = Math.min(window.innerWidth * 0.8, 640); // レスポンシブ対応
-  const cellSize = containerSize / board.size;
+const GameBoard: FC<GameBoardProps> = memo(({ board, isPlayerTurn, onRobotMove }) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isPlayerTurn || !onRobotMove) return;
 
-  const handleRobotClick = (robot: RobotType) => {
-    if (!isPlayerTurn) return;
-    setSelectedRobot(prev => prev?.color === robot.color ? null : robot);
-  };
+    const direction: Direction | undefined = {
+      'ArrowUp': 'up',
+      'ArrowRight': 'right',
+      'ArrowDown': 'down',
+      'ArrowLeft': 'left',
+    }[e.key] as Direction;
 
-  const handleDirectionClick = (direction: Direction) => {
-    if (!selectedRobot || !onRobotMove) return;
-    onRobotMove(selectedRobot.color, direction);
-    setSelectedRobot(null);
-  };
+    if (!direction) return;
 
-  // 移動方向の矢印を表示
-  const renderDirectionArrows = () => {
-    if (!selectedRobot || !isPlayerTurn) return null;
-
-    const directions: { direction: Direction; transform: string; icon: string }[] = [
-      { direction: 'up', transform: 'translate(-50%, -120%)', icon: '↑' },
-      { direction: 'right', transform: 'translate(20%, -50%)', icon: '→' },
-      { direction: 'down', transform: 'translate(-50%, 20%)', icon: '↓' },
-      { direction: 'left', transform: 'translate(-120%, -50%)', icon: '←' },
-    ];
-
-    const position = {
-      left: `${selectedRobot.position.x * cellSize + cellSize / 2}px`,
-      top: `${selectedRobot.position.y * cellSize + cellSize / 2}px`,
-    };
-
-    return (
-      <div
-        className="absolute z-30"
-        style={position}
-      >
-        {directions.map(({ direction, transform, icon }) => (
-          <button
-            key={direction}
-            className={`
-              absolute p-2 rounded-full
-              bg-white shadow-lg
-              hover:bg-gray-100 transition-colors
-              transform
-              ${isPlayerTurn ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}
-            `}
-            style={{ transform }}
-            onClick={() => handleDirectionClick(direction)}
-            disabled={!isPlayerTurn}
-          >
-            {icon}
-          </button>
-        ))}
-      </div>
-    );
+    e.preventDefault();
+    onRobotMove(board.robots[0].color, direction);
   };
 
   return (
     <div 
-      className="relative bg-white rounded-lg shadow-lg overflow-hidden"
-      style={{
-        width: containerSize,
-        height: containerSize,
-      }}
+      className="relative w-full h-full focus:outline-none"
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
     >
-      {/* ボードグリッド */}
+      {/* ボードのセル */}
       <div 
-        className="absolute inset-0 grid"
+        className="grid gap-0"
         style={{
-          gridTemplateColumns: `repeat(${board.size}, ${cellSize}px)`,
-          gridTemplateRows: `repeat(${board.size}, ${cellSize}px)`,
+          gridTemplateColumns: `repeat(${board.size}, 1fr)`,
+          width: '100%',
+          height: '100%',
         }}
       >
         {board.cells.map((row, y) =>
@@ -90,27 +48,31 @@ const GameBoard: FC<GameBoardProps> = ({ board, onRobotMove, isPlayerTurn = fals
               cell={cell}
               x={x}
               y={y}
-              size={cellSize}
+              size={Math.floor((100 / board.size) * 0.9)} // サイズを調整
             />
           ))
         )}
       </div>
 
       {/* ロボット */}
-      {board.robots.map((robot) => (
+      {board.robots.map((robot, index) => (
         <Robot
           key={robot.color}
-          robot={robot}
-          size={cellSize}
-          isSelected={selectedRobot?.color === robot.color}
-          onClick={() => handleRobotClick(robot)}
+          color={robot.color}
+          position={robot.position}
+          boardSize={board.size}
+          isActive={isPlayerTurn}
+          onMove={isPlayerTurn ? onRobotMove : undefined}
+          style={{
+            zIndex: 10 + index,
+            transition: 'transform 0.2s ease-in-out',
+          }}
         />
       ))}
-
-      {/* 移動方向の矢印 */}
-      {renderDirectionArrows()}
     </div>
   );
-};
+});
+
+GameBoard.displayName = 'GameBoard';
 
 export default GameBoard;
