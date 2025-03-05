@@ -12,20 +12,66 @@ const BoardTestPage: FC = () => {
     valid: boolean;
     errors: string[];
   }>({ valid: true, errors: [] });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loader = BoardLoader.getInstance();
-    const patterns = ['A', 'B', 'C', 'D'];
-    const groupedPatterns: {[key: string]: BoardPattern[]} = {};
+    try {
+      console.log('BoardTestPage: Initializing...');
+      const loader = BoardLoader.getInstance();
+      loader.debugPrintState(); // デバッグ情報を出力
 
-    patterns.forEach(pattern => {
-      const boards = loader.getBoardSetByPattern(pattern);
-      groupedPatterns[pattern] = boards;
-    });
+      const patterns = ['A', 'B', 'C', 'D'];
+      const groupedPatterns: {[key: string]: BoardPattern[]} = {};
 
-    setBoardPatterns(groupedPatterns);
-    setValidationResult(loader.validateAllBoards());
+      patterns.forEach(pattern => {
+        console.log(`Loading boards for pattern ${pattern}...`);
+        const boards = loader.getBoardSetByPattern(pattern);
+        console.log(`Found ${boards.length} boards for pattern ${pattern}`);
+        groupedPatterns[pattern] = boards;
+      });
+
+      console.log('All patterns loaded:', groupedPatterns);
+      setBoardPatterns(groupedPatterns);
+
+      const validation = loader.validateAllBoards();
+      console.log('Validation result:', validation);
+      setValidationResult(validation);
+      
+      setLoading(false);
+    } catch (err) {
+      console.error('Error in BoardTestPage:', err);
+      setError(err instanceof Error ? err.message : 'Unknown error occurred');
+      setLoading(false);
+    }
   }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 p-8 flex items-center justify-center">
+        <p className="text-xl">Loading board patterns...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-100 p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <h2 className="font-bold">エラーが発生しました：</h2>
+            <p>{error}</p>
+          </div>
+          <button
+            className="btn btn-secondary"
+            onClick={() => navigate('/')}
+          >
+            戻る
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
@@ -38,6 +84,20 @@ const BoardTestPage: FC = () => {
           >
             戻る
           </button>
+        </div>
+
+        {/* デバッグ情報 */}
+        <div className="bg-gray-200 p-4 mb-8 rounded">
+          <h2 className="font-bold mb-2">デバッグ情報:</h2>
+          <pre className="text-sm overflow-auto">
+            {JSON.stringify({
+              patternsLoaded: Object.keys(boardPatterns),
+              boardCounts: Object.entries(boardPatterns).map(([pattern, boards]) => 
+                `${pattern}: ${boards.length} boards`
+              ),
+              validationStatus: validationResult,
+            }, null, 2)}
+          </pre>
         </div>
 
         {/* バリデーション結果 */}
