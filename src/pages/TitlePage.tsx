@@ -21,6 +21,13 @@ const TitlePage: FC = () => {
         >
           一人で遊ぶ
         </button>
+        {/* 開発中のテストボタン */}
+        <button 
+          className="btn bg-yellow-500 hover:bg-yellow-600 text-white w-48"
+          onClick={() => navigate('/test-boards')}
+        >
+          ボードテスト
+        </button>
       </div>
     </div>
   );

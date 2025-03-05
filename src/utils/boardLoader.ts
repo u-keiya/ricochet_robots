@@ -19,9 +19,11 @@ class BoardLoader {
     return BoardLoader.instance;
   }
 
-  // すべてのボードパターンを取得
-  public getAllBoards(): BoardPattern[] {
-    return this.boardCollection.boards;
+  // 指定したパターン（A,B,C,D）のボードセットを取得
+  public getBoardSetByPattern(pattern: string): BoardPattern[] {
+    return this.boardCollection.boards.filter(board => 
+      board.boardId.startsWith(`board_${pattern}`)
+    );
   }
 
   // 指定したIDのボードパターンを取得
@@ -29,18 +31,20 @@ class BoardLoader {
     return this.boardCollection.boards.find(board => board.boardId === boardId);
   }
 
-  // ランダムなボードを4つ選択して組み合わせる
-  public getRandomBoardSet(count: number = 4): BoardPattern[] {
-    const boards = [...this.boardCollection.boards];
-    const result: BoardPattern[] = [];
-    
-    while (result.length < count && boards.length > 0) {
-      const randomIndex = Math.floor(Math.random() * boards.length);
-      result.push(boards[randomIndex]);
-      boards.splice(randomIndex, 1);
-    }
+  // 各パターンから1つずつランダムに選んで4つのボードを取得
+  public getRandomGameBoards(): BoardPattern[] {
+    const patterns = ['A', 'B', 'C', 'D'];
+    const selectedBoards: BoardPattern[] = [];
 
-    return result;
+    patterns.forEach(pattern => {
+      const boardSet = this.getBoardSetByPattern(pattern);
+      const randomIndex = Math.floor(Math.random() * boardSet.length);
+      if (boardSet[randomIndex]) {
+        selectedBoards.push(boardSet[randomIndex]);
+      }
+    });
+
+    return selectedBoards;
   }
 
   // ボードパターンを検証
@@ -73,27 +77,11 @@ class BoardLoader {
             target.y < 0 || target.y >= board.size) {
           return false;
         }
-      }
-
-      // 重複チェック（同じ位置に複数の要素がないか）
-      const occupiedPositions = new Set<string>();
-
-      // 反射板の位置を記録
-      for (const reflector of board.reflectors) {
-        const pos = `${reflector.x},${reflector.y}`;
-        if (occupiedPositions.has(pos)) {
+        // vortexの場合はcolorチェックをスキップ
+        if (target.symbol !== 'vortex' && 
+            !['red', 'blue', 'yellow', 'green', 'multi'].includes(target.color)) {
           return false;
         }
-        occupiedPositions.add(pos);
-      }
-
-      // ターゲットの位置を記録
-      for (const target of board.targets) {
-        const pos = `${target.x},${target.y}`;
-        if (occupiedPositions.has(pos)) {
-          return false;
-        }
-        occupiedPositions.add(pos);
       }
 
       return true;
@@ -101,6 +89,22 @@ class BoardLoader {
       console.error('Board validation error:', error);
       return false;
     }
+  }
+
+  // 全てのボードパターンを検証
+  public validateAllBoards(): { valid: boolean; errors: string[] } {
+    const errors: string[] = [];
+    
+    this.boardCollection.boards.forEach(board => {
+      if (!this.validateBoard(board)) {
+        errors.push(`Invalid board pattern: ${board.boardId}`);
+      }
+    });
+
+    return {
+      valid: errors.length === 0,
+      errors
+    };
   }
 }
 

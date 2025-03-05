@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import TitlePage from './pages/TitlePage';
 import SinglePlayerPage from './pages/SinglePlayerPage';
+import BoardTestPage from './pages/BoardTestPage';
 // import OnlinePage from './pages/OnlinePage';
 // import CreateRoomPage from './pages/CreateRoomPage';
 // import JoinRoomPage from './pages/JoinRoomPage';
@@ -12,6 +13,7 @@ function App() {
       <Routes>
         <Route path="/" element={<TitlePage />} />
         <Route path="/single" element={<SinglePlayerPage />} />
+        <Route path="/test-boards" element={<BoardTestPage />} />
         {/* オンラインプレイ機能は後で実装 */}
         {/* <Route path="/online" element={<OnlinePage />} /> */}
         {/* <Route path="/create-room" element={<CreateRoomPage />} /> */}
