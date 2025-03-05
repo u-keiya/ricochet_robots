@@ -5,6 +5,9 @@ import GameBoard from '../components/GameBoard/GameBoard';
 import GameInfo from '../components/GameInfo';
 import { DeclarationCardList } from '../components/DeclarationCard';
 
+const SIDE_PANEL_WIDTH = "320px";
+const BOARD_SIZE = "min(70vh, calc(100vw - 400px))";
+
 const SinglePlayerPage: FC = () => {
   const navigate = useNavigate();
   const {
@@ -18,8 +21,17 @@ const SinglePlayerPage: FC = () => {
   return (
     <div className="h-screen w-screen bg-gray-100 flex relative">
       {/* メインエリア（ボード表示部分） */}
-      <div className="flex-1 p-4 flex items-center justify-center">
-        <div className="aspect-square w-full max-w-3xl">
+      <div 
+        className="flex-1 flex flex-col items-center justify-center"
+        style={{ marginRight: SIDE_PANEL_WIDTH }}
+      >
+        <div 
+          className="relative" 
+          style={{ 
+            width: BOARD_SIZE,
+            height: BOARD_SIZE,
+          }}
+        >
           <GameBoard 
             board={gameState.board}
             isPlayerTurn={gameState.phase === 'playing'}
@@ -29,7 +41,10 @@ const SinglePlayerPage: FC = () => {
       </div>
 
       {/* 右サイドパネル */}
-      <div className="w-1/5 min-w-[240px] bg-white shadow-lg p-6 flex flex-col">
+      <div 
+        className="fixed right-0 top-0 h-full bg-white shadow-lg p-6 flex flex-col"
+        style={{ width: SIDE_PANEL_WIDTH }}
+      >
         <GameInfo
           score={gameState.singlePlayer.score}
           moveCount={gameState.singlePlayer.moveCount}
@@ -53,13 +68,22 @@ const SinglePlayerPage: FC = () => {
 
       {/* 下部の宣言カード選択エリア */}
       {gameState.phase === 'declaration' && (
-        <div className="fixed bottom-0 left-1/4 w-1/2 h-1/5 bg-white shadow-lg rounded-t-lg overflow-hidden">
-          <DeclarationCardList
-            selectedNumber={gameState.singlePlayer.declaredMoves}
-            maxNumber={gameState.singlePlayer.maxDeclaredMoves}
-            onSelect={declareMoves}
-            className="h-full flex-shrink-0"
-          />
+        <div 
+          className="fixed bottom-0 bg-white shadow-lg rounded-t-lg overflow-hidden"
+          style={{ 
+            left: "0",
+            width: `calc(100% - ${SIDE_PANEL_WIDTH})`,
+            height: "20vh",
+          }}
+        >
+          <div className="w-full h-full flex justify-center">
+            <DeclarationCardList
+              selectedNumber={gameState.singlePlayer.declaredMoves}
+              maxNumber={gameState.singlePlayer.maxDeclaredMoves}
+              onSelect={declareMoves}
+              className="h-full flex-shrink-0"
+            />
+          </div>
         </div>
       )}
     </div>

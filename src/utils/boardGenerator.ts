@@ -1,5 +1,5 @@
-import { Board, Cell, Robot, Position, RobotColor, Direction } from '../types/game';
-import { BoardPattern } from '../types/board';
+import { Board, Cell, Robot, Position, RobotColor } from '../types/game';
+import { BoardPattern, TargetSymbol } from '../types/board';
 
 const createEmptyCell = (): Cell => ({
   type: 'empty',
@@ -11,47 +11,16 @@ const createEmptyCell = (): Cell => ({
   },
 });
 
-// 指定された位置にロボットを配置可能かチェック
-const isValidRobotPosition = (
-  x: number,
-  y: number,
-  board: Board,
-  existingPositions: Position[]
-): boolean => {
-  // ボード範囲外チェック
-  if (x < 0 || x >= board.size || y < 0 || y >= board.size) {
-    return false;
-  }
-
-  // 他のロボットとの重複チェック
-  if (existingPositions.some(p => p.x === x && p.y === y)) {
-    return false;
-  }
-
-  // ターゲット上の配置を禁止
-  const cell = board.cells[y][x];
-  if (cell.isTarget) {
-    return false;
-  }
-
-  return true;
-};
-
-// ランダムな有効な位置を生成
-const generateValidPosition = (
-  board: Board,
-  existingPositions: Position[],
-  maxAttempts: number = 100
-): Position | null => {
-  for (let i = 0; i < maxAttempts; i++) {
-    const x = Math.floor(Math.random() * board.size);
-    const y = Math.floor(Math.random() * board.size);
-    
-    if (isValidRobotPosition(x, y, board, existingPositions)) {
-      return { x, y };
-    }
-  }
-  return null;
+// ターゲットのシンボルを文字列に変換
+export const getTargetSymbol = (symbol: TargetSymbol): string => {
+  const symbolMap: Record<TargetSymbol, string> = {
+    moon: '☽',     // 三日月
+    gear: '⚙',     // 歯車
+    saturn: '♄',    // 土星
+    cross: '✚',     // 十字
+    vortex: '✧',    // 星型の渦
+  };
+  return symbolMap[symbol];
 };
 
 // ボードパターンからボードを生成
@@ -101,46 +70,39 @@ export const generateBoardFromPattern = (pattern: BoardPattern): Board => {
     const cell = board.cells[target.y][target.x];
     cell.isTarget = true;
     cell.targetColor = target.color;
-    cell.targetSymbol = target.symbol;
+    cell.targetSymbol = getTargetSymbol(target.symbol);
   });
 
-  // ロボットをランダムに配置
+  // ロボットをランダムに配置（ターゲット位置は避ける）
   const robotColors: RobotColor[] = ['red', 'blue', 'yellow', 'green'];
   const positions: Position[] = [];
 
   robotColors.forEach(color => {
-    const position = generateValidPosition(board, positions);
+    let position: Position | null = null;
+    let attempts = 0;
+    const maxAttempts = 100;
+
+    while (!position && attempts < maxAttempts) {
+      const x = Math.floor(Math.random() * pattern.size);
+      const y = Math.floor(Math.random() * pattern.size);
+
+      // ターゲットや他のロボットがない位置を探す
+      if (!board.cells[y][x].isTarget && 
+          !positions.some(p => p.x === x && p.y === y)) {
+        position = { x, y };
+        positions.push(position);
+      }
+
+      attempts++;
+    }
+
     if (!position) {
       console.error('Failed to find valid robot position');
-      return;
+      position = { x: 0, y: 0 }; // フォールバック
     }
-    
-    positions.push(position);
+
     board.robots.push({ color, position });
   });
 
   return board;
-};
-
-// 反射による新しい移動方向を計算
-export const calculateReflection = (
-  direction: Direction,
-  reflectorDirection: '／' | '＼'
-): Direction => {
-  const reflectionMap: Record<'／' | '＼', Record<Direction, Direction>> = {
-    '／': {
-      'up': 'right',
-      'right': 'up',
-      'down': 'left',
-      'left': 'down'
-    },
-    '＼': {
-      'up': 'left',
-      'left': 'up',
-      'down': 'right',
-      'right': 'down'
-    }
-  };
-
-  return reflectionMap[reflectorDirection][direction];
 };

@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { GameState, Direction, Robot, Position, Card, RobotColor } from '../types/game';
-import { generateBoardFromPattern } from '../utils/boardGenerator';
+import { generateBoardFromPattern, getTargetSymbol } from '../utils/boardGenerator';
 import { createCompositeBoardPattern } from '../utils/boardRotation';
 import BoardLoader from '../utils/boardLoader';
 import { CardDeck } from '../utils/cardGenerator';
@@ -10,7 +10,6 @@ export const useGameState = (mode: 'single' | 'multi') => {
     const loader = BoardLoader.getInstance();
     const selectedBoards = loader.getRandomGameBoards();
     
-    // 4つのボードを取得して組み合わせる
     const compositeBoard = createCompositeBoardPattern(
       selectedBoards[0],
       selectedBoards[1],
@@ -18,7 +17,6 @@ export const useGameState = (mode: 'single' | 'multi') => {
       selectedBoards[3]
     );
 
-    // 初期位置を保存
     const board = generateBoardFromPattern(compositeBoard);
     board.robots = board.robots.map(robot => ({
       ...robot,
@@ -47,11 +45,12 @@ export const useGameState = (mode: 'single' | 'multi') => {
   useEffect(() => {
     let interval: number | undefined;
     
-    if (gameState.singlePlayer.isDeclarationPhase && gameState.singlePlayer.timer > 0) {
+    if (gameState.singlePlayer.isDeclarationPhase && 
+        gameState.singlePlayer.timer > 0 &&
+        gameState.singlePlayer.declaredMoves > 0) { // 宣言後にタイマー開始
       interval = window.setInterval(() => {
         setGameState(prev => {
           if (prev.singlePlayer.timer <= 1) {
-            // タイマーが0になったらプレイフェーズへ
             return {
               ...prev,
               phase: 'playing',
@@ -79,7 +78,11 @@ export const useGameState = (mode: 'single' | 'multi') => {
         clearInterval(interval);
       }
     };
-  }, [gameState.singlePlayer.isDeclarationPhase, gameState.singlePlayer.timer]);
+  }, [
+    gameState.singlePlayer.isDeclarationPhase, 
+    gameState.singlePlayer.timer,
+    gameState.singlePlayer.declaredMoves
+  ]);
 
   // 手数を宣言
   const declareMoves = useCallback((moves: number) => {
@@ -137,12 +140,12 @@ export const useGameState = (mode: 'single' | 'multi') => {
         const targetCell = board.cells[card.position.y][card.position.x];
         targetCell.isTarget = true;
         targetCell.targetColor = card.color;
-        targetCell.targetSymbol = card.symbol;
+        targetCell.targetSymbol = getTargetSymbol(card.symbol);
         
         return {
           ...prev,
           board,
-          currentCard: card,
+          currentCard: card, // cardDeckから取得したカードをそのまま使用（symbolはTargetSymbol型）
           phase: 'declaration',
           moveHistory: [],
           singlePlayer: {
@@ -217,7 +220,7 @@ export const useGameState = (mode: 'single' | 'multi') => {
           singlePlayer: {
             ...prev.singlePlayer,
             moveCount: newMoveCount,
-            score: 0  // スコアリセット
+            score: prev.singlePlayer.score // スコアはそのまま
           }
         };
       }
@@ -252,46 +255,37 @@ export const useGameState = (mode: 'single' | 'multi') => {
     while (true) {
       const currentCell = board.cells[newPos.y][newPos.x];
       
-      // 現在の方向の壁をチェック
       if (currentDirection === 'up' && currentCell.walls.top) break;
       if (currentDirection === 'right' && currentCell.walls.right) break;
       if (currentDirection === 'down' && currentCell.walls.bottom) break;
       if (currentDirection === 'left' && currentCell.walls.left) break;
 
-      // 次の位置を計算
       const nextX = newPos.x + moves[currentDirection].x;
       const nextY = newPos.y + moves[currentDirection].y;
 
-      // ボード外チェック
       if (nextX < 0 || nextX >= board.size || nextY < 0 || nextY >= board.size) {
         break;
       }
 
-      // 他のロボットとの衝突チェック
       if (board.robots.some(r => r.position.x === nextX && r.position.y === nextY)) {
         break;
       }
 
-      // 次のセルの壁をチェック
       const nextCell = board.cells[nextY][nextX];
       if (currentDirection === 'up' && nextCell.walls.bottom) break;
       if (currentDirection === 'right' && nextCell.walls.left) break;
       if (currentDirection === 'down' && nextCell.walls.top) break;
       if (currentDirection === 'left' && nextCell.walls.right) break;
 
-      // 移動を適用
       newPos = { x: nextX, y: nextY };
 
-      // 反射板のチェック
       if (nextCell.reflector && nextCell.reflector.color !== robot.color) {
         currentDirection = calculateReflection(currentDirection, nextCell.reflector.direction);
       } else {
-        // 反射がない場合は現在のセルで移動終了
         break;
       }
     }
 
-    // 元の位置と同じ場合は移動無効
     return newPos.x === x && newPos.y === y ? null : newPos;
   }, [gameState.board]);
 
@@ -305,7 +299,6 @@ export const useGameState = (mode: 'single' | 'multi') => {
   };
 };
 
-// 反射による新しい移動方向を計算
 const calculateReflection = (
   direction: Direction,
   reflectorDirection: '／' | '＼'

@@ -1,19 +1,17 @@
 import { Card, RobotColor } from '../types/game';
 import { TargetSymbol } from '../types/board';
 
-const SYMBOLS = ['moon', 'gear', 'saturn', 'cross', 'vortex'] as const;
+const SYMBOLS: TargetSymbol[] = ['moon', 'gear', 'saturn', 'cross', 'vortex'];
 const COLORS: RobotColor[] = ['red', 'blue', 'yellow', 'green'];
-
-type Symbol = typeof SYMBOLS[number];
 
 interface CardTemplate {
   color: RobotColor | 'multi' | 'colors';
-  symbol: Symbol;
+  symbol: TargetSymbol;
 }
 
-// シンボルの文字表現を取得
-export const getSymbolDisplay = (symbol: Symbol): string => {
-  const symbolMap: Record<Symbol, string> = {
+// シンボルの表示用文字列を取得
+export const getSymbolDisplay = (symbol: TargetSymbol): string => {
+  const symbolMap: Record<TargetSymbol, string> = {
     moon: '☽',     // 三日月
     gear: '⚙',     // 歯車
     saturn: '♄',    // 土星
@@ -71,7 +69,7 @@ export class CardDeck {
     return {
       ...template,
       position: {
-        x: 8, // ボードの中央付近に配置
+        x: 8,
         y: 8,
       },
     };
@@ -82,19 +80,13 @@ export class CardDeck {
     return this.cards.length - this.currentIndex;
   }
 
-  // デッキをリセット
-  reset(): void {
-    this.cards = shuffleArray(generateAllCards());
-    this.currentIndex = 0;
+  // カードの総数を取得
+  getTotalCards(): number {
+    return this.cards.length;
   }
 
   // 現在のカードインデックスを取得
   getCurrentCardIndex(): number {
     return this.currentIndex;
-  }
-
-  // カードの総数を取得
-  getTotalCards(): number {
-    return this.cards.length;
   }
 }

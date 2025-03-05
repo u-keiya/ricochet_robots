@@ -1,3 +1,5 @@
+import { TargetSymbol } from './board';
+
 // ボードの位置を表す型
 export type Position = {
   x: number;
@@ -61,7 +63,7 @@ export type Board = {
 // カードを表す型
 export type Card = {
   color: RobotColor | 'multi' | 'colors';
-  symbol: string;
+  symbol: TargetSymbol;
   position: Position;
 };
 
@@ -76,10 +78,10 @@ export type GamePhase =
 // シングルプレイヤーの状態を表す型
 export type SinglePlayerState = {
   moveCount: number;           // 現在の手数
-  score: number;              // 正確な宣言でのゴール数
-  completedCards: number;      // 解決したカード数
+  score: number;              // スコア
+  completedCards: number;      // クリアしたカード数
   declaredMoves: number;      // 宣言した手数
-  maxDeclaredMoves: number;   // 宣言可能な最大手数（変更不可）
+  maxDeclaredMoves: number;   // 宣言可能な最大手数
   timer: number;              // 宣言フェーズの残り時間（秒）
   isDeclarationPhase: boolean; // 宣言フェーズ中か
 };
