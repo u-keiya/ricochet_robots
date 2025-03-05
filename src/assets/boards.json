@@ -592,7 +592,7 @@
       ],
       "reflectors": [
         {"x": 2, "y": 1, "color": "red", "direction": "＼"},
-        {"x": 3, "y": 7, "color": "green", "direction": "＼"}
+        {"x": 3, "y": 6, "color": "green", "direction": "＼"}
       ],
       "targets": [
         {"x": 1, "y": 5, "color": "red", "symbol": "cross"},

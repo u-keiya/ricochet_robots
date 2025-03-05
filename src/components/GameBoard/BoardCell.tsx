@@ -1,6 +1,5 @@
 import { FC } from 'react';
 import { Cell, RobotColor } from '../../types/game';
-import { ReflectorDirection } from '../../types/board';
 import { getSymbolDisplay } from '../../utils/cardGenerator';
 
 interface BoardCellProps {
@@ -36,12 +35,19 @@ export const BoardCell: FC<BoardCellProps> = ({ cell, x, y, size }) => {
     if (!cell.isTarget) return '';
     
     const baseClasses = 'absolute inset-2 rounded-full flex items-center justify-center';
-    const colorClasses: Record<RobotColor | 'multi', string> = {
+    
+    // Vortex用の特別なスタイル
+    if (cell.targetSymbol === 'vortex') {
+      return `${baseClasses} bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 animate-pulse`;
+    }
+
+    const colorClasses: Record<NonNullable<Cell['targetColor']>, string> = {
       red: 'bg-red-500',
       blue: 'bg-blue-500',
       yellow: 'bg-yellow-500',
       green: 'bg-green-500',
       multi: 'bg-gradient-to-r from-red-500 via-blue-500 to-green-500',
+      colors: 'bg-gradient-to-r from-purple-500 via-pink-500 to-red-500', // vortex用
     };
 
     return `${baseClasses} ${cell.targetColor ? colorClasses[cell.targetColor] : 'bg-purple-500'}`;
@@ -73,9 +79,18 @@ export const BoardCell: FC<BoardCellProps> = ({ cell, x, y, size }) => {
     );
   };
 
-  const getTargetSymbol = () => {
+  const renderTargetSymbol = () => {
     if (!cell.isTarget || !cell.targetSymbol) return null;
-    return getSymbolDisplay(cell.targetSymbol as any);
+
+    const symbolClasses = cell.targetSymbol === 'vortex'
+      ? 'text-white font-bold text-lg animate-spin'
+      : 'text-white font-bold text-lg';
+
+    return (
+      <span className={symbolClasses}>
+        {getSymbolDisplay(cell.targetSymbol as any)}
+      </span>
+    );
   };
 
   return (
@@ -100,11 +115,7 @@ export const BoardCell: FC<BoardCellProps> = ({ cell, x, y, size }) => {
       {/* ターゲット */}
       {cell.isTarget && (
         <div className={getTargetClasses()}>
-          {cell.targetSymbol && (
-            <span className="text-white font-bold text-lg">
-              {getTargetSymbol()}
-            </span>
-          )}
+          {renderTargetSymbol()}
         </div>
       )}
     </div>

@@ -1,14 +1,27 @@
 import { Card, RobotColor } from '../types/game';
+import { TargetSymbol } from '../types/board';
 
-const SYMBOLS = ['moon', 'gear', 'saturn', 'cross'] as const;
+const SYMBOLS = ['moon', 'gear', 'saturn', 'cross', 'vortex'] as const;
 const COLORS: RobotColor[] = ['red', 'blue', 'yellow', 'green'];
 
 type Symbol = typeof SYMBOLS[number];
 
 interface CardTemplate {
-  color: RobotColor | 'multi';
+  color: RobotColor | 'multi' | 'colors';
   symbol: Symbol;
 }
+
+// シンボルの文字表現を取得
+export const getSymbolDisplay = (symbol: Symbol): string => {
+  const symbolMap: Record<Symbol, string> = {
+    moon: '☽',     // 三日月
+    gear: '⚙',     // 歯車
+    saturn: '♄',    // 土星
+    cross: '✚',     // 十字
+    vortex: '✧',    // 星型の渦
+  };
+  return symbolMap[symbol];
+};
 
 // すべてのカードの組み合わせを生成
 const generateAllCards = (): CardTemplate[] => {
@@ -17,7 +30,9 @@ const generateAllCards = (): CardTemplate[] => {
   // 各色×各シンボルの組み合わせを生成
   COLORS.forEach(color => {
     SYMBOLS.forEach(symbol => {
-      cards.push({ color, symbol });
+      if (symbol !== 'vortex') { // vortexは通常のカードには含めない
+        cards.push({ color, symbol });
+      }
     });
   });
 
@@ -83,14 +98,3 @@ export class CardDeck {
     return this.cards.length;
   }
 }
-
-// シンボルの文字表現を取得
-export const getSymbolDisplay = (symbol: Symbol): string => {
-  const symbolMap: Record<Symbol, string> = {
-    moon: '☽',    // 三日月
-    gear: '⚙',    // 歯車
-    saturn: '♄',   // 土星
-    cross: '✚',    // 十字
-  };
-  return symbolMap[symbol];
-};

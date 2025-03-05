@@ -45,9 +45,9 @@ export type Cell = {
     left: boolean;
   };
   isTarget?: boolean;
-  targetColor?: RobotColor | 'multi';
+  targetColor?: RobotColor | 'multi' | 'colors';
   targetSymbol?: string;
-  reflector?: Reflector;  // 反射板の情報を追加
+  reflector?: Reflector;
 };
 
 // ボードを表す型
@@ -59,7 +59,7 @@ export type Board = {
 
 // カードを表す型
 export type Card = {
-  color: RobotColor | 'multi';
+  color: RobotColor | 'multi' | 'colors';
   symbol: string;
   position: Position;
 };
