@@ -4,6 +4,7 @@ import { generateBoardFromPattern, getTargetSymbol } from '../utils/boardGenerat
 import { createCompositeBoardPattern } from '../utils/boardRotation';
 import BoardLoader from '../utils/boardLoader';
 import { CardDeck } from '../utils/cardGenerator';
+import { calculateFinalPosition } from '../utils/robotMovement';
 
 export const useGameState = (mode: 'single' | 'multi') => {
   const [gameState, setGameState] = useState<GameState>(() => {
@@ -47,7 +48,7 @@ export const useGameState = (mode: 'single' | 'multi') => {
     
     if (gameState.singlePlayer.isDeclarationPhase && 
         gameState.singlePlayer.timer > 0 &&
-        gameState.singlePlayer.declaredMoves > 0) { // 宣言後にタイマー開始
+        gameState.singlePlayer.declaredMoves > 0) {
       interval = window.setInterval(() => {
         setGameState(prev => {
           if (prev.singlePlayer.timer <= 1) {
@@ -134,7 +135,6 @@ export const useGameState = (mode: 'single' | 'multi') => {
     const card = cardDeck.drawNext();
     if (card) {
       setGameState(prev => {
-        // 新しいカードを設定
         const board = { ...prev.board };
         board.cells.forEach(row => 
           row.forEach(cell => {
@@ -144,13 +144,11 @@ export const useGameState = (mode: 'single' | 'multi') => {
           })
         );
 
-        // ロボットを初期位置に戻す
         board.robots = board.robots.map(robot => ({
           ...robot,
           position: robot.initialPosition ? { ...robot.initialPosition } : robot.position
         }));
 
-        // 新しいターゲットを設定
         const targetCell = board.cells[card.position.y][card.position.x];
         targetCell.isTarget = true;
         targetCell.targetColor = card.color;
@@ -159,7 +157,7 @@ export const useGameState = (mode: 'single' | 'multi') => {
         return {
           ...prev,
           board,
-          currentCard: card, // cardDeckから取得したカードをそのまま使用（symbolはTargetSymbol型）
+          currentCard: card,
           phase: 'declaration',
           moveHistory: [],
           singlePlayer: {
@@ -189,22 +187,27 @@ export const useGameState = (mode: 'single' | 'multi') => {
       const robot = prev.board.robots.find(r => r.color === robotColor);
       if (!robot) return prev;
 
-      const newPosition = isValidMove(robot, direction);
-      if (!newPosition) return prev;
-
-      const newMoveCount = prev.singlePlayer.moveCount + 1;
-      const isOverDeclared = newMoveCount > prev.singlePlayer.declaredMoves;
+      // 最終位置を計算
+      const finalPosition = calculateFinalPosition(prev.board, robot, direction);
+      if (!finalPosition || (
+        finalPosition.x === robot.position.x && 
+        finalPosition.y === robot.position.y
+      )) {
+        return prev;
+      }
 
       const newBoard = {
         ...prev.board,
         robots: prev.board.robots.map(r =>
           r.color === robotColor
-            ? { ...r, position: newPosition }
+            ? { ...r, position: finalPosition }
             : r
         )
       };
 
-      // ゴール判定
+      const newMoveCount = prev.singlePlayer.moveCount + 1;
+      const isOverDeclared = newMoveCount > prev.singlePlayer.declaredMoves;
+
       const movedRobot = newBoard.robots.find(r => r.color === robotColor);
       const isGoal = movedRobot ? checkGoal(movedRobot) : false;
 
@@ -213,7 +216,7 @@ export const useGameState = (mode: 'single' | 'multi') => {
         return {
           ...prev,
           board: newBoard,
-          moveHistory: [...prev.moveHistory, newPosition],
+          moveHistory: [...prev.moveHistory, finalPosition],
           phase: 'completed',
           singlePlayer: {
             ...prev.singlePlayer,
@@ -225,83 +228,18 @@ export const useGameState = (mode: 'single' | 'multi') => {
         };
       }
 
-      // 宣言手数を超えた場合はスコア獲得不可
-      if (isOverDeclared) {
-        return {
-          ...prev,
-          board: newBoard,
-          moveHistory: [...prev.moveHistory, newPosition],
-          singlePlayer: {
-            ...prev.singlePlayer,
-            moveCount: newMoveCount,
-            score: prev.singlePlayer.score // スコアはそのまま
-          }
-        };
-      }
-
       return {
         ...prev,
         board: newBoard,
-        moveHistory: [...prev.moveHistory, newPosition],
+        moveHistory: [...prev.moveHistory, finalPosition],
         singlePlayer: {
           ...prev.singlePlayer,
-          moveCount: newMoveCount
+          moveCount: newMoveCount,
+          score: isOverDeclared ? prev.singlePlayer.score : prev.singlePlayer.score
         }
       };
     });
   }, [checkGoal]);
-
-  // ロボットの移動が有効かチェック
-  const isValidMove = useCallback((robot: Robot, direction: Direction): Position | null => {
-    const { x, y } = robot.position;
-    const board = gameState.board;
-    
-    let newPos: Position = { x, y };
-    let currentDirection = direction;
-    
-    const moves = {
-      up: { x: 0, y: -1 },
-      right: { x: 1, y: 0 },
-      down: { x: 0, y: 1 },
-      left: { x: -1, y: 0 },
-    };
-
-    while (true) {
-      const currentCell = board.cells[newPos.y][newPos.x];
-      
-      if (currentDirection === 'up' && currentCell.walls.top) break;
-      if (currentDirection === 'right' && currentCell.walls.right) break;
-      if (currentDirection === 'down' && currentCell.walls.bottom) break;
-      if (currentDirection === 'left' && currentCell.walls.left) break;
-
-      const nextX = newPos.x + moves[currentDirection].x;
-      const nextY = newPos.y + moves[currentDirection].y;
-
-      if (nextX < 0 || nextX >= board.size || nextY < 0 || nextY >= board.size) {
-        break;
-      }
-
-      if (board.robots.some(r => r.position.x === nextX && r.position.y === nextY)) {
-        break;
-      }
-
-      const nextCell = board.cells[nextY][nextX];
-      if (currentDirection === 'up' && nextCell.walls.bottom) break;
-      if (currentDirection === 'right' && nextCell.walls.left) break;
-      if (currentDirection === 'down' && nextCell.walls.top) break;
-      if (currentDirection === 'left' && nextCell.walls.right) break;
-
-      newPos = { x: nextX, y: nextY };
-
-      if (nextCell.reflector && nextCell.reflector.color !== robot.color) {
-        currentDirection = calculateReflection(currentDirection, nextCell.reflector.direction);
-      } else {
-        break;
-      }
-    }
-
-    return newPos.x === x && newPos.y === y ? null : newPos;
-  }, [gameState.board]);
 
   return {
     gameState,
@@ -311,28 +249,6 @@ export const useGameState = (mode: 'single' | 'multi') => {
     remainingCards: cardDeck.getRemaining(),
     totalCards: cardDeck.getTotalCards(),
   };
-};
-
-const calculateReflection = (
-  direction: Direction,
-  reflectorDirection: '／' | '＼'
-): Direction => {
-  const reflectionMap: Record<'／' | '＼', Record<Direction, Direction>> = {
-    '／': {
-      'up': 'right',
-      'right': 'up',
-      'down': 'left',
-      'left': 'down'
-    },
-    '＼': {
-      'up': 'left',
-      'left': 'up',
-      'down': 'right',
-      'right': 'down'
-    }
-  };
-
-  return reflectionMap[reflectorDirection][direction];
 };
 
 export default useGameState;

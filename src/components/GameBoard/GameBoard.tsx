@@ -1,7 +1,8 @@
-import { FC, memo, useMemo } from 'react';
-import { Board, RobotColor, Direction } from '../../types/game';
+import { FC, memo, useState } from 'react';
+import { Board, RobotColor, Direction, Position } from '../../types/game';
 import { BoardCell } from './BoardCell';
 import Robot from './Robot';
+import { calculatePath } from '../../utils/robotMovement';
 
 interface GameBoardProps {
   board: Board;
@@ -10,8 +11,21 @@ interface GameBoardProps {
 }
 
 const GameBoard: FC<GameBoardProps> = memo(({ board, isPlayerTurn, onRobotMove }) => {
+  // 現在選択されているロボットの色を管理
+  const [selectedRobot, setSelectedRobot] = useState<RobotColor | null>(null);
+  // 移動中のロボットの状態を管理
+  const [movingRobot, setMovingRobot] = useState<{
+    color: RobotColor;
+    path: Position[];
+  } | null>(null);
+
+  // セルサイズを固定値で設定
+  const cellSize = 40; // px単位
+  const boardSize = board.size * cellSize;
+
+  // キーボード操作
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!isPlayerTurn || !onRobotMove) return;
+    if (!isPlayerTurn || !onRobotMove || !selectedRobot || movingRobot) return;
 
     const direction: Direction | undefined = {
       'ArrowUp': 'up',
@@ -23,50 +37,32 @@ const GameBoard: FC<GameBoardProps> = memo(({ board, isPlayerTurn, onRobotMove }
     if (!direction) return;
 
     e.preventDefault();
-    onRobotMove(board.robots[0].color, direction);
+    handleRobotMove(selectedRobot, direction);
   };
 
-  // セルサイズを固定値で設定
-  const cellSize = 40; // px単位
-  const boardSize = board.size * cellSize;
+  // ロボットの移動ハンドラー
+  const handleRobotMove = (color: RobotColor, direction: Direction) => {
+    if (!isPlayerTurn || movingRobot) return;
 
-  // セル配列をメモ化
-  const cells = useMemo(() => {
-    return board.cells.map((row, y) =>
-      row.map((cell, x) => (
-        <BoardCell
-          key={`${x}-${y}`}
-          cell={cell}
-          x={x}
-          y={y}
-          size={cellSize}
-        />
-      ))
-    );
-  }, [board.cells, cellSize]);
+    const robot = board.robots.find(r => r.color === color);
+    if (!robot) return;
 
-  // ロボット配列をメモ化
-  const robots = useMemo(() => {
-    return board.robots.map((robot) => (
-      <Robot
-        key={robot.color}
-        color={robot.color}
-        position={robot.position}
-        boardSize={board.size}
-        isActive={isPlayerTurn}
-        onMove={isPlayerTurn ? onRobotMove : undefined}
-        style={{
-          zIndex: 10,
-          width: `${cellSize}px`,
-          height: `${cellSize}px`,
-          position: 'absolute',
-          left: `${robot.position.x * cellSize}px`,
-          top: `${robot.position.y * cellSize}px`,
-          transition: 'all 0.2s ease-in-out',
-        }}
-      />
-    ));
-  }, [board.robots, board.size, cellSize, isPlayerTurn, onRobotMove]);
+    // 移動経路を計算
+    const path = calculatePath(board, robot, direction);
+    if (path.length <= 1) return; // 移動できない場合
+
+    // アニメーション開始
+    setMovingRobot({ color, path });
+    setSelectedRobot(null);
+
+    // アニメーション完了後に移動を確定
+    setTimeout(() => {
+      if (onRobotMove) {
+        onRobotMove(color, direction);
+      }
+      setMovingRobot(null);
+    }, path.length * 100); // 各ステップ100msで移動
+  };
 
   return (
     <div 
@@ -88,11 +84,40 @@ const GameBoard: FC<GameBoardProps> = memo(({ board, isPlayerTurn, onRobotMove }
             gridTemplateColumns: `repeat(${board.size}, ${cellSize}px)`,
           }}
         >
-          {cells}
+          {board.cells.map((row, y) =>
+            row.map((cell, x) => (
+              <BoardCell
+                key={`${x}-${y}`}
+                cell={cell}
+                x={x}
+                y={y}
+                size={cellSize}
+              />
+            ))
+          )}
         </div>
 
         {/* ロボット */}
-        {robots}
+        {board.robots.map((robot) => (
+          <Robot
+            key={robot.color}
+            color={robot.color}
+            position={robot.position}
+            boardSize={board.size}
+            isActive={isPlayerTurn && (!selectedRobot || selectedRobot === robot.color)}
+            onMove={handleRobotMove}
+            path={movingRobot?.color === robot.color ? movingRobot.path : undefined}
+            style={{
+              zIndex: selectedRobot === robot.color ? 20 : 10,
+              width: `${cellSize}px`,
+              height: `${cellSize}px`,
+              position: 'absolute',
+              left: `${robot.position.x * cellSize}px`,
+              top: `${robot.position.y * cellSize}px`,
+              transition: 'all 0.1s linear',
+            }}
+          />
+        ))}
       </div>
     </div>
   );
