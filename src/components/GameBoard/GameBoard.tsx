@@ -26,49 +26,66 @@ const GameBoard: FC<GameBoardProps> = memo(({ board, isPlayerTurn, onRobotMove }
     onRobotMove(board.robots[0].color, direction);
   };
 
+  // セルサイズを計算（px単位）
+  const cellSize = Math.floor(Math.min(
+    document.documentElement.clientWidth / (board.size * 1.5),
+    document.documentElement.clientHeight / (board.size * 1.2)
+  ));
+
   return (
     <div 
-      className="relative w-full h-full focus:outline-none"
+      className="w-full h-full flex items-center justify-center focus:outline-none"
       tabIndex={0}
       onKeyDown={handleKeyDown}
     >
-      {/* ボードのセル */}
       <div 
-        className="grid gap-0"
+        className="relative"
         style={{
-          gridTemplateColumns: `repeat(${board.size}, 1fr)`,
-          width: '100%',
-          height: '100%',
+          width: `${cellSize * board.size}px`,
+          height: `${cellSize * board.size}px`,
         }}
       >
-        {board.cells.map((row, y) =>
-          row.map((cell, x) => (
-            <BoardCell
-              key={`${x}-${y}`}
-              cell={cell}
-              x={x}
-              y={y}
-              size={Math.floor((100 / board.size) * 0.9)} // サイズを調整
-            />
-          ))
-        )}
-      </div>
-
-      {/* ロボット */}
-      {board.robots.map((robot, index) => (
-        <Robot
-          key={robot.color}
-          color={robot.color}
-          position={robot.position}
-          boardSize={board.size}
-          isActive={isPlayerTurn}
-          onMove={isPlayerTurn ? onRobotMove : undefined}
+        {/* ボードのセル */}
+        <div 
+          className="absolute inset-0 grid gap-0"
           style={{
-            zIndex: 10 + index,
-            transition: 'transform 0.2s ease-in-out',
+            gridTemplateColumns: `repeat(${board.size}, ${cellSize}px)`,
           }}
-        />
-      ))}
+        >
+          {board.cells.map((row, y) =>
+            row.map((cell, x) => (
+              <BoardCell
+                key={`${x}-${y}`}
+                cell={cell}
+                x={x}
+                y={y}
+                size={cellSize}
+              />
+            ))
+          )}
+        </div>
+
+        {/* ロボット */}
+        {board.robots.map((robot) => (
+          <Robot
+            key={robot.color}
+            color={robot.color}
+            position={robot.position}
+            boardSize={board.size}
+            isActive={isPlayerTurn}
+            onMove={isPlayerTurn ? onRobotMove : undefined}
+            style={{
+              zIndex: 10,
+              width: `${cellSize}px`,
+              height: `${cellSize}px`,
+              position: 'absolute',
+              left: `${robot.position.x * cellSize}px`,
+              top: `${robot.position.y * cellSize}px`,
+              transition: 'all 0.2s ease-in-out',
+            }}
+          />
+        ))}
+      </div>
     </div>
   );
 });

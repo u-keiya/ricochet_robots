@@ -6,7 +6,6 @@ import GameInfo from '../components/GameInfo';
 import { DeclarationCardList } from '../components/DeclarationCard';
 
 const SIDE_PANEL_WIDTH = "320px";
-const BOARD_SIZE = "min(65vh, calc(100vw - 400px))";
 const DECLARATION_HEIGHT = "140px";
 
 const SinglePlayerPage: FC = () => {
@@ -23,19 +22,13 @@ const SinglePlayerPage: FC = () => {
     <div className="h-screen w-screen bg-gray-100 flex relative overflow-hidden">
       {/* メインエリア（ボード表示部分） */}
       <div 
-        className="flex-1 flex flex-col items-center pt-8"
+        className="flex-1 flex items-center justify-center"
         style={{ 
           marginRight: SIDE_PANEL_WIDTH,
           paddingBottom: gameState.phase === 'declaration' ? DECLARATION_HEIGHT : '0'
         }}
       >
-        <div 
-          className="relative bg-white rounded-lg shadow-lg p-4" 
-          style={{ 
-            width: BOARD_SIZE,
-            height: BOARD_SIZE,
-          }}
-        >
+        <div className="relative bg-white rounded-lg shadow-lg p-4">
           <GameBoard 
             board={gameState.board}
             isPlayerTurn={gameState.phase === 'playing'}
