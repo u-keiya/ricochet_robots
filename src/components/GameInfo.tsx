@@ -1,0 +1,108 @@
+import { FC } from 'react';
+import { Card } from '../types/game';
+
+interface GameInfoProps {
+  score: number;
+  moveCount: number;
+  declaredMoves: number;
+  timer: number;
+  isDeclarationPhase: boolean;
+  currentCard?: Card;
+  remainingCards: number;
+  onDrawCard: () => void;
+  phase: 'waiting' | 'declaration' | 'playing' | 'completed' | 'finished';
+}
+
+const GameInfo: FC<GameInfoProps> = ({
+  score,
+  moveCount,
+  declaredMoves,
+  timer,
+  isDeclarationPhase,
+  currentCard,
+  remainingCards,
+  onDrawCard,
+  phase,
+}) => {
+  return (
+    <div className="flex flex-col h-full">
+      {/* スコアと手数の表示 */}
+      <div className="mb-8">
+        {/* スコア */}
+        <div className="relative mb-6">
+          <div className="text-sm text-gray-500 mb-1">Score</div>
+          <div className="text-3xl font-bold text-blue-600">{score}</div>
+        </div>
+
+        {/* 手数 */}
+        <div className="relative mb-4">
+          <div className="text-sm text-gray-500 mb-1">Moves</div>
+          <div className="text-xl">
+            <span className="font-bold">{moveCount}</span>
+            {declaredMoves > 0 && (
+              <span className="text-gray-600"> / {declaredMoves}</span>
+            )}
+          </div>
+        </div>
+
+        {/* タイマー */}
+        {timer > 0 && isDeclarationPhase && (
+          <div className="relative">
+            <div className="text-sm text-gray-500 mb-1">Time Remaining</div>
+            <div className="text-xl font-bold text-orange-500">{timer}s</div>
+            <div className="w-full bg-gray-200 h-2 mt-2 rounded-full overflow-hidden">
+              <div
+                className="bg-orange-500 h-full transition-all duration-1000"
+                style={{ width: `${(timer / 60) * 100}%` }}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 現在のターゲット表示 */}
+      {currentCard && (
+        <div className="mb-8">
+          <div className="text-sm text-gray-500 mb-2">Current Target</div>
+          <div className="bg-white shadow-lg rounded-lg p-4 flex items-center justify-center">
+            <div className={`
+              w-16 h-16 rounded-full 
+              ${currentCard.color === 'colors' 
+                ? 'bg-gradient-to-r from-purple-500 via-pink-500 to-red-500' 
+                : `bg-${currentCard.color}-500`
+              }
+              flex items-center justify-center
+            `}>
+              <span className="text-2xl text-white font-bold">
+                {currentCard.symbol}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* カードをめくるボタン */}
+      <div className="mt-auto">
+        <button
+          className={`
+            w-full py-3 px-6 rounded-lg font-bold text-white
+            transition-all duration-200
+            ${(phase === 'waiting' || phase === 'completed')
+              ? 'bg-blue-500 hover:bg-blue-600'
+              : 'bg-gray-400 cursor-not-allowed'
+            }
+          `}
+          onClick={onDrawCard}
+          disabled={phase !== 'waiting' && phase !== 'completed'}
+        >
+          カードをめくる
+          <span className="text-sm ml-2">
+            ({remainingCards} 枚)
+          </span>
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default GameInfo;

@@ -1,118 +1,67 @@
-import { FC, useState } from 'react';
+import { FC } from 'react';
 import { useNavigate } from 'react-router-dom';
-import GameBoard from '../components/GameBoard/GameBoard';
 import useGameState from '../hooks/useGameState';
-import { Direction, RobotColor } from '../types/game';
+import GameBoard from '../components/GameBoard/GameBoard';
+import GameInfo from '../components/GameInfo';
+import { DeclarationCardList } from '../components/DeclarationCard';
 
 const SinglePlayerPage: FC = () => {
   const navigate = useNavigate();
-  const { gameState, moveRobot } = useGameState('single');
-  const [moves, setMoves] = useState<number>(0);
-  const [bestMove, setBestMove] = useState<number | null>(null);
-
-  const handleRobotMove = (robotColor: RobotColor, direction: Direction) => {
-    moveRobot(robotColor, direction);
-    setMoves(prev => prev + 1);
-  };
-
-  const handleReset = () => {
-    setMoves(0);
-    // TODO: ボードをリセット
-  };
-
-  const handleNextPuzzle = () => {
-    if (bestMove === null || moves < bestMove) {
-      setBestMove(moves);
-    }
-    handleReset();
-    // TODO: 新しいパズルを生成
-  };
+  const {
+    gameState,
+    moveRobot,
+    declareMoves,
+    drawNextCard,
+    remainingCards,
+  } = useGameState('single');
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* ヘッダー */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex justify-between items-center">
-            <h1 className="text-xl font-bold text-gray-800">
-              一人で遊ぶ
-            </h1>
-            <button
-              className="btn bg-gray-300 text-gray-700 hover:bg-gray-400"
-              onClick={() => navigate('/')}
-            >
-              タイトルに戻る
-            </button>
-          </div>
+    <div className="h-screen w-screen bg-gray-100 flex relative">
+      {/* メインエリア（ボード表示部分） */}
+      <div className="flex-1 p-4 flex items-center justify-center">
+        <div className="aspect-square w-full max-w-3xl">
+          <GameBoard 
+            board={gameState.board}
+            isPlayerTurn={gameState.phase === 'playing'}
+            onRobotMove={moveRobot}
+          />
         </div>
-      </header>
+      </div>
 
-      {/* メインコンテンツ */}
-      <main className="max-w-7xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-3 gap-6">
-          {/* ゲームボード */}
-          <div className="col-span-2 bg-white rounded-lg shadow p-4">
-            <div className="aspect-square flex items-center justify-center">
-              <GameBoard
-                board={gameState.board}
-                onRobotMove={handleRobotMove}
-                isPlayerTurn={true}
-              />
-            </div>
-          </div>
+      {/* 右サイドパネル */}
+      <div className="w-1/5 min-w-[240px] bg-white shadow-lg p-6 flex flex-col">
+        <GameInfo
+          score={gameState.singlePlayer.score}
+          moveCount={gameState.singlePlayer.moveCount}
+          declaredMoves={gameState.singlePlayer.declaredMoves}
+          timer={gameState.singlePlayer.timer}
+          isDeclarationPhase={gameState.singlePlayer.isDeclarationPhase}
+          currentCard={gameState.currentCard}
+          remainingCards={remainingCards}
+          onDrawCard={drawNextCard}
+          phase={gameState.phase}
+        />
 
-          {/* 情報パネル */}
-          <div className="col-span-1 space-y-4">
-            {/* 現在の状態 */}
-            <div className="bg-white rounded-lg shadow p-4">
-              <h2 className="text-lg font-bold mb-4">現在の状態</h2>
-              <div className="space-y-2">
-                <p className="text-lg">
-                  手数: <span className="font-bold">{moves}</span>
-                </p>
-                {bestMove !== null && (
-                  <p className="text-sm text-gray-600">
-                    ベストスコア: {bestMove}手
-                  </p>
-                )}
-              </div>
-            </div>
+        {/* ホームに戻るボタン */}
+        <button
+          className="mt-6 py-2 px-4 rounded bg-gray-200 hover:bg-gray-300 transition-colors"
+          onClick={() => navigate('/')}
+        >
+          ホームに戻る
+        </button>
+      </div>
 
-            {/* カード情報 */}
-            <div className="bg-white rounded-lg shadow p-4">
-              <h2 className="text-lg font-bold mb-4">目標</h2>
-              <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
-                {gameState.currentCard ? (
-                  <div className="text-center">
-                    <p>色: {gameState.currentCard.color}</p>
-                    <p>記号: {gameState.currentCard.symbol}</p>
-                  </div>
-                ) : (
-                  <p className="text-gray-500">カードなし</p>
-                )}
-              </div>
-            </div>
-
-            {/* 操作ボタン */}
-            <div className="bg-white rounded-lg shadow p-4">
-              <div className="space-y-2">
-                <button
-                  className="btn btn-primary w-full"
-                  onClick={handleNextPuzzle}
-                >
-                  次のパズル
-                </button>
-                <button
-                  className="btn btn-secondary w-full"
-                  onClick={handleReset}
-                >
-                  リセット
-                </button>
-              </div>
-            </div>
-          </div>
+      {/* 下部の宣言カード選択エリア */}
+      {gameState.phase === 'declaration' && (
+        <div className="fixed bottom-0 left-1/4 w-1/2 h-1/5 bg-white shadow-lg rounded-t-lg overflow-hidden">
+          <DeclarationCardList
+            selectedNumber={gameState.singlePlayer.declaredMoves}
+            maxNumber={gameState.singlePlayer.maxDeclaredMoves}
+            onSelect={declareMoves}
+            className="h-full flex-shrink-0"
+          />
         </div>
-      </main>
+      )}
     </div>
   );
 };

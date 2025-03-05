@@ -14,6 +14,7 @@ export type GameMode = 'single' | 'multi';
 export type Robot = {
   color: RobotColor;
   position: Position;
+  initialPosition?: Position;
 };
 
 // セルの反射板を表す型
@@ -64,17 +65,32 @@ export type Card = {
   position: Position;
 };
 
-// ゲームのフェーズを表す型
-export type GamePhase = 'waiting' | 'declaration' | 'movement' | 'finished';
+// ゲームの状態を表す型
+export type GamePhase =
+  | 'waiting'       // カードめくり待ち
+  | 'declaration'   // 宣言フェーズ（1分間）
+  | 'playing'       // プレイ中
+  | 'completed'     // ゴール達成
+  | 'finished';     // ゲーム終了
+
+// シングルプレイヤーの状態を表す型
+export type SinglePlayerState = {
+  moveCount: number;           // 現在の手数
+  score: number;              // 正確な宣言でのゴール数
+  completedCards: number;      // 解決したカード数
+  declaredMoves: number;      // 宣言した手数
+  maxDeclaredMoves: number;   // 宣言可能な最大手数（変更不可）
+  timer: number;              // 宣言フェーズの残り時間（秒）
+  isDeclarationPhase: boolean; // 宣言フェーズ中か
+};
 
 // ゲームの状態を表す型
 export type GameState = {
   board: Board;
   currentCard?: Card;
   phase: GamePhase;
-  timer: number;
-  declarations: Record<string, number>;
   moveHistory: Position[];
+  singlePlayer: SinglePlayerState;
 };
 
 // 移動の方向を表す型
