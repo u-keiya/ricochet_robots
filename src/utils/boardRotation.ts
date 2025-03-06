@@ -112,64 +112,38 @@ export const createCompositeBoardPattern = (
     }
   };
 
+  // 要素の座標を変換するヘルパー関数
+  const transformElements = <T extends { x: number; y: number }>(
+    elements: T[],
+    quadrant: 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight'
+  ): T[] => {
+    return elements.map(element => {
+      const [newX, newY] = transformCoordinates(element.x, element.y, quadrant);
+      return { ...element, x: newX, y: newY };
+    });
+  };
+
+  // 各象限のボードを結合
+  const quadrants = [
+    { board: topLeft, quadrant: 'topLeft' as const },
+    { board: rotatedTopRight, quadrant: 'topRight' as const },
+    { board: rotatedBottomLeft, quadrant: 'bottomLeft' as const },
+    { board: rotatedBottomRight, quadrant: 'bottomRight' as const },
+  ];
+
   // 新しいボードパターンを作成
   const composite: BoardPattern = {
     boardId: 'composite',
-    size: newSize, // 16
-    walls: [
-      ...topLeft.walls.map(w => {
-        const [newX, newY] = transformCoordinates(w.x, w.y, 'topLeft');
-        return { ...w, x: newX, y: newY };
-      }),
-      ...rotatedTopRight.walls.map(w => {
-        const [newX, newY] = transformCoordinates(w.x, w.y, 'topRight');
-        return { ...w, x: newX, y: newY };
-      }),
-      ...rotatedBottomLeft.walls.map(w => {
-        const [newX, newY] = transformCoordinates(w.x, w.y, 'bottomLeft');
-        return { ...w, x: newX, y: newY };
-      }),
-      ...rotatedBottomRight.walls.map(w => {
-        const [newX, newY] = transformCoordinates(w.x, w.y, 'bottomRight');
-        return { ...w, x: newX, y: newY };
-      }),
-    ],
-    reflectors: [
-      ...topLeft.reflectors.map(r => {
-        const [newX, newY] = transformCoordinates(r.x, r.y, 'topLeft');
-        return { ...r, x: newX, y: newY };
-      }),
-      ...rotatedTopRight.reflectors.map(r => {
-        const [newX, newY] = transformCoordinates(r.x, r.y, 'topRight');
-        return { ...r, x: newX, y: newY };
-      }),
-      ...rotatedBottomLeft.reflectors.map(r => {
-        const [newX, newY] = transformCoordinates(r.x, r.y, 'bottomLeft');
-        return { ...r, x: newX, y: newY };
-      }),
-      ...rotatedBottomRight.reflectors.map(r => {
-        const [newX, newY] = transformCoordinates(r.x, r.y, 'bottomRight');
-        return { ...r, x: newX, y: newY };
-      }),
-    ],
-    targets: [
-      ...topLeft.targets.map(t => {
-        const [newX, newY] = transformCoordinates(t.x, t.y, 'topLeft');
-        return { ...t, x: newX, y: newY };
-      }),
-      ...rotatedTopRight.targets.map(t => {
-        const [newX, newY] = transformCoordinates(t.x, t.y, 'topRight');
-        return { ...t, x: newX, y: newY };
-      }),
-      ...rotatedBottomLeft.targets.map(t => {
-        const [newX, newY] = transformCoordinates(t.x, t.y, 'bottomLeft');
-        return { ...t, x: newX, y: newY };
-      }),
-      ...rotatedBottomRight.targets.map(t => {
-        const [newX, newY] = transformCoordinates(t.x, t.y, 'bottomRight');
-        return { ...t, x: newX, y: newY };
-      }),
-    ],
+    size: newSize,
+    walls: quadrants.flatMap(({ board, quadrant }) =>
+      transformElements(board.walls, quadrant)
+    ),
+    reflectors: quadrants.flatMap(({ board, quadrant }) =>
+      transformElements(board.reflectors, quadrant)
+    ),
+    targets: quadrants.flatMap(({ board, quadrant }) =>
+      transformElements(board.targets, quadrant)
+    ),
   };
 
   return composite;

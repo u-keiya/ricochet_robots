@@ -1,8 +1,7 @@
 import { Card, RobotColor } from '../types/game';
 import { TargetSymbol } from '../types/board';
 
-const SYMBOLS: TargetSymbol[] = ['moon', 'gear', 'saturn', 'cross', 'vortex'];
-const COLORS: RobotColor[] = ['red', 'blue', 'yellow', 'green'];
+import { SYMBOLS, ROBOT_COLORS, SYMBOL_MAP } from './constants';
 
 interface CardTemplate {
   color: RobotColor | 'multi' | 'colors';
@@ -11,14 +10,7 @@ interface CardTemplate {
 
 // シンボルの表示用文字列を取得
 export const getSymbolDisplay = (symbol: TargetSymbol): string => {
-  const symbolMap: Record<TargetSymbol, string> = {
-    moon: '☽',     // 三日月
-    gear: '⚙',     // 歯車
-    saturn: '♄',    // 土星
-    cross: '✚',     // 十字
-    vortex: '✧',    // 星型の渦
-  };
-  return symbolMap[symbol];
+  return SYMBOL_MAP[symbol];
 };
 
 // すべてのカードの組み合わせを生成
@@ -26,7 +18,7 @@ const generateAllCards = (): CardTemplate[] => {
   const cards: CardTemplate[] = [];
 
   // 各色×各シンボルの組み合わせを生成
-  COLORS.forEach(color => {
+  ROBOT_COLORS.forEach(color => {
     SYMBOLS.forEach(symbol => {
       if (symbol !== 'vortex') { // vortexは通常のカードには含めない
         cards.push({ color, symbol });

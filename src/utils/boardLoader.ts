@@ -1,7 +1,8 @@
-import { BoardPattern, RawBoardSet, TargetColor, RawBoardPattern } from '../types/board';
+import { BoardPattern, RawBoardSet, RawBoardPattern } from '../types/board';
+import { BoardValidator } from './boardValidator';
 import boardData from '../assets/boards.json';
 
-class BoardLoader {
+export class BoardLoader {
   private static instance: BoardLoader;
   private boardData: RawBoardSet;
 
@@ -27,11 +28,21 @@ class BoardLoader {
     console.log(`Getting boards for pattern ${pattern} with key ${key}`);
     const boards = this.boardData[key] || [];
     
-    // boardIdを文字列形式に変換
-    return boards.map(board => ({
-      ...board,
-      boardId: `board_${pattern}${board.boardId.toString()}` // 例: "board_A0"
-    }));
+    // ボードを変換して検証
+    const validatedBoards = boards
+      .map(board => ({
+        ...board,
+        boardId: `board_${pattern}${board.boardId.toString()}` // 例: "board_A0"
+      }))
+      .filter(board => {
+        const isValid = BoardValidator.validateBoard(board);
+        if (!isValid) {
+          console.warn(`Invalid board skipped: ${board.boardId}`);
+        }
+        return isValid;
+      });
+
+    return validatedBoards;
   }
 
   // 指定したIDのボードパターンを取得
@@ -42,8 +53,15 @@ class BoardLoader {
     
     if (!pattern || isNaN(index)) return undefined;
     
-    const boards = this.getBoardSetByPattern(pattern);
-    return boards.find(b => parseInt(b.boardId.toString().slice(-1)) === index);
+    const board = this.getBoardSetByPattern(pattern)
+      .find(b => parseInt(b.boardId.toString().slice(-1)) === index);
+
+    if (board && !BoardValidator.validateBoard(board)) {
+      console.warn(`Invalid board requested: ${boardId}`);
+      return undefined;
+    }
+
+    return board;
   }
 
   // 各パターンから1つずつランダムに選んで組み合わせる
@@ -62,91 +80,6 @@ class BoardLoader {
     return selectedBoards;
   }
 
-  // ターゲットの色が有効かチェック
-  private isValidTargetColor(color: TargetColor, isVortex: boolean): boolean {
-    if (isVortex) {
-      return color === 'colors';
-    }
-    return ['red', 'blue', 'yellow', 'green', 'multi'].includes(color);
-  }
-
-  // 位置が有効かチェック
-  private isValidPosition(x: number, y: number, size: number): boolean {
-    return x >= 0 && x < size && y >= 0 && y < size;
-  }
-
-  // ボードパターンを検証
-  public validateBoard(board: BoardPattern | RawBoardPattern): boolean {
-    try {
-      // 基本的なバリデーション
-      if (board.size !== 8) {
-        console.warn(`Invalid board ${board.boardId}: invalid size`);
-        return false;
-      }
-
-      // 壁の位置が有効か検証
-      for (const wall of board.walls) {
-        if (!this.isValidPosition(wall.x, wall.y, board.size)) {
-          console.warn(`Invalid wall position in board ${board.boardId}:`, wall);
-          return false;
-        }
-      }
-
-      // 反射板の位置が有効か検証
-      for (const reflector of (board.reflectors || [])) {
-        if (!this.isValidPosition(reflector.x, reflector.y, board.size)) {
-          console.warn(`Invalid reflector position in board ${board.boardId}:`, reflector);
-          return false;
-        }
-      }
-
-      // ターゲットの位置と色を検証
-      for (const target of board.targets) {
-        if (!this.isValidPosition(target.x, target.y, board.size)) {
-          console.warn(`Invalid target position in board ${board.boardId}:`, target);
-          return false;
-        }
-
-        if (!this.isValidTargetColor(target.color, target.symbol === 'vortex')) {
-          console.warn(`Invalid target color in board ${board.boardId}:`, target);
-          return false;
-        }
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Board validation error:', error);
-      return false;
-    }
-  }
-
-  // 全てのボードパターンを検証
-  public validateAllBoards(): { valid: boolean; errors: string[] } {
-    const errors: string[] = [];
-    console.log('Validating all boards...');
-    
-    const patterns = ['A', 'B', 'C', 'D'];
-    patterns.forEach(pattern => {
-      const key = this.getPatternKey(pattern);
-      const boards = this.boardData[key];
-      if (boards) {
-        boards.forEach((board, index) => {
-          if (!this.validateBoard(board)) {
-            const error = `Invalid board pattern: ${key}[${index}]`;
-            console.error(error);
-            errors.push(error);
-          }
-        });
-      }
-    });
-
-    console.log('Validation complete. Errors:', errors);
-    return {
-      valid: errors.length === 0,
-      errors
-    };
-  }
-
   // デバッグ用：現在のボードコレクションの状態を出力
   public debugPrintState(): void {
     console.log('Current BoardLoader state:');
@@ -161,6 +94,28 @@ class BoardLoader {
         });
       }
     });
+  }
+
+  // 全てのボードパターンを検証
+  public validateAllBoards(): { valid: boolean; errors: string[] } {
+    console.log('Validating all boards...');
+    const errors: string[] = [];
+    
+    const patterns = ['A', 'B', 'C', 'D'];
+    patterns.forEach(pattern => {
+      const key = this.getPatternKey(pattern);
+      const boards = this.boardData[key];
+      if (boards) {
+        const result = BoardValidator.validateBoardSet(pattern, boards);
+        errors.push(...result.errors);
+      }
+    });
+
+    console.log('Validation complete. Errors:', errors);
+    return {
+      valid: errors.length === 0,
+      errors
+    };
   }
 }
 
