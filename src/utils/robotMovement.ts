@@ -1,13 +1,14 @@
 import { Board, Direction, Robot, Position } from '../types/game';
 
 // 移動方向と壁の方向のマッピング
-type WallDirection = 'top' | 'right' | 'bottom' | 'left';
-const directionToWall: Record<Direction, WallDirection> = {
-  up: 'top',
-  right: 'right',
-  down: 'bottom',
-  left: 'left'
-};
+const directionToWall = {
+  'up': 'top',
+  'right': 'right',
+  'down': 'bottom',
+  'left': 'left'
+} as const;
+
+type WallDirection = typeof directionToWall[keyof typeof directionToWall];
 
 // 反射による新しい移動方向を計算
 const calculateReflection = (
@@ -47,34 +48,46 @@ const getNextPosition = (position: Position, direction: Direction): Position => 
   };
 };
 
-// 壁の存在をチェック
-const hasWall = (board: Board, position: Position, direction: Direction): boolean => {
-  const cell = board.cells[position.y][position.x];
-  const nextPos = getNextPosition(position, direction);
-
+// 壁や他のロボットとの衝突をチェック
+const hasCollision = (
+  board: Board,
+  position: Position,
+  nextPosition: Position,
+  direction: Direction
+): boolean => {
   // ボード外チェック
-  if (nextPos.x < 0 || nextPos.x >= board.size || 
-      nextPos.y < 0 || nextPos.y >= board.size) {
+  if (nextPosition.x < 0 || nextPosition.x >= board.size || 
+      nextPosition.y < 0 || nextPosition.y >= board.size) {
+    return true;
+  }
+
+  // 他のロボットとの衝突チェック
+  if (board.robots.some(r => 
+    r.position.x === nextPosition.x && r.position.y === nextPosition.y
+  )) {
     return true;
   }
 
   // 現在のセルの壁をチェック
-  if (cell.walls[directionToWall[direction]]) {
+  const currentCell = board.cells[position.y][position.x];
+  const currentWallDirection = directionToWall[direction];
+  if (currentCell.walls[currentWallDirection]) {
     return true;
   }
 
   // 隣接セルの反対側の壁をチェック
-  const nextCell = board.cells[nextPos.y][nextPos.x];
-  const oppositeDirections: Record<Direction, WallDirection> = {
+  const nextCell = board.cells[nextPosition.y][nextPosition.x];
+  const oppositeWalls: Record<Direction, WallDirection> = {
     up: 'bottom',
     right: 'left',
     down: 'top',
     left: 'right'
   };
-  return nextCell.walls[oppositeDirections[direction]];
+  
+  return nextCell.walls[oppositeWalls[direction]];
 };
 
-// 移動の途中経路を計算
+// 移動の途中経路を計算（反射を含む）
 export const calculatePath = (
   board: Board,
   robot: Robot,
@@ -85,14 +98,10 @@ export const calculatePath = (
   let currentDirection = initialDirection;
 
   while (true) {
-    // 他のロボットとの衝突チェック
     const nextPos = getNextPosition(currentPos, currentDirection);
-    if (board.robots.some(r => r.position.x === nextPos.x && r.position.y === nextPos.y)) {
-      break;
-    }
-
-    // 壁のチェック
-    if (hasWall(board, currentPos, currentDirection)) {
+    
+    // 衝突判定
+    if (hasCollision(board, currentPos, nextPos, currentDirection)) {
       break;
     }
 
@@ -103,7 +112,16 @@ export const calculatePath = (
     // 反射板のチェック
     const cell = board.cells[currentPos.y][currentPos.x];
     if (cell.reflector && cell.reflector.color !== robot.color) {
-      currentDirection = calculateReflection(currentDirection, cell.reflector.direction);
+      // 反射による方向転換
+      const newDirection = calculateReflection(currentDirection, cell.reflector.direction);
+      
+      // 反射後の移動が可能か確認
+      const nextPosAfterReflection = getNextPosition(currentPos, newDirection);
+      if (!hasCollision(board, currentPos, nextPosAfterReflection, newDirection)) {
+        currentDirection = newDirection;
+        continue;
+      }
+      break;
     }
   }
 

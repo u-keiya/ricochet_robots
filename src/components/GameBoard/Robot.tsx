@@ -1,4 +1,4 @@
-import { FC, CSSProperties, useState, useEffect } from 'react';
+import { FC, CSSProperties } from 'react';
 import { RobotColor, Direction, Position } from '../../types/game';
 
 export interface RobotProps {
@@ -6,9 +6,10 @@ export interface RobotProps {
   position: Position;
   boardSize: number;
   isActive: boolean;
+  isSelected?: boolean; // 選択状態を追加
   onMove?: (color: RobotColor, direction: Direction) => void;
+  onClick?: () => void; // クリックハンドラを追加
   style?: CSSProperties;
-  path?: Position[];  // 移動経路
 }
 
 const DirectionArrow: FC<{
@@ -55,47 +56,22 @@ const Robot: FC<RobotProps> = ({
   position,
   boardSize,
   isActive,
+  isSelected = false,
   onMove,
-  style,
-  path
+  onClick,
+  style
 }) => {
-  const [isSelected, setIsSelected] = useState(false);
-  const [currentPathIndex, setCurrentPathIndex] = useState(0);
-  const [displayPosition, setDisplayPosition] = useState(position);
-
-  // 移動アニメーション
-  useEffect(() => {
-    if (path && path.length > 0) {
-      const interval = setInterval(() => {
-        setCurrentPathIndex(prev => {
-          const next = prev + 1;
-          if (next >= path.length) {
-            clearInterval(interval);
-            return prev;
-          }
-          setDisplayPosition(path[next]);
-          return next;
-        });
-      }, 100); // 100ms毎に移動
-
-      return () => clearInterval(interval);
-    } else {
-      setDisplayPosition(position);
-      setCurrentPathIndex(0);
-    }
-  }, [path, position]);
-
   // セルサイズに基づいて位置を計算
   const getPositionStyle = (): CSSProperties => {
     const cellSize = 100 / boardSize;
     return {
       position: 'absolute',
-      left: `${displayPosition.x * cellSize}%`,
-      top: `${displayPosition.y * cellSize}%`,
+      left: `${position.x * cellSize}%`,
+      top: `${position.y * cellSize}%`,
       width: `${cellSize}%`,
       height: `${cellSize}%`,
       transform: 'translate(0, 0)',
-      transition: 'all 0.1s linear',
+      transition: 'all 100ms linear',
       cursor: isActive ? 'pointer' : 'default',
       ...style
     };
@@ -116,14 +92,6 @@ const Robot: FC<RobotProps> = ({
   const handleMove = (direction: Direction) => {
     if (onMove) {
       onMove(color, direction);
-      setIsSelected(false);
-    }
-  };
-
-  // ロボットのクリック
-  const handleClick = () => {
-    if (isActive && !path) { // 移動中は選択不可
-      setIsSelected(!isSelected);
     }
   };
 
@@ -133,20 +101,20 @@ const Robot: FC<RobotProps> = ({
       tabIndex={isActive ? 0 : -1}
       className={`
         rounded-full shadow-lg
-        transform transition-all
+        transform transition-colors
         ${getColorStyle()}
-        ${isActive && !path ? 'hover:scale-105' : ''}
+        ${isActive ? 'hover:scale-105' : ''}
         ${isSelected ? 'ring-4 ring-white ring-opacity-50' : ''}
       `}
       style={getPositionStyle()}
-      onClick={handleClick}
+      onClick={onClick}
     >
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="w-2/3 h-2/3 rounded-full bg-white bg-opacity-30" />
       </div>
 
-      {/* 移動矢印 */}
-      {isSelected && isActive && !path && (
+      {/* 移動矢印（選択されているときのみ表示） */}
+      {isActive && isSelected && (
         <div className="absolute inset-0">
           {[
             { dir: 'up' as Direction, pos: 'top' as const },

@@ -4,7 +4,13 @@ import { generateBoardFromPattern, getTargetSymbol } from '../utils/boardGenerat
 import { createCompositeBoardPattern } from '../utils/boardRotation';
 import BoardLoader from '../utils/boardLoader';
 import { CardDeck } from '../utils/cardGenerator';
-import { calculateFinalPosition } from '../utils/robotMovement';
+import { calculatePath } from '../utils/robotMovement';
+
+interface MovingRobot {
+  color: RobotColor;
+  path: Position[];
+  currentIndex: number;
+}
 
 export const useGameState = (mode: 'single' | 'multi') => {
   const [gameState, setGameState] = useState<GameState>(() => {
@@ -41,6 +47,7 @@ export const useGameState = (mode: 'single' | 'multi') => {
   });
 
   const [cardDeck, setCardDeck] = useState<CardDeck>(() => new CardDeck());
+  const [movingRobot, setMovingRobot] = useState<MovingRobot | null>(null);
 
   // タイマーの制御
   useEffect(() => {
@@ -84,6 +91,38 @@ export const useGameState = (mode: 'single' | 'multi') => {
     gameState.singlePlayer.timer,
     gameState.singlePlayer.declaredMoves
   ]);
+
+  // ロボットの移動アニメーション制御
+  useEffect(() => {
+    if (!movingRobot || movingRobot.currentIndex >= movingRobot.path.length) return;
+
+    const moveInterval = setInterval(() => {
+      setGameState(prev => {
+        const newBoard = { ...prev.board };
+        const robotIndex = newBoard.robots.findIndex(r => r.color === movingRobot.color);
+        if (robotIndex === -1) return prev;
+
+        // 次の位置に更新
+        newBoard.robots = [...newBoard.robots];
+        newBoard.robots[robotIndex] = {
+          ...newBoard.robots[robotIndex],
+          position: movingRobot.path[movingRobot.currentIndex]
+        };
+
+        return { ...prev, board: newBoard };
+      });
+
+      setMovingRobot(prev => {
+        if (!prev) return null;
+        const nextIndex = prev.currentIndex + 1;
+        return nextIndex < prev.path.length
+          ? { ...prev, currentIndex: nextIndex }
+          : null;
+      });
+    }, 100); // 100ms間隔で移動
+
+    return () => clearInterval(moveInterval);
+  }, [movingRobot]);
 
   // 手数を宣言
   const declareMoves = useCallback((moves: number) => {
@@ -181,41 +220,36 @@ export const useGameState = (mode: 'single' | 'multi') => {
 
   // ロボットを移動
   const moveRobot = useCallback((robotColor: RobotColor, direction: Direction) => {
+    if (movingRobot) return; // 移動中は新しい移動を開始しない
+
     setGameState(prev => {
       if (prev.phase !== 'playing') return prev;
 
       const robot = prev.board.robots.find(r => r.color === robotColor);
       if (!robot) return prev;
 
-      // 最終位置を計算
-      const finalPosition = calculateFinalPosition(prev.board, robot, direction);
-      if (!finalPosition || (
-        finalPosition.x === robot.position.x && 
-        finalPosition.y === robot.position.y
-      )) {
-        return prev;
-      }
+      // 移動経路を計算
+      const path = calculatePath(prev.board, robot, direction);
+      if (path.length <= 1) return prev;
 
-      const newBoard = {
-        ...prev.board,
-        robots: prev.board.robots.map(r =>
-          r.color === robotColor
-            ? { ...r, position: finalPosition }
-            : r
-        )
-      };
+      // 移動アニメーションを開始
+      setMovingRobot({
+        color: robotColor,
+        path,
+        currentIndex: 0
+      });
 
       const newMoveCount = prev.singlePlayer.moveCount + 1;
-      const isOverDeclared = newMoveCount > prev.singlePlayer.declaredMoves;
+      const finalPosition = path[path.length - 1];
 
-      const movedRobot = newBoard.robots.find(r => r.color === robotColor);
-      const isGoal = movedRobot ? checkGoal(movedRobot) : false;
+      // 最終位置でのゴール判定用の仮想ロボット
+      const movedRobot = { ...robot, position: finalPosition };
+      const isGoal = checkGoal(movedRobot);
 
       if (isGoal) {
         const isExactMoves = newMoveCount === prev.singlePlayer.declaredMoves;
         return {
           ...prev,
-          board: newBoard,
           moveHistory: [...prev.moveHistory, finalPosition],
           phase: 'completed',
           singlePlayer: {
@@ -230,16 +264,14 @@ export const useGameState = (mode: 'single' | 'multi') => {
 
       return {
         ...prev,
-        board: newBoard,
         moveHistory: [...prev.moveHistory, finalPosition],
         singlePlayer: {
           ...prev.singlePlayer,
           moveCount: newMoveCount,
-          score: isOverDeclared ? prev.singlePlayer.score : prev.singlePlayer.score
         }
       };
     });
-  }, [checkGoal]);
+  }, [checkGoal, movingRobot]);
 
   return {
     gameState,

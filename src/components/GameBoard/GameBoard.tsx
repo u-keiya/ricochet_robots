@@ -1,5 +1,5 @@
-import { FC, memo, useState } from 'react';
-import { Board, RobotColor, Direction, Position } from '../../types/game';
+import { FC, memo, useState, useEffect } from 'react';
+import { Board, RobotColor, Direction } from '../../types/game';
 import { BoardCell } from './BoardCell';
 import Robot from './Robot';
 import { calculatePath } from '../../utils/robotMovement';
@@ -13,19 +13,21 @@ interface GameBoardProps {
 const GameBoard: FC<GameBoardProps> = memo(({ board, isPlayerTurn, onRobotMove }) => {
   // 現在選択されているロボットの色を管理
   const [selectedRobot, setSelectedRobot] = useState<RobotColor | null>(null);
-  // 移動中のロボットの状態を管理
-  const [movingRobot, setMovingRobot] = useState<{
-    color: RobotColor;
-    path: Position[];
-  } | null>(null);
+  // 移動中かどうかを管理
+  const [isMoving, setIsMoving] = useState(false);
 
   // セルサイズを固定値で設定
   const cellSize = 40; // px単位
   const boardSize = board.size * cellSize;
 
+  // ボードの状態が変化したら移動中フラグをリセット
+  useEffect(() => {
+    setIsMoving(false);
+  }, [board.robots]);
+
   // キーボード操作
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!isPlayerTurn || !onRobotMove || !selectedRobot || movingRobot) return;
+    if (!isPlayerTurn || !selectedRobot || isMoving) return;
 
     const direction: Direction | undefined = {
       'ArrowUp': 'up',
@@ -42,7 +44,7 @@ const GameBoard: FC<GameBoardProps> = memo(({ board, isPlayerTurn, onRobotMove }
 
   // ロボットの移動ハンドラー
   const handleRobotMove = (color: RobotColor, direction: Direction) => {
-    if (!isPlayerTurn || movingRobot) return;
+    if (!isPlayerTurn || isMoving || !onRobotMove) return;
 
     const robot = board.robots.find(r => r.color === color);
     if (!robot) return;
@@ -51,17 +53,15 @@ const GameBoard: FC<GameBoardProps> = memo(({ board, isPlayerTurn, onRobotMove }
     const path = calculatePath(board, robot, direction);
     if (path.length <= 1) return; // 移動できない場合
 
-    // アニメーション開始
-    setMovingRobot({ color, path });
-    setSelectedRobot(null);
+    // 移動中フラグを設定
+    setIsMoving(true);
+    onRobotMove(color, direction);
+  };
 
-    // アニメーション完了後に移動を確定
-    setTimeout(() => {
-      if (onRobotMove) {
-        onRobotMove(color, direction);
-      }
-      setMovingRobot(null);
-    }, path.length * 100); // 各ステップ100msで移動
+  // ロボットのクリックハンドラー
+  const handleRobotClick = (color: RobotColor) => {
+    if (!isPlayerTurn || isMoving) return;
+    setSelectedRobot(prev => prev === color ? null : color);
   };
 
   return (
@@ -104,9 +104,10 @@ const GameBoard: FC<GameBoardProps> = memo(({ board, isPlayerTurn, onRobotMove }
             color={robot.color}
             position={robot.position}
             boardSize={board.size}
-            isActive={isPlayerTurn && (!selectedRobot || selectedRobot === robot.color)}
+            isActive={isPlayerTurn && !isMoving}
+            isSelected={selectedRobot === robot.color}
             onMove={handleRobotMove}
-            path={movingRobot?.color === robot.color ? movingRobot.path : undefined}
+            onClick={() => handleRobotClick(robot.color)}
             style={{
               zIndex: selectedRobot === robot.color ? 20 : 10,
               width: `${cellSize}px`,
@@ -114,7 +115,6 @@ const GameBoard: FC<GameBoardProps> = memo(({ board, isPlayerTurn, onRobotMove }
               position: 'absolute',
               left: `${robot.position.x * cellSize}px`,
               top: `${robot.position.y * cellSize}px`,
-              transition: 'all 0.1s linear',
             }}
           />
         ))}
