@@ -46,8 +46,9 @@ export const useGameState = (mode: 'single' | 'multi') => {
     };
   });
 
-  const [cardDeck, setCardDeck] = useState<CardDeck>(() => new CardDeck());
+  const [cardDeck, setCardDeck] = useState(() => new CardDeck(gameState.board));
   const [movingRobot, setMovingRobot] = useState<MovingRobot | null>(null);
+  const [goalAchieved, setGoalAchieved] = useState(false);
 
   // タイマーの制御
   useEffect(() => {
@@ -94,7 +95,31 @@ export const useGameState = (mode: 'single' | 'multi') => {
 
   // ロボットの移動アニメーション制御
   useEffect(() => {
-    if (!movingRobot || movingRobot.currentIndex >= movingRobot.path.length) return;
+    if (!movingRobot || movingRobot.currentIndex >= movingRobot.path.length) {
+      if (goalAchieved) {
+        setGameState(prev => ({
+          ...prev,
+          board: {
+            ...prev.board,
+            robots: prev.board.robots.map(robot => ({
+              ...robot,
+              position: robot.initialPosition ? { ...robot.initialPosition } : robot.position
+            }))
+          },
+          phase: 'waiting',
+          moveHistory: [],
+          singlePlayer: {
+            ...prev.singlePlayer,
+            moveCount: 0,
+            declaredMoves: 0,
+            maxDeclaredMoves: 0,
+            isDeclarationPhase: false
+          }
+        }));
+        setGoalAchieved(false);
+      }
+      return;
+    }
 
     const moveInterval = setInterval(() => {
       setGameState(prev => {
@@ -119,27 +144,25 @@ export const useGameState = (mode: 'single' | 'multi') => {
           ? { ...prev, currentIndex: nextIndex }
           : null;
       });
-    }, 100); // 100ms間隔で移動
+    }, 100);
 
     return () => clearInterval(moveInterval);
-  }, [movingRobot]);
+  }, [movingRobot, goalAchieved]);
 
   // 手数を宣言
   const declareMoves = useCallback((moves: number) => {
     setGameState(prev => {
       if (!prev.singlePlayer.isDeclarationPhase) return prev;
 
-      // 現在の宣言値より小さい値を選択した場合、その値が新しい上限となる
       const currentDeclared = prev.singlePlayer.declaredMoves;
       const newMaxMoves = currentDeclared === 0 
-        ? moves  // 初回の宣言
-        : Math.min(  // 2回目以降の宣言
+        ? moves
+        : Math.min(
             moves, 
             currentDeclared,
             prev.singlePlayer.maxDeclaredMoves || Infinity
           );
 
-      // 宣言された値が現在の上限を超えている場合は変更しない
       if (moves > prev.singlePlayer.maxDeclaredMoves && prev.singlePlayer.maxDeclaredMoves > 0) {
         return prev;
       }
@@ -155,18 +178,37 @@ export const useGameState = (mode: 'single' | 'multi') => {
     });
   }, []);
 
-  // ゴール判定
+  // ゴール判定（デバッグログ追加）
   const checkGoal = useCallback((robot: Robot): boolean => {
-    if (!gameState.currentCard) return false;
+    if (!gameState.currentCard) {
+      console.log('No current card');
+      return false;
+    }
     
     const cell = gameState.board.cells[robot.position.y][robot.position.x];
-    if (!cell.isTarget) return false;
+    console.log('Debug: Goal Check', {
+      robotColor: robot.color,
+      robotPosition: robot.position,
+      cardColor: gameState.currentCard.color,
+      cardPosition: gameState.currentCard.position,
+      isTargetCell: cell.isTarget,
+      cellPosition: { x: robot.position.x, y: robot.position.y },
+      targetCellInfo: cell,
+    });
 
-    if (gameState.currentCard.color === 'colors') {
-      return true; // vortexの場合は任意の色でOK
+    if (!cell.isTarget) {
+      console.log('Not a target cell');
+      return false;
     }
 
-    return robot.color === gameState.currentCard.color;
+    const isValidColor = gameState.currentCard.color === 'colors' || robot.color === gameState.currentCard.color;
+    console.log('Color check:', {
+      isValidColor,
+      robotColor: robot.color,
+      targetColor: gameState.currentCard.color
+    });
+
+    return isValidColor;
   }, [gameState.board.cells, gameState.currentCard]);
 
   // 次のカードを引く
@@ -183,15 +225,18 @@ export const useGameState = (mode: 'single' | 'multi') => {
           })
         );
 
-        board.robots = board.robots.map(robot => ({
-          ...robot,
-          position: robot.initialPosition ? { ...robot.initialPosition } : robot.position
-        }));
-
+        // 新しいターゲットを設定
         const targetCell = board.cells[card.position.y][card.position.x];
         targetCell.isTarget = true;
         targetCell.targetColor = card.color;
         targetCell.targetSymbol = getTargetSymbol(card.symbol);
+
+        console.log('New target set:', {
+          position: card.position,
+          color: card.color,
+          symbol: card.symbol,
+          cellInfo: targetCell
+        });
         
         return {
           ...prev,
@@ -220,7 +265,7 @@ export const useGameState = (mode: 'single' | 'multi') => {
 
   // ロボットを移動
   const moveRobot = useCallback((robotColor: RobotColor, direction: Direction) => {
-    if (movingRobot) return; // 移動中は新しい移動を開始しない
+    if (movingRobot) return;
 
     setGameState(prev => {
       if (prev.phase !== 'playing') return prev;
@@ -228,9 +273,16 @@ export const useGameState = (mode: 'single' | 'multi') => {
       const robot = prev.board.robots.find(r => r.color === robotColor);
       if (!robot) return prev;
 
-      // 移動経路を計算
       const path = calculatePath(prev.board, robot, direction);
       if (path.length <= 1) return prev;
+
+      const finalPosition = path[path.length - 1];
+      console.log('Robot movement:', {
+        color: robotColor,
+        from: robot.position,
+        to: finalPosition,
+        pathLength: path.length
+      });
 
       // 移動アニメーションを開始
       setMovingRobot({
@@ -240,24 +292,29 @@ export const useGameState = (mode: 'single' | 'multi') => {
       });
 
       const newMoveCount = prev.singlePlayer.moveCount + 1;
-      const finalPosition = path[path.length - 1];
-
-      // 最終位置でのゴール判定用の仮想ロボット
       const movedRobot = { ...robot, position: finalPosition };
       const isGoal = checkGoal(movedRobot);
 
-      if (isGoal) {
+      console.log('Move result:', {
+        isGoal,
+        moveCount: newMoveCount,
+        declaredMoves: prev.singlePlayer.declaredMoves
+      });
+
+      // ゴール達成時またはオーバーシュート時の処理
+      if (isGoal || newMoveCount > prev.singlePlayer.declaredMoves) {
         const isExactMoves = newMoveCount === prev.singlePlayer.declaredMoves;
+        const isSuccessfulGoal = isGoal && isExactMoves;
+        setGoalAchieved(true);
+
         return {
           ...prev,
           moveHistory: [...prev.moveHistory, finalPosition],
-          phase: 'completed',
           singlePlayer: {
             ...prev.singlePlayer,
             moveCount: newMoveCount,
-            score: prev.singlePlayer.score + (isExactMoves ? 1 : 0),
-            completedCards: prev.singlePlayer.completedCards + 1,
-            isDeclarationPhase: false
+            score: prev.singlePlayer.score + (isSuccessfulGoal ? 1 : 0),
+            completedCards: prev.singlePlayer.completedCards + (isGoal ? 1 : 0)
           }
         };
       }
@@ -267,7 +324,7 @@ export const useGameState = (mode: 'single' | 'multi') => {
         moveHistory: [...prev.moveHistory, finalPosition],
         singlePlayer: {
           ...prev.singlePlayer,
-          moveCount: newMoveCount,
+          moveCount: newMoveCount
         }
       };
     });

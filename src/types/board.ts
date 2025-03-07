@@ -10,7 +10,7 @@ export type ReflectorDirection = '／' | '＼';
 export type TargetSymbol = 'moon' | 'gear' | 'saturn' | 'cross' | 'vortex';
 
 // ターゲットの色を表す型（vortex用のcolorsを追加）
-export type TargetColor = RobotColor | 'multi' | 'colors';
+export type TargetColor = RobotColor | 'colors';
 
 // 基本的なボードパターン型
 export interface BaseBoardPattern {
@@ -147,7 +147,7 @@ export const isValidBoardPattern = (pattern: any): pattern is BoardPattern => {
       // vortexの場合はcolorsのみ許容
       return target.color === 'colors';
     }
-    if (!['red', 'blue', 'yellow', 'green', 'multi'].includes(target.color)) {
+    if (!['red', 'blue', 'yellow', 'green', 'colors'].includes(target.color)) {
       console.error('Invalid target color:', target);
       return false;
     }
