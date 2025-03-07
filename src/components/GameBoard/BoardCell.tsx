@@ -33,7 +33,7 @@ export const BoardCell: FC<BoardCellProps> = memo(({ cell, x, y, size }) => {
   const getTargetClasses = () => {
     if (!cell.isTarget) return '';
     
-    const baseClasses = 'absolute inset-2 rounded-full flex items-center justify-center';
+    const baseClasses = 'absolute inset-1 rounded-md flex items-center justify-center';
     
     // Vortex用の特別なスタイル
     if (cell.targetSymbol === '✧') {
@@ -42,10 +42,9 @@ export const BoardCell: FC<BoardCellProps> = memo(({ cell, x, y, size }) => {
 
     const colorClasses: Record<string, string> = {
       red: 'bg-red-500',
-      blue: 'bg-blue-500',
+      blue: 'bg-blue-700',
       yellow: 'bg-yellow-500',
       green: 'bg-green-500',
-      multi: 'bg-gradient-to-r from-red-500 via-blue-500 to-green-500',
       colors: 'bg-gradient-to-r from-purple-500 via-pink-500 to-red-500',
     };
 
@@ -92,8 +91,8 @@ export const BoardCell: FC<BoardCellProps> = memo(({ cell, x, y, size }) => {
     if (!cell.isTarget || !cell.targetSymbol) return null;
 
     const symbolClasses = cell.targetSymbol === '✧'
-      ? 'text-white font-bold text-2xl animate-spin'
-      : 'text-white font-bold text-2xl';
+      ? 'text-white font-bold text-3xl animate-spin'
+      : 'text-white font-bold text-3xl';
 
     return (
       <span className={symbolClasses}>

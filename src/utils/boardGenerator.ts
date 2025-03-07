@@ -74,6 +74,11 @@ const placeTargets = (board: Board, pattern: BoardPattern): void => {
   });
 };
 
+// 中央4マスかどうかのチェック
+const isCenterArea = (x: number, y: number): boolean => {
+  return (x === 7 || x === 8) && (y === 7 || y === 8);
+};
+
 // ランダムな空いている位置を取得
 const getRandomEmptyPosition = (
   board: Board,
@@ -86,7 +91,8 @@ const getRandomEmptyPosition = (
     const y = Math.floor(Math.random() * board.size);
 
     if (!board.cells[y][x].isTarget &&
-        !occupiedPositions.some(p => p.x === x && p.y === y)) {
+        !occupiedPositions.some(p => p.x === x && p.y === y) &&
+        !isCenterArea(x, y)) {
       return { x, y };
     }
     attempts++;

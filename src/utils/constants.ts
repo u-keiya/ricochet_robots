@@ -5,7 +5,7 @@ import { RobotColor } from '../types/game';
 export const SYMBOL_MAP: Record<TargetSymbol, string> = {
   moon: '☽',     // 三日月
   gear: '⚙',     // 歯車
-  saturn: '♄',    // 土星
+  saturn: '🪐',    // 土星
   cross: '✚',     // 十字
   vortex: '✧',    // 星型の渦
 };

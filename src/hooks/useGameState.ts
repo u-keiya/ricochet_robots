@@ -201,6 +201,13 @@ export const useGameState = (mode: 'single' | 'multi') => {
       return false;
     }
 
+    // カードの位置と一致するかチェック
+    if (robot.position.x !== gameState.currentCard.position.x || 
+      robot.position.y !== gameState.currentCard.position.y) {
+    console.log('Not at card position');
+    return false;
+    }
+
     const isValidColor = gameState.currentCard.color === 'colors' || robot.color === gameState.currentCard.color;
     console.log('Color check:', {
       isValidColor,
@@ -217,26 +224,6 @@ export const useGameState = (mode: 'single' | 'multi') => {
     if (card) {
       setGameState(prev => {
         const board = { ...prev.board };
-        board.cells.forEach(row => 
-          row.forEach(cell => {
-            cell.isTarget = false;
-            cell.targetColor = undefined;
-            cell.targetSymbol = undefined;
-          })
-        );
-
-        // 新しいターゲットを設定
-        const targetCell = board.cells[card.position.y][card.position.x];
-        targetCell.isTarget = true;
-        targetCell.targetColor = card.color;
-        targetCell.targetSymbol = getTargetSymbol(card.symbol);
-
-        console.log('New target set:', {
-          position: card.position,
-          color: card.color,
-          symbol: card.symbol,
-          cellInfo: targetCell
-        });
         
         return {
           ...prev,

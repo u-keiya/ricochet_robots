@@ -61,7 +61,7 @@ export const DeclarationCardList: FC<DeclarationCardListProps> = ({
 }) => {
   const [startIndex, setStartIndex] = useState(0);
   const visibleCount = 5;
-  const totalNumbers = 20;
+  const totalNumbers = 99;
 
   const handlePrevClick = () => {
     setStartIndex(Math.max(0, startIndex - 1));
