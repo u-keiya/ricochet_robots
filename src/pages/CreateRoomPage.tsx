@@ -1,76 +1,69 @@
-import { FC, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import CreateRoomForm from '../components/room/CreateRoomForm';
+import useGameStore from '../stores/gameStore';
 
-const CreateRoomPage: FC = () => {
+const CreateRoomPage: React.FC = () => {
   const navigate = useNavigate();
-  const [roomName, setRoomName] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const { 
+    connect,
+    isConnected,
+    isConnecting,
+    connectionError,
+    currentRoom,
+  } = useGameStore();
 
-  const handleCreateRoom = () => {
-    if (!roomName.trim()) {
-      setError('部屋の名前を入力してください');
-      return;
+  useEffect(() => {
+    if (!isConnected && !isConnecting) {
+      connect();
     }
-    if (!password.trim()) {
-      setError('パスワードを入力してください');
-      return;
+  }, [isConnected, isConnecting, connect]);
+
+  useEffect(() => {
+    if (currentRoom) {
+      navigate(`/game/${currentRoom.id}`);
     }
-    // TODO: WebSocket接続を実装し、部屋を作成する
-    // 仮実装として、すぐにゲーム画面に遷移
-    navigate(`/game/${encodeURIComponent(roomName)}`);
+  }, [currentRoom, navigate]);
+
+  const handleCreateSuccess = () => {
+    // ルーム作成に成功した場合、currentRoomの更新を待ってリダイレクト
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-md w-96">
-        <h1 className="text-2xl font-bold mb-6 text-gray-800">部屋を作る</h1>
-        
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="roomName" className="block text-sm font-medium text-gray-700">
-              部屋の名前
-            </label>
-            <input
-              type="text"
-              id="roomName"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50"
-              value={roomName}
-              onChange={(e) => setRoomName(e.target.value)}
-            />
-          </div>
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md mx-auto">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-extrabold text-gray-900">
+            ルームを作成
+          </h2>
+          <p className="mt-2 text-sm text-gray-600">
+            新しいゲームルームを作成して、他のプレイヤーを招待しましょう
+          </p>
+        </div>
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              パスワード
-            </label>
-            <input
-              type="password"
-              id="password"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+        {connectionError && (
+          <div className="mb-4 p-4 rounded-md bg-red-50">
+            <div className="text-sm text-red-700">
+              接続エラー: {connectionError}
+            </div>
           </div>
+        )}
 
-          {error && (
-            <p className="text-red-500 text-sm">{error}</p>
-          )}
-
-          <div className="space-y-2">
-            <button
-              className="btn btn-primary w-full"
-              onClick={handleCreateRoom}
-            >
-              公開する
-            </button>
-            <button
-              className="btn bg-gray-300 text-gray-700 hover:bg-gray-400 w-full"
-              onClick={() => navigate('/online')}
-            >
-              戻る
-            </button>
+        {isConnecting ? (
+          <div className="text-center text-gray-600">
+            接続中...
           </div>
+        ) : (
+          <CreateRoomForm onSuccess={handleCreateSuccess} />
+        )}
+
+        <div className="mt-4 text-center">
+          <button
+            onClick={() => navigate('/online')}
+            className="text-sm text-indigo-600 hover:text-indigo-500"
+          >
+            オンラインメニューに戻る
+          </button>
         </div>
       </div>
     </div>
