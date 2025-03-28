@@ -11,6 +11,8 @@ export class RoomManager {
 
   createRoom(hostPlayer: Player, options: RoomOptions): Room {
     const roomId = uuidv4();
+    // ホストプレイヤーのisHostを設定
+    hostPlayer.isHost = true;
     const room: Room = {
       id: roomId,
       name: options.name,
