@@ -1,0 +1,30 @@
+新規追加機能:
+
+1. server/src/services/roomManager.ts
+- クラス名: RoomManager
+- 機能:
+  - createRoom: ルームの作成
+    - 入力: hostPlayer: Player, options: RoomOptions
+    - 出力: Room
+  - joinRoom: ルームへの参加
+    - 入力: playerId: string, roomId: string, password?: string
+    - 出力: boolean
+  - leaveRoom: ルームからの退出
+    - 入力: playerId: string, roomId: string
+    - 出力: boolean
+  - updatePlayerConnection: プレイヤーの接続状態更新
+    - 入力: playerId: string, roomId: string, connected: boolean
+    - 出力: void
+  - cleanupInactiveRooms: 非アクティブなルームの削除
+    - 入力: なし
+    - 出力: void
+
+2. server/src/server.ts
+- 機能: Socket.IOサーバー
+- 主要イベントハンドラー:
+  - connection: 新規接続の処理
+  - register: プレイヤー登録
+  - createRoom: ルーム作成
+  - joinRoom: ルーム参加
+  - leaveRoom: ルーム退出
+  - disconnect: 切断処理
