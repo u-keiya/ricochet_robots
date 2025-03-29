@@ -25,7 +25,7 @@ export class GameManager {
 
     return {
       phase: GamePhase.WAITING,
-      remainingCards: 17, // 4色 x 4シンボル + 1ボルテックス
+      remainingCards: 17,
       totalCards: 17,
       declarations: new Map(),
       playerStates,
@@ -44,7 +44,6 @@ export class GameManager {
       throw new Error('Not enough players to start the game');
     }
 
-    // 最初のプレイヤーをランダムに選択
     this.gameState.currentPlayer = this.players[Math.floor(Math.random() * this.players.length)].id;
     this.gameState.phase = GamePhase.DECLARATION;
     this.startDeclarationPhase();
@@ -57,17 +56,17 @@ export class GameManager {
     
     this.startTimer(() => {
       this.endDeclarationPhase();
-    });
+    }, this.rules.declarationTimeLimit);
   }
 
-  private startTimer(callback: () => void): void {
+  private startTimer(callback: () => void, duration: number): void {
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
     }
 
     this.timerInterval = setInterval(() => {
       const elapsed = Math.floor((Date.now() - (this.gameState.timerStartedAt || 0)) / 1000);
-      this.gameState.timer = Math.max(0, this.rules.declarationTimeLimit - elapsed);
+      this.gameState.timer = Math.max(0, duration - elapsed);
 
       if (this.gameState.timer === 0) {
         clearInterval(this.timerInterval);
@@ -93,7 +92,6 @@ export class GameManager {
 
     this.gameState.declarations.set(playerId, declaration);
     
-    // 全員が宣言したら宣言フェーズを終了
     if (this.gameState.declarations.size === this.players.length) {
       this.endDeclarationPhase();
     }
@@ -104,7 +102,6 @@ export class GameManager {
       clearInterval(this.timerInterval);
     }
 
-    // 最小手数を宣言したプレイヤーを特定
     let minMoves = Infinity;
     let minMovesPlayerId: string | undefined;
 
@@ -120,7 +117,6 @@ export class GameManager {
       this.gameState.phase = GamePhase.SOLUTION;
       this.startSolutionPhase();
     } else {
-      // 誰も宣言しなかった場合は次のカードへ
       this.drawNextCard();
     }
   }
@@ -132,7 +128,7 @@ export class GameManager {
 
     this.startTimer(() => {
       this.failCurrentSolution();
-    });
+    }, this.rules.solutionTimeLimit);
   }
 
   public moveRobot(playerId: string, robotColor: RobotColor, positions: Position[]): void {
@@ -153,14 +149,12 @@ export class GameManager {
       throw new Error('Too many moves');
     }
 
-    // 移動の記録
     this.gameState.moveHistory.push({
       robotColor,
       positions,
       timestamp: Date.now()
     });
 
-    // 目標達成の確認
     if (this.checkGoal()) {
       this.successCurrentSolution();
     }
@@ -200,16 +194,18 @@ export class GameManager {
       }
     }
 
-    // 次に最小手数を宣言したプレイヤーに移行
     this.moveToNextPlayer();
   }
 
   private moveToNextPlayer(): void {
+    const currentDeclaration = this.gameState.declarations.get(this.gameState.currentPlayer!);
+    let nextPlayerId = undefined;
     let minMoves = Infinity;
-    let nextPlayerId: string | undefined;
 
     this.gameState.declarations.forEach((declaration, playerId) => {
-      if (playerId !== this.gameState.currentPlayer && declaration.moves < minMoves) {
+      if (playerId !== this.gameState.currentPlayer && 
+          declaration.moves > currentDeclaration!.moves && 
+          declaration.moves < minMoves) {
         minMoves = declaration.moves;
         nextPlayerId = playerId;
       }
@@ -219,15 +215,13 @@ export class GameManager {
       this.gameState.currentPlayer = nextPlayerId;
       this.startSolutionPhase();
     } else {
-      // 全員が失敗した場合は次のカードへ
       this.drawNextCard();
     }
   }
 
   private drawNextCard(): void {
-    if (this.gameState.remainingCards > 0) {
+    if (this.gameState.remainingCards > 1) {
       this.gameState.remainingCards--;
-      // TODO: カードデッキの実装とカード生成ロジック
       this.startDeclarationPhase();
     } else {
       this.endGame();
@@ -239,6 +233,7 @@ export class GameManager {
       clearInterval(this.timerInterval);
     }
     this.gameState.phase = GamePhase.FINISHED;
+    this.gameState.remainingCards = 0;
   }
 
   public getGameState(): MultiplayerGameState {

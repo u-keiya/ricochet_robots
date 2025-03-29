@@ -73,6 +73,11 @@ describe('GameManager', () => {
       expect(state.currentPlayer).toBeDefined();
       expect(state.timer).toBe(testRules.declarationTimeLimit);
     });
+
+    it('should not allow starting an already started game', () => {
+      gameManager.startGame();
+      expect(() => gameManager.startGame()).toThrow('Game has already started');
+    });
   });
 
   describe('Declaration Phase', () => {
@@ -105,6 +110,7 @@ describe('GameManager', () => {
 
       const state = gameManager.getGameState();
       expect(state.phase).toBe(GamePhase.SOLUTION);
+      expect(state.currentPlayer).toBe(mockPlayers[0].id); // player1が最小手数(5)
     });
 
     it('should end declaration phase when timer expires', () => {
@@ -113,6 +119,17 @@ describe('GameManager', () => {
       
       const state = gameManager.getGameState();
       expect(state.phase).toBe(GamePhase.SOLUTION);
+      expect(state.currentPlayer).toBe(mockPlayers[0].id);
+    });
+
+    it('should update timer correctly', () => {
+      const initialState = gameManager.getGameState();
+      expect(initialState.timer).toBe(testRules.declarationTimeLimit);
+
+      jest.advanceTimersByTime(2000); // 2秒経過
+
+      const updatedState = gameManager.getGameState();
+      expect(updatedState.timer).toBe(testRules.declarationTimeLimit - 2);
     });
   });
 
@@ -160,31 +177,66 @@ describe('GameManager', () => {
       }).toThrow('Too many moves');
     });
 
-    it('should move to next player when timer expires', () => {
+    it('should move to next player with higher moves when timer expires', () => {
       const initialState = gameManager.getGameState();
       const initialPlayer = initialState.currentPlayer;
 
       jest.advanceTimersByTime(testRules.solutionTimeLimit * 1000);
 
       const newState = gameManager.getGameState();
-      expect(newState.currentPlayer).not.toBe(initialPlayer);
+      expect(newState.currentPlayer).toBe(mockPlayers[1].id); // player2は6手を宣言
       expect(newState.phase).toBe(GamePhase.SOLUTION);
+
+      // player2がタイムアウト
+      jest.advanceTimersByTime(testRules.solutionTimeLimit * 1000);
+
+      const finalState = gameManager.getGameState();
+      expect(finalState.currentPlayer).toBe(mockPlayers[2].id); // player3は7手を宣言
+      expect(finalState.phase).toBe(GamePhase.SOLUTION);
+    });
+
+    it('should apply penalty points on failure', () => {
+      const state = gameManager.getGameState();
+      const currentPlayer = state.currentPlayer!;
+      
+      jest.advanceTimersByTime(testRules.solutionTimeLimit * 1000);
+
+      const newState = gameManager.getGameState();
+      const playerState = newState.playerStates.get(currentPlayer);
+      expect(playerState?.score).toBe(testRules.penaltyPoints);
     });
   });
 
   describe('Game End', () => {
-    it('should end game when all cards are used', () => {
+    beforeEach(() => {
       gameManager.startGame();
+    });
 
-      // Simulate using all cards
-      for (let i = 0; i < 17; i++) {
+    it('should end game when all cards are used', () => {
+      // 16枚のカードを使用
+      for (let i = 0; i < 16; i++) {
         mockPlayers.forEach(player => gameManager.declareMoves(player.id, 5));
         jest.advanceTimersByTime(testRules.solutionTimeLimit * 1000);
       }
 
+      // 最後のカード
+      mockPlayers.forEach(player => gameManager.declareMoves(player.id, 5));
+      jest.advanceTimersByTime(testRules.solutionTimeLimit * 1000);
+
       const state = gameManager.getGameState();
       expect(state.phase).toBe(GamePhase.FINISHED);
       expect(state.remainingCards).toBe(0);
+    });
+
+    it('should maintain player scores at game end', () => {
+      // プレイヤー1が成功、プレイヤー2が失敗のシナリオ
+      mockPlayers.forEach(player => gameManager.declareMoves(player.id, 5));
+      
+      jest.advanceTimersByTime(testRules.solutionTimeLimit * 1000);
+      
+      const finalState = gameManager.getGameState();
+      const player1Score = finalState.playerStates.get(mockPlayers[0].id)?.score;
+      expect(player1Score).toBe(testRules.penaltyPoints);
     });
   });
 });
