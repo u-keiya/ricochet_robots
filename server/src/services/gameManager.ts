@@ -50,6 +50,10 @@ export class GameManager {
   }
 
   private startDeclarationPhase(): void {
+    if (this.gameState.phase === GamePhase.FINISHED) {
+      return;
+    }
+
     this.gameState.declarations.clear();
     this.gameState.timer = this.rules.declarationTimeLimit;
     this.gameState.timerStartedAt = Date.now();
@@ -60,8 +64,12 @@ export class GameManager {
   }
 
   private startTimer(callback: () => void, duration: number): void {
-    if (this.timerInterval) {
-      clearInterval(this.timerInterval);
+    // タイマーのクリーンアップを確実に
+    this.cleanup();
+    
+    // 終了したゲームではタイマーを開始しない
+    if (this.gameState.phase === GamePhase.FINISHED) {
+      return;
     }
 
     this.timerInterval = setInterval(() => {
@@ -122,6 +130,10 @@ export class GameManager {
   }
 
   private startSolutionPhase(): void {
+    if (this.gameState.phase === GamePhase.FINISHED) {
+      return;
+    }
+
     this.gameState.timer = this.rules.solutionTimeLimit;
     this.gameState.timerStartedAt = Date.now();
     this.gameState.moveHistory = [];
@@ -178,6 +190,7 @@ export class GameManager {
       }
     }
 
+    this.gameState.phase = GamePhase.DECLARATION;
     this.drawNextCard();
   }
 
@@ -211,7 +224,18 @@ export class GameManager {
       }
     });
 
-    if (nextPlayerId) {
+    // 次のプレイヤーが見つからない場合のフォールバック処理
+    if (!nextPlayerId && this.gameState.remainingCards > 0) {
+      // 新しいカードに移行する前にスコア処理
+      const currentPlayer = this.gameState.currentPlayer;
+      if (currentPlayer) {
+        const playerState = this.gameState.playerStates.get(currentPlayer);
+        if (playerState) {
+          playerState.score += this.rules.penaltyPoints;
+        }
+      }
+      this.drawNextCard();
+    } else if (nextPlayerId) {
       this.gameState.currentPlayer = nextPlayerId;
       this.startSolutionPhase();
     } else {
@@ -220,7 +244,7 @@ export class GameManager {
   }
 
   private drawNextCard(): void {
-    if (this.gameState.remainingCards > 1) {
+    if (this.gameState.remainingCards > 0) {
       this.gameState.remainingCards--;
       this.startDeclarationPhase();
     } else {
