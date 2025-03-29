@@ -1,5 +1,9 @@
 import { io } from 'socket.io-client';
-import { GameSocket } from '../types/socket';
+import { GameSocket, ServerToClientEvents, ClientToServerEvents } from '../types/socket'; // 型をインポート
+import { Player } from '../types/player'; // Playerをインポート
+import { Room, RoomSummary } from '../types/room'; // Room, RoomSummaryをインポート
+import { MultiplayerGameState } from '../stores/gameStore'; // MultiplayerGameStateをインポート
+import { RobotColor, Position } from '../types/game'; // RobotColor, Positionをインポート
 
 class SocketService {
   private static instance: SocketService;
@@ -18,15 +22,21 @@ class SocketService {
 
   public connect(): Promise<void> {
     return new Promise((resolve, reject) => {
+      if (this.socket?.connected) { // 接続済みなら即解決
+        resolve();
+        return;
+      }
       try {
-        this.socket = io(import.meta.env.VITE_WS_URL, {
+        // VITE_WS_URL を VITE_SOCKET_URL に修正 (環境変数名合わせ)
+        this.socket = io(import.meta.env.VITE_SOCKET_URL, {
           reconnectionAttempts: this.maxReconnectAttempts,
           reconnectionDelay: 1000,
           autoConnect: true,
+          transports: ['websocket'], // websocketを優先
         });
 
         this.socket.on('connect', () => {
-          console.log('Socket connected');
+          console.log('Socket connected:', this.socket?.id); // IDもログ出力
           this.reconnectAttempts = 0;
           resolve();
         });
@@ -35,12 +45,17 @@ class SocketService {
           console.error('Connection error:', error);
           this.reconnectAttempts++;
           if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+            this.disconnect(); // 切断処理を呼ぶ
             reject(new Error('Maximum reconnection attempts reached'));
           }
         });
 
         this.socket.on('disconnect', (reason) => {
           console.log('Socket disconnected:', reason);
+          // 手動切断以外の場合の処理 (必要なら)
+          if (reason !== 'io client disconnect') {
+             // 例: set({ isConnected: false }); など
+          }
         });
 
       } catch (error) {
@@ -54,52 +69,128 @@ class SocketService {
     if (this.socket) {
       this.socket.disconnect();
       this.socket = null;
+      console.log('Socket manually disconnected'); // ログ追加
     }
   }
+// --- Helper for emitting events ---
+private emit<Event extends keyof ClientToServerEvents>(
+  event: Event,
+  ...args: Parameters<ClientToServerEvents[Event]> // Use rest parameters for args
+): void {
+  if (this.socket?.connected) {
+    // Spread the arguments for the emit call
+    (this.socket.emit as (event: Event, ...args: Parameters<ClientToServerEvents[Event]>) => void)(event, ...args);
+  } else {
+    console.error(`Socket not connected. Cannot emit event: ${event}`);
+    // TODO: Handle offline scenario? Queue events?
+  }
+}
 
+
+// --- Player and Room Actions ---
   public registerPlayer(name: string): void {
-    this.socket?.emit('register', name);
+    this.emit('register', name);
   }
 
   public createRoom(options: { name: string; password?: string }): void {
-    this.socket?.emit('createRoom', options);
+    this.emit('createRoom', options);
   }
 
   public joinRoom(roomId: string, password?: string): void {
-    this.socket?.emit('joinRoom', roomId, password);
+    this.emit('joinRoom', { roomId, password }); // payloadオブジェクトに変更
   }
 
   public leaveRoom(roomId: string): void {
-    this.socket?.emit('leaveRoom', roomId);
+    this.emit('leaveRoom', { roomId }); // payloadオブジェクトに変更
   }
 
-  public onPlayerRegistered(callback: (player: any) => void): void {
-    this.socket?.on('playerRegistered', callback);
+  public getAvailableRooms(): void { // 追加
+    this.emit('getAvailableRooms'); // 引数なしで呼び出す
   }
 
-  public onRoomCreated(callback: (room: any) => void): void {
-    this.socket?.on('roomCreated', callback);
+  // --- Game Actions ---
+  public startGame(roomId: string): void { // 追加
+    this.emit('startGame', { roomId });
   }
 
-  public onRoomJoined(callback: (room: any) => void): void {
-    this.socket?.on('roomJoined', callback);
+  public declareMoves(roomId: string, moves: number): void { // 追加
+    this.emit('declareMoves', { roomId, moves });
   }
 
-  public onRoomLeft(callback: (room: any) => void): void {
-    this.socket?.on('roomLeft', callback);
+  public moveRobot(roomId: string, robotColor: RobotColor, path: Position[]): void { // 追加
+    this.emit('moveRobot', { roomId, robotColor, path });
   }
 
-  public onRoomUpdated(callback: (room: any) => void): void {
-    this.socket?.on('roomUpdated', callback);
+  // --- Event Listeners ---
+  private registerEventListener<Event extends keyof ServerToClientEvents>(
+    event: Event,
+    callback: ServerToClientEvents[Event]
+  ): void {
+    this.socket?.off(event); // Remove existing listener first
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.socket?.on(event, callback as any); // Cast callback to any to bypass complex type issue
   }
 
-  public onError(callback: (error: { message: string }) => void): void {
-    this.socket?.on('error', callback);
+  // --- Room Event Listeners ---
+  public onPlayerRegistered(callback: ServerToClientEvents['playerRegistered']): void {
+    this.registerEventListener('playerRegistered', callback);
   }
+
+  public onRoomCreated(callback: ServerToClientEvents['roomCreated']): void {
+    this.registerEventListener('roomCreated', callback);
+  }
+
+  public onRoomJoined(callback: ServerToClientEvents['roomJoined']): void {
+    this.registerEventListener('roomJoined', callback);
+  }
+
+  public onRoomLeft(callback: ServerToClientEvents['roomLeft']): void { // 型を更新
+    this.registerEventListener('roomLeft', callback);
+  }
+
+  public onRoomUpdated(callback: ServerToClientEvents['roomUpdated']): void {
+    this.registerEventListener('roomUpdated', callback);
+  }
+
+  public onAvailableRoomsUpdated(callback: ServerToClientEvents['availableRoomsUpdated']): void { // 型を更新 (RoomSummary[])
+    this.registerEventListener('availableRoomsUpdated', callback);
+  }
+
+  public onError(callback: ServerToClientEvents['error']): void {
+    this.registerEventListener('error', callback);
+  }
+
+  // --- Game Event Listeners ---
+  public onGameStarted(callback: ServerToClientEvents['gameStarted']): void { // 追加
+    this.registerEventListener('gameStarted', callback);
+  }
+
+  public onGameStateUpdated(callback: ServerToClientEvents['gameStateUpdated']): void { // 追加
+    this.registerEventListener('gameStateUpdated', callback);
+  }
+
+  public onDeclarationMade(callback: ServerToClientEvents['declarationMade']): void { // 追加
+    this.registerEventListener('declarationMade', callback);
+  }
+
+  public onTurnChanged(callback: ServerToClientEvents['turnChanged']): void { // 追加
+    this.registerEventListener('turnChanged', callback);
+  }
+
+  public onSolutionAttemptResult(callback: ServerToClientEvents['solutionAttemptResult']): void { // 追加
+    this.registerEventListener('solutionAttemptResult', callback);
+  }
+
+  public onGameOver(callback: ServerToClientEvents['gameOver']): void { // 追加
+    this.registerEventListener('gameOver', callback);
+  }
+  // --- ここまで ---
 
   public removeAllListeners(): void {
     if (this.socket) {
-      this.socket.removeAllListeners();
+      // 特定のイベントリスナーのみ削除するか、offAny()を使うか検討
+      // ここでは一旦 offAny() を維持
+      this.socket.offAny();
     }
   }
 }
