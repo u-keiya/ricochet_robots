@@ -1,40 +1,105 @@
-import { FC } from 'react';
+import { FC, useEffect } from 'react'; // useEffectを追加
 import { useParams, useNavigate } from 'react-router-dom';
 import GameBoard from '../components/GameBoard/GameBoard';
-import useGameState from '../hooks/useGameState';
-import { GameMode } from '../types/game';
+import useGameStore from '../stores/gameStore'; // useGameStoreをインポート
+import { DeclarationCardList } from '../components/DeclarationCard'; // DeclarationCardListをインポート
+import { Player } from '../types/player'; // Player型をインポート
+// Direction と Card['color'] (CardColorの代わり) をインポート
+import { RobotColor, Position, GamePhase, Direction, Card } from '../types/game';
+import { calculatePath } from '../utils/robotMovement'; // calculatePathをインポート
 
-interface Player {
-  id: string;
-  name: string;
-  points: number;
-}
+// --- ヘルパー関数 ---
+const getPhaseText = (phase: GamePhase): string => {
+  switch (phase) {
+    case 'waiting': return '待機中';
+    case 'declaration': return '宣言フェーズ';
+    case 'playing': return '解法提示フェーズ';
+    case 'finished': return 'ゲーム終了';
+    default: return phase;
+  }
+};
+
+const getTargetColorClass = (color: Card['color']): string => { // Card['color'] を使用
+  switch (color) {
+    case 'red': return 'text-red-600';
+    case 'blue': return 'text-blue-600';
+    case 'green': return 'text-green-600';
+    case 'yellow': return 'text-yellow-600';
+    case 'colors': return 'bg-gradient-to-r from-red-500 via-blue-500 to-green-500 text-transparent bg-clip-text'; // 仮の多色表示
+    default: return 'text-gray-600';
+  }
+};
+// --- ここまで ---
+
 
 const GamePage: FC = () => {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
-  const { gameState, moveRobot, declareMoves } = useGameState('multi' as GameMode);
+  // useGameStoreから必要な状態とアクションを取得
+  const {
+    game,
+    currentRoom,
+    currentPlayer,
+    startGame,
+    declareMoves: storeDeclareMoves, // 名前衝突を避ける
+    moveRobot: storeMoveRobot,       // 名前衝突を避ける
+    leaveRoom,
+    isConnected,
+    connectionError,
+  } = useGameStore();
 
-  // 仮の初期プレイヤーリスト
-  const players: Player[] = [
-    { id: '1', name: 'プレイヤー1', points: 0 },
-    { id: '2', name: 'プレイヤー2', points: 0 },
-  ];
+  // roomIdがない、または接続エラーがあればオンラインページに戻る
+  useEffect(() => {
+    if (!isConnected || connectionError) {
+      console.error('Not connected or connection error, navigating back.');
+      navigate('/online');
+    }
+    // TODO: ルームが存在しない場合の処理 (currentRoomがnullになったら?)
+  }, [isConnected, connectionError, navigate]);
 
+  // --- アクションハンドラーを gameStore に接続 ---
   const handleStartGame = () => {
-    // TODO: WebSocket通信でゲーム開始を通知
-    console.log('ゲーム開始');
+    startGame(); // gameStoreのアクションを呼び出す
   };
 
-  const handleFlipCard = () => {
-    // TODO: WebSocket通信でカードめくりを通知
-    console.log('カードをめくる');
-  };
+  // handleFlipCard はサーバー側で自動で行われる想定のため削除
 
   const handleDeclareMoves = (moves: number) => {
-    // TODO: WebSocket通信で手数宣言を通知
-    declareMoves('player1', moves);
+    storeDeclareMoves(moves); // gameStoreのアクションを呼び出す
   };
+
+  // GameBoardから方向を受け取り、パスを計算してstoreのアクションを呼ぶ
+  const handleRobotMove = (robotColor: RobotColor, direction: Direction) => { // 引数を direction に変更
+    if (!game?.board || !currentPlayer) return; // ボードやプレイヤー情報がない場合は何もしない
+
+    const robot = game.board.robots.find(r => r.color === robotColor);
+    if (!robot) return;
+
+    // パスを計算
+    const path = calculatePath(game.board, robot, direction);
+
+    if (path.length > 1) { // 移動があった場合のみ送信
+       storeMoveRobot(robotColor, path); // 計算したパスを渡す
+    }
+  };
+
+
+  const handleLeaveRoom = () => {
+    leaveRoom();
+    navigate('/online'); // 退室後はオンラインページへ
+  };
+  // --- ここまで ---
+
+  // --- UI表示のための準備 ---
+  // ゲームが存在しない、またはボードがない場合はローディング表示などを検討
+  if (!game || !game.board || !currentRoom) { // currentRoomもチェック
+    // TODO: もっと良いローディング表示/エラー表示
+    return <div className="p-4">ゲームデータを読み込み中...</div>;
+  }
+  // players をオブジェクトから配列に変換
+  const playersArray = Object.values(currentRoom.players);
+  // --- ここまで ---
+
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -47,7 +112,7 @@ const GamePage: FC = () => {
             </h1>
             <button
               className="btn bg-gray-300 text-gray-700 hover:bg-gray-400"
-              onClick={() => navigate('/online')}
+              onClick={handleLeaveRoom} // 修正
             >
               退室
             </button>
@@ -59,30 +124,69 @@ const GamePage: FC = () => {
       <main className="max-w-7xl mx-auto px-4 py-6">
         <div className="grid grid-cols-4 gap-6">
           {/* 左サイドバー - プレイヤー情報 */}
+          {/* 左サイドバー - プレイヤー情報 */}
+          {/* 左サイドバー - プレイヤー情報 */}
           <div className="col-span-1 bg-white rounded-lg shadow p-4">
             <h2 className="text-lg font-bold mb-4">プレイヤー</h2>
             <div className="space-y-2">
-              {players.map(player => (
+              {/* playersArray を使用 */}
+              {playersArray.map((player: Player) => (
                 <div
                   key={player.id}
-                  className="flex justify-between items-center p-2 bg-gray-50 rounded"
+                  className={`flex justify-between items-center p-2 rounded ${
+                    player.id === game.currentPlayerTurn ? 'bg-blue-100 ring-2 ring-blue-300' : 'bg-gray-50' // 手番プレイヤーを強調
+                  } ${
+                    !player.connected ? 'opacity-50' : '' // 非接続プレイヤーを薄く表示
+                  }`}
                 >
-                  <span>{player.name}</span>
-                  <span className="font-bold">{player.points}pt</span>
+                  <span className="flex items-center">
+                     <span className={`w-2 h-2 rounded-full mr-2 ${player.connected ? 'bg-green-500' : 'bg-gray-400'}`}></span> {/* 接続状態表示 */}
+                    {player.name}
+                    {player.id === currentRoom.hostId && ' (Host)'} {/* ホスト表示 */}
+                    {player.id === currentPlayer?.id && ' (You)'} {/* 自分を表示 */}
+                  </span>
+                  <span className="font-bold">{game.scores[player.id] ?? 0}pt</span> {/* game.scoresを使用 */}
                 </div>
               ))}
             </div>
+             {/* 宣言表示 */}
+             {game.phase === 'declaration' || game.phase === 'playing' ? (
+                <div className="mt-4 pt-4 border-t">
+                  <h3 className="text-md font-semibold mb-2">宣言</h3>
+                  <div className="space-y-1 text-sm">
+                    {game.declarations.map(decl => (
+                      <div key={decl.playerId} className="flex justify-between">
+                        {/* playersArray を使用して find */}
+                        <span>{playersArray.find((p: Player) => p.id === decl.playerId)?.name ?? '不明'}</span>
+                        <span>{decl.moves === null ? '考え中...' : `${decl.moves}手`}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
           </div>
 
-          {/* メインエリア - ゲームボード */}
-          <div className="col-span-2 bg-white rounded-lg shadow p-4">
-            <div className="aspect-square flex items-center justify-center">
+          {/* メインエリア - ゲームボードと宣言 */}
+          <div className="col-span-2 bg-white rounded-lg shadow p-4 flex flex-col">
+            <div className="aspect-square flex items-center justify-center flex-grow">
               <GameBoard
-                board={gameState.board}
-                onRobotMove={moveRobot}
-                isPlayerTurn={gameState.phase === 'movement'}
+                board={game.board} // game.boardを使用
+                onRobotMove={handleRobotMove} // 修正
+                // 自分のターンか、かつ solution フェーズか
+                isPlayerTurn={game.phase === 'playing' && game.currentPlayerTurn === currentPlayer?.id}
               />
             </div>
+             {/* 宣言カードリスト */}
+             {game.phase === 'declaration' && (
+              <div className="mt-4 pt-4 border-t">
+                <DeclarationCardList
+                  selectedNumber={game.declarations.find(d => d.playerId === currentPlayer?.id)?.moves ?? null}
+                  maxNumber={30} // 仮の最大手数
+                  onSelect={handleDeclareMoves}
+                  className="mt-2"
+                />
+              </div>
+            )}
           </div>
 
           {/* 右サイドバー - ゲーム情報と操作 */}
@@ -91,31 +195,50 @@ const GamePage: FC = () => {
             <div className="bg-white rounded-lg shadow p-4">
               <h2 className="text-lg font-bold mb-2">ゲーム情報</h2>
               <div className="text-sm space-y-1">
-                <p>フェーズ: {gameState.phase}</p>
-                <p>残り時間: {gameState.timer}秒</p>
+                <p>フェーズ: {getPhaseText(game.phase)}</p> {/* game.phaseを使用し、テキスト変換 */}
+                <p>残り時間: {game.timer}秒</p> {/* game.timerを使用 */}
+                <p>残りカード: {game.remainingCards} / {game.totalCards}</p> {/* カード情報 */}
+                {game.currentCard && (
+                  <div className="mt-2 p-2 border rounded flex items-center justify-center space-x-2">
+                    <span className={`font-bold text-xl ${getTargetColorClass(game.currentCard.color)}`}>
+                      {game.currentCard.symbol}
+                    </span>
+                    <span>({game.currentCard.color})</span>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* ゲームコントロール */}
-            <div className="bg-white rounded-lg shadow p-4">
-              <h2 className="text-lg font-bold mb-2">操作</h2>
-              <div className="space-y-2">
-                <button
-                  className="btn btn-primary w-full"
-                  onClick={handleStartGame}
-                  disabled={gameState.phase !== 'waiting'}
-                >
-                  ゲームスタート
-                </button>
-                <button
-                  className="btn btn-secondary w-full"
-                  onClick={handleFlipCard}
-                  disabled={gameState.phase !== 'waiting'}
-                >
-                  カードをめくる
-                </button>
+            {currentRoom?.hostId === currentPlayer?.id && game.phase === 'waiting' && ( // ホストかつ待機中のみ表示
+              <div className="bg-white rounded-lg shadow p-4">
+                <h2 className="text-lg font-bold mb-2">操作</h2>
+                <div className="space-y-2">
+                  <button
+                    className="btn btn-primary w-full"
+                    onClick={handleStartGame}
+                    // disabled={currentRoom.players.length < 2} // プレイヤー数チェックはサーバー側で行う想定
+                  >
+                    ゲームスタート
+                  </button>
+                  {/* カードめくりボタンは削除 */}
+                </div>
               </div>
-            </div>
+            )}
+             {/* 勝者表示 */}
+             {game.phase === 'finished' && (
+                <div className="bg-white rounded-lg shadow p-4 text-center">
+                  <h2 className="text-lg font-bold mb-2">ゲーム終了！</h2>
+                  {game.winner ? (
+                    <p><span className="font-semibold">{game.winner.name}</span> の勝利！</p>
+                  ) : (
+                    <p>引き分け！</p>
+                  )}
+                  <button className="btn btn-secondary mt-4" onClick={handleLeaveRoom}>
+                    ルームを出る
+                  </button>
+                </div>
+             )}
           </div>
         </div>
       </main>

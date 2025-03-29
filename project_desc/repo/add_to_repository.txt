@@ -1,30 +1,79 @@
-新規追加機能:
+================================================================
+Added Files
+================================================================
 
-1. server/src/services/roomManager.ts
-- クラス名: RoomManager
-- 機能:
-  - createRoom: ルームの作成
-    - 入力: hostPlayer: Player, options: RoomOptions
-    - 出力: Room
-  - joinRoom: ルームへの参加
-    - 入力: playerId: string, roomId: string, password?: string
-    - 出力: boolean
-  - leaveRoom: ルームからの退出
-    - 入力: playerId: string, roomId: string
-    - 出力: boolean
-  - updatePlayerConnection: プレイヤーの接続状態更新
-    - 入力: playerId: string, roomId: string, connected: boolean
-    - 出力: void
-  - cleanupInactiveRooms: 非アクティブなルームの削除
-    - 入力: なし
-    - 出力: void
+### server/src/types/game.ts
 
-2. server/src/server.ts
-- 機能: Socket.IOサーバー
-- 主要イベントハンドラー:
-  - connection: 新規接続の処理
-  - register: プレイヤー登録
-  - createRoom: ルーム作成
-  - joinRoom: ルーム参加
-  - leaveRoom: ルーム退出
-  - disconnect: 切断処理
+* Short description: Defines TypeScript types for multiplayer game state management.
+* Key types:
+  - GamePhase: Enum for game phases (waiting, declaration, solution, finished)
+  - Position: Interface for robot positions (x, y coordinates)
+  - RobotColor: Enum for robot colors (red, blue, green, yellow)
+  - Card: Interface for game cards (color, symbol, position)
+  - Declaration: Interface for move declarations
+  - PlayerGameState: Interface for player-specific game state
+  - MultiplayerGameState: Interface for overall game state
+  - GameRules: Interface for game configuration
+  - DEFAULT_GAME_RULES: Constant with default game rules
+
+### server/src/services/gameManager.ts
+
+* GameManager (Class)
+  * constructor
+    * short description: Initializes game manager with players and rules
+    * input / output: Takes `players: Player[]`, `rules: GameRules`. Returns `void`.
+  * startGame
+    * short description: Starts the game if enough players are present
+    * input / output: Takes no input. Returns `void`. Throws if game already started or too few players.
+  * declareMoves
+    * short description: Handles player's move count declarations
+    * input / output: Takes `playerId: string`, `moves: number`. Returns `void`. Throws if invalid phase or moves.
+  * moveRobot
+    * short description: Handles robot movement during solution phase
+    * input / output: Takes `playerId: string`, `robotColor: RobotColor`, `positions: Position[]`. Returns `void`.
+  * getGameState
+    * short description: Returns current game state
+    * input / output: Takes no input. Returns `MultiplayerGameState`.
+
+### server/src/services/__tests__/gameManager.test.ts
+
+* Short description: Contains comprehensive tests for GameManager class.
+* Test suites:
+  - Game Initialization: Tests game setup and starting conditions
+  - Declaration Phase: Tests move declaration validation and timing
+  - Solution Phase: Tests robot movement validation and player turns
+  - Game End: Tests game completion conditions
+
+================================================================
+Implementation Details
+================================================================
+
+### Multiplayer Game Logic
+- Game state management using GameManager class
+- Phase-based gameplay (waiting → declaration → solution)
+- Timer system for declaration and solution phases
+- Move validation and scoring system
+- Player turn management
+
+### Game Flow
+1. Game starts with 2+ players
+2. Players declare move counts (1-30 moves)
+3. Lowest declarer attempts solution
+4. Success: +1 point, new card
+5. Failure: -1 point, next lowest declarer tries
+6. Game ends when all cards are used
+
+### Testing
+- Unit tests cover all major functionality
+- Mock timers for testing time-dependent features
+- Edge cases tested (invalid moves, timeouts)
+- Player interaction scenarios verified
+
+================================================================
+Notes
+================================================================
+
+TODO:
+1. Card deck implementation
+2. Goal achievement validation logic
+3. Integration with Socket.IO events
