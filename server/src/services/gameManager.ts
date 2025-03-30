@@ -110,34 +110,38 @@ export class GameManager {
 
     this.gameState.declarations.set(playerId, declaration);
 
-    // If all players have declared, end the phase
-    if (this.gameState.declarations.size === this.players.length) {
-      this.endDeclarationPhase();
-    }
+    // Declaration phase now always waits for the timer to end
+    // The following check is removed:
+    // if (this.gameState.declarations.size === this.players.length) {
+    //   this.endDeclarationPhase();
+    // }
   }
+private endDeclarationPhase(): void {
+  this.cleanup(); // Clear declaration timer
 
-  private endDeclarationPhase(): void {
-    this.cleanup(); // Clear declaration timer
+  // 1. Collect valid declarations
+  const validDeclarations = Array.from(this.gameState.declarations.values());
 
-    let minMoves = Infinity;
-    let minMovesPlayerId: string | undefined;
-
-    // Find the player with the minimum declared moves
-    this.gameState.declarations.forEach((declaration, playerId) => {
-      if (declaration.moves < minMoves) {
-        minMoves = declaration.moves;
-        minMovesPlayerId = playerId;
-      }
-    });
-
-    if (minMovesPlayerId) {
-      // If someone declared, start the solution phase for them
-      this.gameState.currentPlayer = minMovesPlayerId;
-      this.startSolutionPhase();
-    } else {
-      // If no one declared (e.g., timer ran out with no declarations), draw next card
-      this.drawNextCard();
+  // 2. Sort declarations: ascending moves, then ascending timestamp
+  validDeclarations.sort((a, b) => {
+    if (a.moves !== b.moves) {
+      return a.moves - b.moves;
     }
+    return a.timestamp - b.timestamp;
+  });
+
+  // 3. Set the declaration order
+  this.gameState.declarationOrder = validDeclarations.map(d => d.playerId);
+
+  // 4. Determine the next player and phase
+  if (this.gameState.declarationOrder.length > 0) {
+    // If there are valid declarations, start the solution phase for the first player
+    this.gameState.currentPlayer = this.gameState.declarationOrder[0];
+    this.startSolutionPhase();
+  } else {
+    // If no one made a valid declaration, draw the next card
+    this.drawNextCard();
+  }
   }
 
   private startSolutionPhase(): void {
@@ -210,55 +214,30 @@ export class GameManager {
   private failCurrentSolution(): void {
     this.cleanup(); // Stop solution timer
 
-    // --- Penalty logic removed based on new rule ---
-    // const currentPlayer = this.gameState.currentPlayer;
-    // if (currentPlayer && !this.penaltyApplied.has(currentPlayer)) {
-    //   const playerState = this.gameState.playerStates.get(currentPlayer);
-    //   if (playerState) {
-    //     playerState.score += this.rules.penaltyPoints; // Apply penalty
-    //     this.penaltyApplied.add(currentPlayer); // Mark player as penalized for this round
-    //   }
-    // }
-    // --- End of removed penalty logic ---
+    const currentPlayerId = this.gameState.currentPlayer;
+    if (!currentPlayerId) {
+      // Should not happen in this phase, but handle defensively
+      this.drawNextCard();
+      return;
+    }
 
-    // Move to the next player who might attempt a solution
-    this.moveToNextPlayer();
-  }
+    // Remove the current player from the declaration order
+    if (this.gameState.declarationOrder) {
+      this.gameState.declarationOrder = this.gameState.declarationOrder.filter(id => id !== currentPlayerId);
+    }
 
-  private moveToNextPlayer(): void {
-    const currentDeclaration = this.gameState.declarations.get(this.gameState.currentPlayer!);
-    let nextPlayerId: string | undefined;
-    let minMoves = Infinity;
-
-    // Find the next player with the lowest number of moves greater than the current player
-    this.gameState.declarations.forEach((declaration, playerId) => {
-      // Ensure the player is not the current one
-      if (playerId !== this.gameState.currentPlayer) {
-         // Check if their move count is higher than the current failed player's moves
-         if (currentDeclaration && declaration.moves > currentDeclaration.moves) {
-            // Find the minimum among those eligible players
-            if (declaration.moves < minMoves) {
-               minMoves = declaration.moves;
-               nextPlayerId = playerId;
-            }
-         } else if (!currentDeclaration && declaration.moves < minMoves) {
-             // Handle case where current player didn't declare (shouldn't happen in solution phase)
-             minMoves = declaration.moves;
-             nextPlayerId = playerId;
-         }
-      }
-    });
-
-
-    if (nextPlayerId) {
-      // If a next player is found, let them attempt the solution
-      this.gameState.currentPlayer = nextPlayerId;
+    // Check if there are remaining players in the order
+    if (this.gameState.declarationOrder && this.gameState.declarationOrder.length > 0) {
+      // Move to the next player in the order
+      this.gameState.currentPlayer = this.gameState.declarationOrder[0];
       this.startSolutionPhase();
     } else {
-      // If no other player can attempt (all failed or didn't declare higher), draw next card
+      // No more players left to attempt, draw the next card
       this.drawNextCard();
     }
   }
+
+  // moveToNextPlayer method removed as its logic is now handled within failCurrentSolution
 
   private drawNextCard(): void {
     if (this.gameState.remainingCards > 0) {

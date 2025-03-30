@@ -47,6 +47,7 @@ export interface MultiplayerGameState {
   playerStates: Map<string, PlayerGameState>;
   timer: number;
   timerStartedAt: number;
+  declarationOrder?: string[]; // Added: Order of players eligible to present solution
   robotPositions: Map<RobotColor, Position>;
   moveHistory: {
     robotColor: RobotColor;
