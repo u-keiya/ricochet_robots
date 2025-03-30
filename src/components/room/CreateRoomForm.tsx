@@ -9,24 +9,36 @@ const CreateRoomForm: React.FC<CreateRoomFormProps> = ({ onSuccess }) => {
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false); // ローディング状態を追加
   const { createRoom, connectionError } = useGameStore();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => { // async に変更
     e.preventDefault();
+    if (isLoading) return; // ローディング中は処理しない
+
     setError(null);
+    setIsLoading(true); // ローディング開始
 
     if (!name.trim()) {
       setError('ルーム名を入力してください');
+      setIsLoading(false); // ローディング終了
       return;
     }
 
-    createRoom({
-      name: name.trim(),
-      password: password.trim() || undefined,
-    });
-
-    if (!connectionError && onSuccess) {
-      onSuccess();
+    try {
+      await createRoom({ // await を追加
+        name: name.trim(),
+        password: password.trim() || undefined,
+      });
+      // 成功した場合、onSuccess を呼び出す (リダイレクトは親コンポーネントの useEffect で行われる)
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch (err) {
+      // エラーは gameStore でセットされるので、ここではローディング解除のみ
+      console.error("Room creation failed in form:", err);
+    } finally {
+      setIsLoading(false); // ローディング終了
     }
   };
 
@@ -70,9 +82,14 @@ const CreateRoomForm: React.FC<CreateRoomFormProps> = ({ onSuccess }) => {
 
       <button
         type="submit"
-        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        disabled={isLoading} // isLoading で無効化
+        className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
+          isLoading
+            ? 'bg-indigo-400 cursor-not-allowed' // ローディング中のスタイル
+            : 'bg-indigo-600 hover:bg-indigo-700' // 通常時のスタイル
+        }`}
       >
-        ルームを作成
+        {isLoading ? '作成中...' : 'ルームを作成'} {/* ローディングテキスト */}
       </button>
     </form>
   );

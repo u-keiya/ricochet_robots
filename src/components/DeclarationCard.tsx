@@ -47,7 +47,7 @@ const ChevronRight: FC = () => (
 
 // 宣言カード一覧コンポーネント
 interface DeclarationCardListProps {
-  selectedNumber: number;
+  selectedNumber: number | null; // null を許容するように変更
   maxNumber: number;
   onSelect: (num: number) => void;
   className?: string;
@@ -97,8 +97,9 @@ export const DeclarationCardList: FC<DeclarationCardListProps> = ({
               number={number}
               isSelected={selectedNumber === number}
               isDisabled={(
-                maxNumber > 0 && 
-                number > Math.max(selectedNumber, maxNumber)
+                maxNumber > 0 &&
+                // selectedNumber が null の場合は 0 として扱う
+                number > Math.max(selectedNumber ?? 0, maxNumber)
               )}
               onClick={onSelect}
             />
