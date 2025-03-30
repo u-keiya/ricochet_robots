@@ -11,6 +11,8 @@ const CreateRoomPage: React.FC = () => {
     isConnecting,
     connectionError,
     currentRoom,
+    registerPlayer, // registerPlayer を取得
+    currentPlayer, // currentPlayer を取得
   } = useGameStore();
 
   useEffect(() => {
@@ -18,6 +20,17 @@ const CreateRoomPage: React.FC = () => {
       connect();
     }
   }, [isConnected, isConnecting, connect]);
+
+  // 接続成功後、プレイヤーが未登録なら登録する
+  useEffect(() => {
+    if (isConnected && !currentPlayer && !isConnecting) { // isConnectingもチェック
+      // 仮のプレイヤー名。本来はユーザー入力などから取得
+      const playerName = `Player_${Math.random().toString(36).substring(2, 7)}`;
+      console.log(`[CreateRoomPage] Registering player: ${playerName}`); // ログ追加
+      registerPlayer(playerName);
+    }
+  }, [isConnected, currentPlayer, registerPlayer, isConnecting]); // isConnectingを依存配列に追加
+
 
   useEffect(() => {
     if (currentRoom) {
