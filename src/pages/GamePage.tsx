@@ -145,6 +145,12 @@ const GamePage: FC = () => {
                     {player.name}
                     {player.id === currentRoom.hostId && ' (Host)'} {/* ホスト表示 */}
                     {player.id === currentPlayer?.id && ' (You)'} {/* 自分を表示 */}
+                    {/* 解答権順序の表示 (playingフェーズかつdeclarationOrderが存在する場合) */}
+                    {game && game.phase === 'playing' && game.declarationOrder && game.declarationOrder.includes(player.id) && (
+                      <span className="ml-2 text-xs text-gray-500">
+                        (解答権: {game.declarationOrder.indexOf(player.id) + 1})
+                      </span>
+                    )}
                   </span>
                   {/* game が存在するならスコア表示 */}
                   <span className="font-bold">{game && game.scores[player.id] !== undefined ? `${game.scores[player.id]}pt` : '0pt'}</span>

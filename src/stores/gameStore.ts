@@ -22,8 +22,8 @@ export interface MultiplayerGameState { // exportを追加
   remainingCards: number; // 残りカード数
   totalCards: number; // 全カード数
   winner: Player | null; // ゲームの勝者
+  declarationOrder?: string[]; // 解答権の順序 (プレイヤーIDの配列)
 }
-// --- ここまで ---
 
 
 interface GameStore {

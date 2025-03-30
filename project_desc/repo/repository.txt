@@ -689,10 +689,6 @@ Okay, here is the source code description for each file, formatted as you reques
 
 * Short description: Defines TypeScript interfaces for WebSocket communication events between the server and client using Socket.IO[cite: 540, 541, 542, 543]. It specifies the event names and payload types for both `ServerToClientEvents` and `ClientToServerEvents`, and defines the `GameSocket` type by combining these with the base Socket type[cite: 544].
 
-<![CDATA[================================================================
-Added Files
-================================================================
-
 ### server/src/types/game.ts
 
 * Short description: Defines TypeScript types for multiplayer game state management.
@@ -802,7 +798,51 @@ Added/Modified Frontend Components/Hooks/Stores (Issue #7)
 * SocketService (Class - Singleton)
   * short description: Added methods to emit new game-related events (`startGame`, `declareMoves`, `moveRobot`, `getAvailableRooms`). Added methods to register listeners for new server-sent game events (`onGameStarted`, `onGameStateUpdated`, etc.). Refined the `emit` helper and listener registration logic.
   * input / output: Provides methods for components/stores to interact with the WebSocket server.
-]]>
+
+
+<![CDATA[<![CDATA[
+---
+file name: server/src/types/game.ts
+classname: MultiplayerGameState (Interface)
+property name: declarationOrder?
+short description: Optional array of player IDs representing the order in which players are eligible to present their solution, sorted by declared moves and timestamp.
+input / output: type: string[] | undefined
+
+---
+file name: server/src/services/gameManager.ts
+classname: GameManager
+function name: endDeclarationPhase (private)
+short description: Modified to sort valid declarations by moves (asc) then timestamp (asc), store the resulting player order in `gameState.declarationOrder`, and set the first player in the order as the `currentPlayer` to start the solution phase. If no valid declarations, proceeds to draw the next card.
+input / output: Takes no input. Returns `void`. Modifies `gameState.phase`, `gameState.declarationOrder`, `gameState.currentPlayer`. Calls `startSolutionPhase()` or `drawNextCard()`.
+
+---
+file name: server/src/services/gameManager.ts
+classname: GameManager
+function name: failCurrentSolution (private)
+short description: Modified to remove the current player from `gameState.declarationOrder`. If players remain in the order, sets the next player as `currentPlayer` and starts their solution phase. Otherwise, draws the next card.
+input / output: Takes no input. Returns `void`. Modifies `gameState.declarationOrder`, `gameState.currentPlayer`. Calls `startSolutionPhase()` or `drawNextCard()`.
+
+---
+file name: server/src/services/gameManager.ts
+classname: GameManager
+function name: moveToNextPlayer (private)
+short description: Removed. Logic is now handled within `failCurrentSolution`.
+input / output: N/A
+
+---
+file name: src/stores/gameStore.ts
+classname: MultiplayerGameState (Interface)
+property name: declarationOrder?
+short description: Optional array of player IDs representing the order in which players are eligible to present their solution. Added to align with backend changes.
+input / output: type: string[] | undefined
+
+---
+file name: src/pages/GamePage.tsx
+classname: GamePage (Function Component)
+function name: (JSX rendering)
+short description: Modified the player list rendering to display the declaration order (e.g., "(解答権: 1)") next to the player's name during the 'playing' phase, using the `game.declarationOrder` state from `useGameStore`.
+input / output: N/A (UI rendering change)
+]]>]]>
 
 ================================================================
 End of Codebase
