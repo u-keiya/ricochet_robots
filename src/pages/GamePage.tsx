@@ -91,10 +91,10 @@ const GamePage: FC = () => {
   // --- ここまで ---
 
   // --- UI表示のための準備 ---
-  // ゲームが存在しない、またはボードがない場合はローディング表示などを検討
-  if (!game || !game.board || !currentRoom) { // currentRoomもチェック
+  // currentRoom がない場合はローディング表示
+  if (!currentRoom) {
     // TODO: もっと良いローディング表示/エラー表示
-    return <div className="p-4">ゲームデータを読み込み中...</div>;
+    return <div className="p-4">ルーム情報を読み込み中...</div>;
   }
   // players をオブジェクトから配列に変換
   const playersArray = Object.values(currentRoom.players);
@@ -134,7 +134,8 @@ const GamePage: FC = () => {
                 <div
                   key={player.id}
                   className={`flex justify-between items-center p-2 rounded ${
-                    player.id === game.currentPlayerTurn ? 'bg-blue-100 ring-2 ring-blue-300' : 'bg-gray-50' // 手番プレイヤーを強調
+                    // game が存在する かつ 手番プレイヤーの場合に強調
+                    game && player.id === game.currentPlayerTurn ? 'bg-blue-100 ring-2 ring-blue-300' : 'bg-gray-50'
                   } ${
                     !player.connected ? 'opacity-50' : '' // 非接続プレイヤーを薄く表示
                   }`}
@@ -145,16 +146,18 @@ const GamePage: FC = () => {
                     {player.id === currentRoom.hostId && ' (Host)'} {/* ホスト表示 */}
                     {player.id === currentPlayer?.id && ' (You)'} {/* 自分を表示 */}
                   </span>
-                  <span className="font-bold">{game.scores[player.id] ?? 0}pt</span> {/* game.scoresを使用 */}
+                  {/* game が存在するならスコア表示 */}
+                  <span className="font-bold">{game && game.scores[player.id] !== undefined ? `${game.scores[player.id]}pt` : '0pt'}</span>
                 </div>
               ))}
             </div>
-             {/* 宣言表示 */}
-             {game.phase === 'declaration' || game.phase === 'playing' ? (
+             {/* 宣言表示 (game が存在する場合) */}
+             {game && (game.phase === 'declaration' || game.phase === 'playing') ? (
                 <div className="mt-4 pt-4 border-t">
                   <h3 className="text-md font-semibold mb-2">宣言</h3>
                   <div className="space-y-1 text-sm">
-                    {game.declarations.map(decl => (
+                    {/* game.declarations が存在する場合 */}
+                    {game.declarations && game.declarations.map(decl => (
                       <div key={decl.playerId} className="flex justify-between">
                         {/* playersArray を使用して find */}
                         <span>{playersArray.find((p: Player) => p.id === decl.playerId)?.name ?? '不明'}</span>
@@ -169,18 +172,23 @@ const GamePage: FC = () => {
           {/* メインエリア - ゲームボードと宣言 */}
           <div className="col-span-2 bg-white rounded-lg shadow p-4 flex flex-col">
             <div className="aspect-square flex items-center justify-center flex-grow">
-              <GameBoard
-                board={game.board} // game.boardを使用
-                onRobotMove={handleRobotMove} // 修正
-                // 自分のターンか、かつ solution フェーズか
-                isPlayerTurn={game.phase === 'playing' && game.currentPlayerTurn === currentPlayer?.id}
-              />
+              {/* game と game.board が存在するなら GameBoard を表示 */}
+              {game && game.board ? (
+                <GameBoard
+                  board={game.board}
+                  onRobotMove={handleRobotMove}
+                  // 自分のターンか、かつ playing フェーズか
+                  isPlayerTurn={game.phase === 'playing' && game.currentPlayerTurn === currentPlayer?.id}
+                />
+              ) : (
+                <div className="text-gray-500">ボードを待っています...</div>
+              )}
             </div>
-             {/* 宣言カードリスト */}
-             {game.phase === 'declaration' && (
+             {/* 宣言カードリスト (game が存在する場合) */}
+             {game && game.phase === 'declaration' && (
               <div className="mt-4 pt-4 border-t">
                 <DeclarationCardList
-                  selectedNumber={game.declarations.find(d => d.playerId === currentPlayer?.id)?.moves ?? null}
+                  selectedNumber={game.declarations?.find(d => d.playerId === currentPlayer?.id)?.moves ?? null}
                   maxNumber={30} // 仮の最大手数
                   onSelect={handleDeclareMoves}
                   className="mt-2"
@@ -191,26 +199,28 @@ const GamePage: FC = () => {
 
           {/* 右サイドバー - ゲーム情報と操作 */}
           <div className="col-span-1 space-y-4">
-            {/* ラウンド情報 */}
-            <div className="bg-white rounded-lg shadow p-4">
-              <h2 className="text-lg font-bold mb-2">ゲーム情報</h2>
-              <div className="text-sm space-y-1">
-                <p>フェーズ: {getPhaseText(game.phase)}</p> {/* game.phaseを使用し、テキスト変換 */}
-                <p>残り時間: {game.timer}秒</p> {/* game.timerを使用 */}
-                <p>残りカード: {game.remainingCards} / {game.totalCards}</p> {/* カード情報 */}
-                {game.currentCard && (
-                  <div className="mt-2 p-2 border rounded flex items-center justify-center space-x-2">
-                    <span className={`font-bold text-xl ${getTargetColorClass(game.currentCard.color)}`}>
-                      {game.currentCard.symbol}
-                    </span>
-                    <span>({game.currentCard.color})</span>
-                  </div>
-                )}
+            {/* ラウンド情報 (game が存在する場合) */}
+            {game && (
+              <div className="bg-white rounded-lg shadow p-4">
+                <h2 className="text-lg font-bold mb-2">ゲーム情報</h2>
+                <div className="text-sm space-y-1">
+                  <p>フェーズ: {getPhaseText(game.phase)}</p>
+                  <p>残り時間: {game.timer}秒</p>
+                  <p>残りカード: {game.remainingCards} / {game.totalCards}</p>
+                  {game.currentCard && (
+                    <div className="mt-2 p-2 border rounded flex items-center justify-center space-x-2">
+                      <span className={`font-bold text-xl ${getTargetColorClass(game.currentCard.color)}`}>
+                        {game.currentCard.symbol}
+                      </span>
+                      <span>({game.currentCard.color})</span>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* ゲームコントロール */}
-            {currentRoom?.hostId === currentPlayer?.id && game.phase === 'waiting' && ( // ホストかつ待機中のみ表示
+            {/* ゲームコントロール (ホスト用, game が null でも表示) */}
+            {currentRoom.hostId === currentPlayer?.id && (!game || game.phase === 'waiting') && (
               <div className="bg-white rounded-lg shadow p-4">
                 <h2 className="text-lg font-bold mb-2">操作</h2>
                 <div className="space-y-2">
@@ -225,8 +235,8 @@ const GamePage: FC = () => {
                 </div>
               </div>
             )}
-             {/* 勝者表示 */}
-             {game.phase === 'finished' && (
+             {/* 勝者表示 (game が存在する場合) */}
+             {game && game.phase === 'finished' && (
                 <div className="bg-white rounded-lg shadow p-4 text-center">
                   <h2 className="text-lg font-bold mb-2">ゲーム終了！</h2>
                   {game.winner ? (
