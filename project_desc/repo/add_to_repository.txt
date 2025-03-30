@@ -1,4 +1,4 @@
-================================================================
+<![CDATA[================================================================
 Added Files
 ================================================================
 
@@ -77,3 +77,38 @@ TODO:
 1. Card deck implementation
 2. Goal achievement validation logic
 3. Integration with Socket.IO events
+
+================================================================
+Added/Modified Frontend Components/Hooks/Stores (Issue #7)
+================================================================
+
+### src/stores/gameStore.ts
+
+* useGameStore (Zustand Hook/Store)
+  * short description: Extended to manage multiplayer game state (`game`) including board, phase, timer, declarations, scores, etc. Added actions (`startGame`, `declareMoves`, `moveRobot`) to interact with the server via Socket.IO. Added listeners for server-sent game events (`gameStarted`, `gameStateUpdated`, etc.) to update the local state.
+  * input / output: Provides game state and actions to components.
+
+### src/pages/GamePage.tsx
+
+* GamePage (Function Component)
+  * short description: Refactored to use `useGameStore` for multiplayer game state and actions. Displays player list with scores and connection status, game board, game info (phase, timer, card), declarations, and game controls (start game button for host). Renders `DeclarationCardList` during the declaration phase. Handles player turns and game over display.
+  * input / output: Takes no props. Renders the main game UI. Uses `useGameStore`, `GameBoard`, `DeclarationCardList`.
+
+### src/components/DeclarationCard.tsx
+
+* DeclarationCardList (Function Component)
+  * short description: Modified `selectedNumber` prop to accept `number | null`. Adjusted internal logic to handle `null` value for `selectedNumber` when calculating disabled state.
+  * input / output: Takes `selectedNumber: number | null`, `maxNumber: number`, `onSelect: (num: number) => void`. Returns JSX.
+
+### src/types/socket.ts
+
+* ServerToClientEvents / ClientToServerEvents (Interfaces)
+  * short description: Added event definitions for multiplayer game interactions: `gameStarted`, `gameStateUpdated`, `declarationMade`, `turnChanged`, `solutionAttemptResult`, `gameOver`, `startGame`, `declareMoves`, `moveRobot`, `getAvailableRooms`, `availableRoomsUpdated`. Updated existing event payloads for consistency.
+  * input / output: Defines the contract for client-server communication via Socket.IO.
+
+### src/services/socketService.ts
+
+* SocketService (Class - Singleton)
+  * short description: Added methods to emit new game-related events (`startGame`, `declareMoves`, `moveRobot`, `getAvailableRooms`). Added methods to register listeners for new server-sent game events (`onGameStarted`, `onGameStateUpdated`, etc.). Refined the `emit` helper and listener registration logic.
+  * input / output: Provides methods for components/stores to interact with the WebSocket server.
+]]>
