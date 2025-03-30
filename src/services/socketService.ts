@@ -92,9 +92,39 @@ private emit<Event extends keyof ClientToServerEvents>(
     this.emit('register', name);
   }
 
-  public createRoom(options: { name: string; password?: string }): void {
-    this.emit('createRoom', options);
+  // Promise を返すように変更
+  public createRoom(options: { name: string; password?: string }): Promise<Room> {
+    return new Promise((resolve, reject) => {
+      if (!this.socket) {
+        return reject(new Error('Socket not connected'));
+      }
+
+      // タイムアウト処理
+      const timeout = setTimeout(() => {
+        // リスナーを削除
+        this.socket?.off('roomCreated');
+        this.socket?.off('error');
+        reject(new Error('Room creation timed out'));
+      }, 10000); // 10秒タイムアウト
+
+      // 一時的なリスナーを設定
+      this.socket.once('roomCreated', (room: Room) => {
+        clearTimeout(timeout);
+        this.socket?.off('error'); // エラーリスナーも削除
+        resolve(room);
+      });
+
+      this.socket.once('error', (error: { message: string }) => {
+        clearTimeout(timeout);
+        this.socket?.off('roomCreated'); // roomCreatedリスナーも削除
+        // エラーメッセージにイベントの種類を追加するとデバッグしやすい
+        reject(new Error(`Room creation failed: ${error.message}`));
+      });
+
+      this.emit('createRoom', options);
+    });
   }
+
 
   public joinRoom(roomId: string, password?: string): void {
     this.emit('joinRoom', { roomId, password }); // payloadオブジェクトに変更

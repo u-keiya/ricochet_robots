@@ -39,8 +39,8 @@ interface GameStore {
   connect: () => Promise<void>;
   disconnect: () => void;
   registerPlayer: (name: string) => void;
-  createRoom: (options: { name: string; password?: string }) => void;
-  joinRoom: (roomId: string, password?: string) => void;
+  createRoom: (options: { name: string; password?: string }) => Promise<Room>; // Promise<Room> を返すように変更
+  joinRoom: (roomId: string, password?: string) => void; // TODO: joinRoomもPromise化を検討
   leaveRoom: () => void;
   setConnectionError: (error: string | null) => void;
   // --- ゲームアクションを追加 ---
@@ -180,9 +180,22 @@ const useGameStore = create<GameStore>((set, get) => ({
     socketService.registerPlayer(name);
   },
 
-  createRoom: (options: { name: string; password?: string }) => {
+  // async にし、Promise<Room> を返すように変更
+  createRoom: async (options: { name: string; password?: string }): Promise<Room> => {
     const socketService = SocketService.getInstance();
-    socketService.createRoom(options);
+    set({ connectionError: null }); // エラーをクリア
+    try {
+      // socketService.createRoom を呼び出し、結果を待つ
+      const room = await socketService.createRoom(options);
+      // 成功した場合、状態を更新 (サーバーからの roomCreated イベントでも更新されるが、即時反映のため)
+      // set({ currentRoom: room }); // roomCreatedイベントで更新されるので不要かも
+      return room; // 成功した Room オブジェクトを返す
+    } catch (error) {
+      console.error('[GameStore] Failed to create room:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error creating room';
+      set({ connectionError: errorMessage });
+      throw error; // エラーを再スローして呼び出し元で処理できるようにする
+    }
   },
 
   joinRoom: (roomId: string, password?: string) => {
