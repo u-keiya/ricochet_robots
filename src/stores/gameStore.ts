@@ -23,6 +23,7 @@ export interface MultiplayerGameState { // exportを追加
   totalCards: number; // 全カード数
   winner: Player | null; // ゲームの勝者
   declarationOrder?: string[]; // 解答権の順序 (プレイヤーIDの配列)
+  rankings?: { playerId: string; score: number; rank: number }[]; // ゲーム終了時のランキング
 }
 
 
