@@ -227,16 +227,7 @@ const GamePage: FC = () => {
             )}
 
             {/* ゲームコントロール (ホスト用, game が null でも表示) */}
-            {(() => { // ★ デバッグ用ログ出力のための即時関数
-              console.log('[GamePage] Button Check:', {
-                isHost: currentRoom.hostId === currentPlayer?.id,
-                hostId: currentRoom.hostId,
-                currentPlayerId: currentPlayer?.id,
-                isWaitingPhase: !game || game?.phase === 'waiting',
-                gamePhase: game?.phase,
-              });
-              return currentRoom.hostId === currentPlayer?.id && (!game || game.phase === 'waiting');
-            })() && (
+            {currentRoom.hostId === currentPlayer?.id && (!game || game.phase === 'waiting') && (
               <div className="bg-white rounded-lg shadow p-4">
                 <h2 className="text-lg font-bold mb-2">操作</h2>
                 <div className="space-y-2">
