@@ -271,9 +271,8 @@ const useGameStore = create<GameStore>((set, get) => ({
     const { currentRoom } = get();
     if (currentRoom) {
       const socketService = SocketService.getInstance();
-      // TODO: Implement startGame event emission
       console.log(`[GameStore] Requesting game start for room: ${currentRoom.id}`);
-      // socketService.startGame(currentRoom.id); // Assuming SocketService has this method
+      socketService.startGame(currentRoom.id); // Call the startGame method on socketService
     } else {
       console.error('[GameStore] Cannot start game without being in a room.');
     }
