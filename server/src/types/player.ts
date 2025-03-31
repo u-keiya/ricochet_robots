@@ -1,16 +1,13 @@
 export interface Player {
-  id: string;
+  id: string; // socket.id と同じ
   name: string;
   roomId: string | null;
   score: number;
   connected: boolean;
   isHost: boolean;
+  lastConnected: Date; // 最終接続時刻を追加
 }
 
-export interface PlayerSession {
-  playerId: string;
-  socketId: string;
-  lastConnected: Date;
-}
+// PlayerSession は不要になったため削除
 
 export type PlayerStatus = 'connected' | 'disconnected' | 'reconnecting';

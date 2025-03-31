@@ -4,9 +4,9 @@ import { Player } from '../../types/player';
 import { GamePhase, RobotColor, GameRules, MultiplayerGameState } from '../../types/game';
 
 const mockPlayers: Player[] = [
-  { id: 'player1', name: 'Player 1', roomId: '', score: 0, connected: true, isHost: false },
-  { id: 'player2', name: 'Player 2', roomId: '', score: 0, connected: true, isHost: false },
-  { id: 'player3', name: 'Player 3', roomId: '', score: 0, connected: true, isHost: false }
+  { id: 'player1', name: 'Player 1', roomId: '', score: 0, connected: true, isHost: false, lastConnected: new Date() },
+  { id: 'player2', name: 'Player 2', roomId: '', score: 0, connected: true, isHost: false, lastConnected: new Date() },
+  { id: 'player3', name: 'Player 3', roomId: '', score: 0, connected: true, isHost: false, lastConnected: new Date() }
 ];
 
 const testRules: GameRules = {
