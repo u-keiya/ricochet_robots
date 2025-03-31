@@ -32,3 +32,10 @@ classname: GameManager
 function name: endGame (private)
 short description: Sets the game phase to FINISHED, clears timers, and calculates final player rankings based on scores.
 input / output: Takes no input. Returns `void`. Modifies `gameState.phase`, `gameState.rankings`. Calls `cleanup()`.
+
+---
+file name: src/components/GameResultDisplay.tsx
+classname: GameResultDisplay (Function Component)
+function name: GameResultDisplay
+short description: Displays the game results including rankings and final scores when the game phase is 'finished'. Retrieves ranking data from useGameStore and maps player names.
+input / output: Props: `players: Player[]`, `onLeaveRoom: () => void`. Returns JSX.
