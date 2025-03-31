@@ -2,7 +2,28 @@ import { create } from 'zustand';
 import { Player } from '../types/player';
 import { Room, RoomSummary } from '../types/room';
 import SocketService from '../services/socketService';
-import { Board, Card, GamePhase, Position, RobotColor } from '../types/game'; // GameState関連の型をインポート
+import { Board, Card, GamePhase, Position, RobotColor, GameState } from '../types/game'; // GameState関連の型をインポート
+
+// --- 型ガード関数 ---
+function isMultiplayerGameState(state: any): state is MultiplayerGameState {
+  return (
+    state !== null &&
+    typeof state === 'object' &&
+    'board' in state && // board が null の可能性もあるが、プロパティ自体は存在するはず
+    'currentCard' in state &&
+    'phase' in state &&
+    'timer' in state &&
+    'declarations' in state &&
+    'currentPlayerTurn' in state &&
+    'scores' in state &&
+    'moveHistory' in state &&
+    'remainingCards' in state &&
+    'totalCards' in state
+    // winner, declarationOrder, rankings はオプショナルなのでチェック不要
+  );
+}
+// --- ここまで ---
+
 
 // --- マルチプレイヤーゲーム状態の型定義を追加 ---
 interface Declaration {
@@ -79,20 +100,43 @@ const useGameStore = create<GameStore>((set, get) => ({
       });
 
       socketService.onRoomJoined((room) => {
-        set({ currentRoom: room });
+        set((state) => {
+          // 自分のプレイヤー情報がルームにあれば currentPlayer を更新
+          const myPlayerInfo = room.players[state.currentPlayer?.id ?? ''];
+          return {
+            currentRoom: room,
+            // ルーム参加時はゲーム状態をリセット (サーバーから gameStarted が来るまで null)
+            game: null,
+            // 自分の情報がルームにあれば currentPlayer を更新、なければ null のまま
+            currentPlayer: myPlayerInfo ? { ...state.currentPlayer, ...myPlayerInfo } : state.currentPlayer,
+          };
+        });
       });
 
       socketService.onRoomLeft(() => {
-        set({ currentRoom: null });
+        // ルーム退出時はゲーム状態もリセット
+        set({ currentRoom: null, game: null });
       });
 
       socketService.onRoomUpdated((room) => {
-        const { currentRoom } = get();
+        const { currentRoom } = get(); // get() は set の外で使う
         if (currentRoom && currentRoom.id === room.id) {
-          set({ currentRoom: room });
+          set((state) => { // set の中で get() を使わないように state を使う
+            const myPlayerInfo = room.players[state.currentPlayer?.id ?? ''];
+            // サーバーから送られてきた gameState を使う
+            // 型ガード関数を使用して MultiplayerGameState かどうかをチェック
+            const nextGameState = isMultiplayerGameState(room.gameState)
+              ? room.gameState // 型ガードが成功すれば安全に割り当て可能
+              : state.game; // それ以外は既存の state.game を維持
+            return {
+              currentRoom: room,
+              game: nextGameState,
+              // 自分の情報がルームにあれば currentPlayer を更新
+              currentPlayer: myPlayerInfo ? { ...state.currentPlayer, ...myPlayerInfo } : state.currentPlayer,
+            };
+          });
         }
       });
-
       // ルームリスト更新リスナーを追加
       socketService.onAvailableRoomsUpdated((rooms) => {
         set({ availableRooms: rooms });
