@@ -23,3 +23,20 @@ classname: RoomManager
 function name: joinRoom
 short description: Modified the first parameter to accept a Player object instead of just a playerId string. Updates the passed Player object's roomId, isHost, connected, and lastConnected properties upon successful join.
 input / output: Takes `player: Player`, `roomId: string`, `password?: string`. Returns `boolean`. Modifies the input `player` object and the room's `players` map.
+---
+file name: src/stores/gameStore.ts
+function name: (event handler) 'onRoomJoined'
+short description: Modified to update 'currentPlayer' based on the joined room's player list and reset 'game' state to null upon joining a room.
+input / output: Takes 'room: Room'. Updates 'currentRoom', 'game', and 'currentPlayer' state.
+
+---
+file name: src/stores/gameStore.ts
+function name: (event handler) 'onRoomUpdated'
+short description: Modified to update 'currentPlayer' based on the updated room's player list. Added a type guard 'isMultiplayerGameState' to safely update the 'game' state using 'room.gameState' only if it conforms to the 'MultiplayerGameState' interface.
+input / output: Takes 'room: Room'. Updates 'currentRoom', 'game', and 'currentPlayer' state.
+
+---
+file name: src/stores/gameStore.ts
+function name: isMultiplayerGameState (Type Guard)
+short description: Added a type guard function to check if a given state object has all the necessary properties of the 'MultiplayerGameState' interface. Used within 'onRoomUpdated' handler for safer type assertion.
+input / output: Takes 'state: any'. Returns 'boolean' (true if state is MultiplayerGameState).
