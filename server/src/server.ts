@@ -3,7 +3,7 @@ import { createServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import dotenv from 'dotenv';
 import { RoomManager } from './services/roomManager';
-import { Player, PlayerSession } from './types/player';
+import { Player } from './types/player'; // PlayerSession のインポートを削除
 import winston from 'winston';
 
 // 環境変数の読み込み
@@ -33,19 +33,19 @@ const io = new Server(httpServer, {
 });
 
 const roomManager = new RoomManager();
-const sessions = new Map<string, PlayerSession>();
+const sessions = new Map<string, Player>(); // 型を Map<string, Player> に変更
 
-// 接続中のプレイヤーを定期的にチェック
+// 接続中のプレイヤーを定期的にチェック (lastConnected を使用)
 setInterval(() => {
   const now = Date.now();
-  for (const [socketId, session] of sessions.entries()) {
-    const timeSinceLastConnection = now - session.lastConnected.getTime();
+  for (const [socketId, player] of sessions.entries()) {
+    const timeSinceLastConnection = now - player.lastConnected.getTime();
     if (timeSinceLastConnection > 30000) { // 30秒以上接続がない場合
       const socket = io.sockets.sockets.get(socketId);
       if (socket) {
         socket.disconnect(true);
       }
-      sessions.delete(socketId);
+      // disconnect イベントハンドラで sessions.delete が呼ばれる
     }
   }
 }, 10000);
@@ -67,17 +67,13 @@ io.on('connection', (socket: Socket) => {
         roomId: null,
         score: 0,
         connected: true,
-        isHost: false
+        isHost: false,
+        lastConnected: new Date() // lastConnected を追加
       };
 
-      sessions.set(socket.id, {
-        playerId,
-        socketId: socket.id,
-        lastConnected: new Date()
-      });
+      sessions.set(socket.id, player); // Player オブジェクトを保存
 
-      // ★ 修正: 完全な Player オブジェクトを送信する
-      socket.emit('registered', player);
+      socket.emit('registered', player); // 完全な Player オブジェクトを送信
       logger.info(`Player registered: ${name} (${playerId})`);
     } catch (error) {
       logger.error('Error in register:', error);
@@ -88,40 +84,47 @@ io.on('connection', (socket: Socket) => {
   socket.on('createRoom', ({ name, password, maxPlayers }: { name: string, password?: string, maxPlayers?: number }) => {
     try {
       const playerId = socket.id;
-      const player: Player = {
-        id: playerId,
-        name: sessions.get(socket.id)?.playerId || 'Unknown Player',
-        roomId: null,
-        score: 0,
-        connected: true,
-        isHost: true
-      };
+      const player = sessions.get(playerId); // sessions から Player を取得
+
+      if (!player) {
+        throw new Error('Player not registered');
+      }
+
+      player.isHost = true; // 取得した Player の isHost を設定
+      player.lastConnected = new Date(); // アクティビティ更新
 
       const room = roomManager.createRoom(player, { name, password, maxPlayers });
+      player.roomId = room.id; // Player オブジェクトに roomId を設定
       socket.join(room.id);
-      // ★ 修正: Room オブジェクト全体を送信する
-      socket.emit('roomCreated', room);
+      socket.emit('roomCreated', room); // Room オブジェクト全体を送信
       io.emit('roomListUpdated', roomManager.getRoomSummaries());
       logger.info(`Room created: ${room.id} by ${player.name}`);
     } catch (error) {
       logger.error('Error in createRoom:', error);
-      socket.emit('error', { message: 'Failed to create room' });
+      socket.emit('error', { message: error instanceof Error ? error.message : 'Failed to create room' });
     }
   });
 
   socket.on('joinRoom', ({ roomId, password }: { roomId: string, password?: string }) => {
     try {
       const playerId = socket.id;
-      if (roomManager.joinRoom(playerId, roomId, password)) {
+      const player = sessions.get(playerId); // sessions から Player を取得
+
+      if (!player) {
+        throw new Error('Player not registered');
+      }
+      player.lastConnected = new Date(); // アクティビティ更新
+
+      if (roomManager.joinRoom(player, roomId, password)) { // joinRoom に Player オブジェクトを渡すように変更
+        player.roomId = roomId; // Player オブジェクトに roomId を設定
         socket.join(roomId);
         const room = roomManager.getRoom(roomId);
         if (room) {
-          socket.to(roomId).emit('playerJoined', {
-            playerId,
-            name: sessions.get(socket.id)?.playerId || 'Unknown Player'
-          });
+          // 他のプレイヤーに通知する際は、完全な Player オブジェクトを渡す方が良いかもしれない
+          socket.to(roomId).emit('playerJoined', player); // playerJoined イベントに Player オブジェクトを渡す
           socket.emit('roomJoined', { room });
           io.emit('roomListUpdated', roomManager.getRoomSummaries());
+          logger.info(`Player ${player.name} joined room ${roomId}`);
         }
       }
     } catch (error) {
@@ -133,41 +136,55 @@ io.on('connection', (socket: Socket) => {
   socket.on('leaveRoom', ({ roomId }: { roomId: string }) => {
     try {
       const playerId = socket.id;
+      const player = sessions.get(playerId);
+
+      if (!player) {
+        throw new Error('Player not found in session');
+      }
+
       if (roomManager.leaveRoom(playerId, roomId)) {
+        player.roomId = null; // Player オブジェクトの roomId をリセット
         socket.leave(roomId);
         socket.to(roomId).emit('playerLeft', { playerId });
         io.emit('roomListUpdated', roomManager.getRoomSummaries());
+        logger.info(`Player ${player.name} left room ${roomId}`);
       }
     } catch (error) {
       logger.error('Error in leaveRoom:', error);
-      socket.emit('error', { message: 'Failed to leave room' });
+      socket.emit('error', { message: error instanceof Error ? error.message : 'Failed to leave room' });
     }
   });
 
   socket.on('disconnect', () => {
     try {
-      const session = sessions.get(socket.id);
-      if (session) {
-        const room = Array.from(roomManager.getRoomSummaries())
-          .find(room => roomManager.getRoom(room.id)?.players.has(session.playerId));
-        
-        if (room) {
-          roomManager.updatePlayerConnection(session.playerId, room.id, false);
-          socket.to(room.id).emit('playerDisconnected', { playerId: session.playerId });
+      const player = sessions.get(socket.id); // Player オブジェクトを取得
+      if (player) {
+        logger.info(`Player disconnecting: ${player.name} (${socket.id})`);
+        if (player.roomId) {
+          try {
+            roomManager.updatePlayerConnection(player.id, player.roomId, false);
+            socket.to(player.roomId).emit('playerDisconnected', { playerId: player.id });
+            logger.info(`Notified room ${player.roomId} about player ${player.name} disconnection`);
+            // ホスト交代ロジックは roomManager.leaveRoom にあるため、ここでは不要
+          } catch (roomError) {
+             logger.error(`Error updating player connection status in room ${player.roomId} for player ${player.id}:`, roomError);
+          }
         }
+        sessions.delete(socket.id); // セッションから削除
+        logger.info(`Player ${player.name} removed from sessions.`);
+      } else {
+         logger.warn(`Disconnect event for unknown socket ID: ${socket.id}`);
       }
-      sessions.delete(socket.id);
-      logger.info(`Disconnected: ${socket.id}`);
     } catch (error) {
-      logger.error('Error in disconnect:', error);
+      logger.error('Error in disconnect handler:', error);
     }
   });
 
   // ヘルスチェック
   socket.on('ping', () => {
-    const session = sessions.get(socket.id);
-    if (session) {
-      session.lastConnected = new Date();
+    const player = sessions.get(socket.id); // Player オブジェクトを取得
+    if (player) {
+      player.lastConnected = new Date(); // lastConnected を更新
       socket.emit('pong');
     }
   });
@@ -176,7 +193,7 @@ io.on('connection', (socket: Socket) => {
 const PORT = process.env.PORT || 3001;
 const HOST = process.env.HOST || 'localhost';
 
-httpServer.listen(PORT, () => {
+httpServer.listen(Number(PORT), HOST, () => { // PORT を数値に変換
   logger.info(`Server is running on http://${HOST}:${PORT}`);
 });
 
