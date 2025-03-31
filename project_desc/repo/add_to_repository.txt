@@ -87,3 +87,9 @@ classname: JoinRoomPage (Function Component)
 function name: (useEffect hook for player registration)
 short description: Modified the condition to trigger player registration (`registerPlayer`) to also check for the presence of `socketId` in the `gameStore` state, ensuring registration only happens after a successful connection with an ID. Added `socketId` to the dependency array.
 input / output: Uses `isConnected`, `socketId`, `currentPlayer`, `isConnecting` from `useGameStore`. Calls `registerPlayer`.
+---
+file name: src/stores/gameStore.ts
+classname: useGameStore (Zustand Hook/Store)
+function name: startGame (Action)
+short description: Uncommented the call to `socketService.startGame` to ensure the 'startGame' event is emitted to the server when the action is called.
+input / output: Takes no input. Calls `socketService.startGame` with `currentRoom.id`.
