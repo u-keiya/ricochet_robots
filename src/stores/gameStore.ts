@@ -55,6 +55,7 @@ interface GameStore {
   currentPlayer: Player | null;
   currentRoom: Room | null;
   availableRooms: RoomSummary[];
+  socketId: string | null; // Add socketId state
   // --- マルチプレイヤーゲーム状態を追加 ---
   game: MultiplayerGameState | null; // ゲーム全体の状態
   // --- ここまで ---
@@ -79,20 +80,23 @@ const useGameStore = create<GameStore>((set, get) => ({
   currentPlayer: null,
   currentRoom: null,
   availableRooms: [],
+  socketId: null, // Initial value
   // --- ゲーム状態の初期値を追加 ---
   game: null,
   // --- ここまで ---
 
   connect: async () => {
     const socketService = SocketService.getInstance();
-    set({ isConnecting: true, connectionError: null });
+    set({ isConnecting: true, connectionError: null, socketId: null }); // Reset socketId
 
     try {
-      await socketService.connect();
-      set({ isConnected: true, isConnecting: false });
+      const connectedSocketId = await socketService.connect(); // Get socket ID
+      set({ isConnected: true, isConnecting: false, socketId: connectedSocketId }); // Store socket ID
 
       socketService.onPlayerRegistered((player) => {
+        console.log('[GameStore] Received playerRegistered event:', player); // ログ追加
         set({ currentPlayer: player });
+        console.log('[GameStore] currentPlayer state updated.'); // ログ追加
       });
 
       socketService.onRoomCreated((room) => {
@@ -203,6 +207,7 @@ const useGameStore = create<GameStore>((set, get) => ({
         isConnected: false,
         isConnecting: false,
         connectionError: error instanceof Error ? error.message : 'Unknown error occurred',
+        socketId: null, // Reset socketId on error
       });
     }
   },
@@ -217,6 +222,7 @@ const useGameStore = create<GameStore>((set, get) => ({
       currentRoom: null,
       availableRooms: [],
       game: null, // ゲーム状態もリセット
+      socketId: null, // Reset socketId on disconnect
     });
   },
 

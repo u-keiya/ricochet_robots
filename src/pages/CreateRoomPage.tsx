@@ -14,6 +14,7 @@ const CreateRoomPage: React.FC = () => {
     currentRoom,
     registerPlayer, // registerPlayer を取得
     currentPlayer, // currentPlayer を取得
+    socketId, // socketId を取得
   } = useGameStore();
 
   useEffect(() => {
@@ -24,13 +25,15 @@ const CreateRoomPage: React.FC = () => {
 
   // 接続成功後、プレイヤーが未登録なら登録する
   useEffect(() => {
-    if (isConnected && !currentPlayer && !isConnecting) { // isConnectingもチェック
+    // socketId もチェック条件に追加
+    if (isConnected && socketId && !currentPlayer && !isConnecting) {
       // 仮のプレイヤー名。本来はユーザー入力などから取得
       const playerName = `Player_${Math.random().toString(36).substring(2, 7)}`;
-      console.log(`[CreateRoomPage] Registering player: ${playerName}`); // ログ追加
+      console.log(`[CreateRoomPage] Registering player: ${playerName} for socket ${socketId}`); // ログ更新
       registerPlayer(playerName);
     }
-  }, [isConnected, currentPlayer, registerPlayer, isConnecting]); // isConnectingを依存配列に追加
+    // socketId を依存配列に追加
+  }, [isConnected, socketId, currentPlayer, registerPlayer, isConnecting]);
 
   // useEffect フックは削除
 
