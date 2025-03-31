@@ -222,9 +222,10 @@ private endDeclarationPhase(): void {
     }
 
     // Remove the current player from the declaration order
+    // Penalty is no longer applied based on feedback
     if (this.gameState.declarationOrder) {
       this.gameState.declarationOrder = this.gameState.declarationOrder.filter(id => id !== currentPlayerId);
-    }
+    } // Add missing closing bracket
 
     // Check if there are remaining players in the order
     if (this.gameState.declarationOrder && this.gameState.declarationOrder.length > 0) {
@@ -258,7 +259,22 @@ private endDeclarationPhase(): void {
   private endGame(): void {
     this.cleanup(); // Clear any running timers
     this.gameState.phase = GamePhase.FINISHED;
-    // Optionally, calculate final rankings or perform other cleanup
+
+    // Calculate final rankings
+    const playerScores = Array.from(this.gameState.playerStates.entries())
+      .map(([playerId, state]) => ({ playerId, score: state.score }));
+
+    // Sort players by score descending
+    playerScores.sort((a, b) => b.score - a.score);
+
+    // Assign ranks (handle ties)
+    let rank = 1;
+    this.gameState.rankings = playerScores.map((player, index) => {
+      if (index > 0 && player.score < playerScores[index - 1].score) {
+        rank = index + 1;
+      }
+      return { ...player, rank };
+    });
   }
 
   public getGameState(): MultiplayerGameState {
