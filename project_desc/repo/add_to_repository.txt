@@ -1,0 +1,25 @@
+---
+file name: server/src/types/player.ts
+classname: Player (Interface)
+property name: lastConnected
+short description: Added property to track the last time the player's socket was active. Replaces the need for a separate PlayerSession interface.
+input / output: type: Date
+
+---
+file name: server/src/server.ts
+function name: (event handler) 'createRoom'
+short description: Modified to retrieve the existing Player object from the sessions map (created during 'register' event) instead of creating a new one. Sets the retrieved player's isHost and roomId properties before passing it to roomManager.createRoom.
+input / output: Uses socket ID to get Player from sessions map. Calls roomManager.createRoom with the retrieved Player. Emits 'roomCreated' with the Room object.
+
+---
+file name: server/src/server.ts
+function name: (event handler) 'joinRoom'
+short description: Modified to retrieve the existing Player object from the sessions map. Passes the retrieved Player object to roomManager.joinRoom. Updates the player's roomId upon successful join.
+input / output: Uses socket ID to get Player from sessions map. Calls roomManager.joinRoom with the retrieved Player. Emits 'playerJoined' with the Player object.
+
+---
+file name: server/src/services/roomManager.ts
+classname: RoomManager
+function name: joinRoom
+short description: Modified the first parameter to accept a Player object instead of just a playerId string. Updates the passed Player object's roomId, isHost, connected, and lastConnected properties upon successful join.
+input / output: Takes `player: Player`, `roomId: string`, `password?: string`. Returns `boolean`. Modifies the input `player` object and the room's `players` map.
