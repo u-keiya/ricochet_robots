@@ -327,34 +327,38 @@ describe('GameManager', () => {
   });
 
   describe('Score Management', () => {
-     beforeEach(() => {
-       gameManager.startGame();
-     });
+    beforeEach(() => {
+      gameManager.startGame();
+    });
 
-     it('should not apply penalties for failed attempts', () => {
-       // P1 declares 5, P2 declares 10
-       gameManager.declareMoves('player1', 5);
-       gameManager.declareMoves('player2', 10);
-       jest.advanceTimersByTime(testRules.declarationTimeLimit * 1000); // End declaration
+    it('should not apply penalties for failed attempts', () => {
+      // P1 declares 5, P2 declares 10
+      gameManager.declareMoves('player1', 5);
+      gameManager.declareMoves('player2', 10);
+      jest.advanceTimersByTime(testRules.declarationTimeLimit * 1000); // End declaration
 
-       // P1 attempts and fails
-       expect(gameManager.getGameState().currentPlayer).toBe('player1');
-       jest.advanceTimersByTime(testRules.solutionTimeLimit * 1000);
-       expect(gameManager.getGameState().playerStates.get('player1')?.score).toBe(0);
+      // P1 attempts and fails
+      expect(gameManager.getGameState().currentPlayer).toBe('player1');
+      jest.advanceTimersByTime(testRules.solutionTimeLimit * 1000);
+      // Player 1 fails, score should remain 0
+      expect(gameManager.getGameState().playerStates.get('player1')?.score).toBe(0);
 
-       // P2 attempts and fails
-       expect(gameManager.getGameState().currentPlayer).toBe('player2');
-       jest.advanceTimersByTime(testRules.solutionTimeLimit * 1000);
-       expect(gameManager.getGameState().playerStates.get('player2')?.score).toBe(0);
+      // P2 attempts and fails
+      expect(gameManager.getGameState().currentPlayer).toBe('player2');
+      jest.advanceTimersByTime(testRules.solutionTimeLimit * 1000);
+      // Player 2 fails, score should remain 0
+      expect(gameManager.getGameState().playerStates.get('player2')?.score).toBe(0);
 
-       // Round ends, check scores again
-       jest.advanceTimersByTime(1); // Ensure transition
-       expect(gameManager.getGameState().phase).toBe(GamePhase.DECLARATION);
-       expect(gameManager.getGameState().playerStates.get('player1')?.score).toBe(0);
-       expect(gameManager.getGameState().playerStates.get('player2')?.score).toBe(0);
-     });
+      // Round ends, check scores again (should remain 0)
+      jest.advanceTimersByTime(1); // Ensure transition
+      expect(gameManager.getGameState().phase).toBe(GamePhase.DECLARATION);
+      expect(gameManager.getGameState().playerStates.get('player1')?.score).toBe(0);
+      expect(gameManager.getGameState().playerStates.get('player2')?.score).toBe(0);
+      // Player 3 didn't attempt, score should be 0
+      expect(gameManager.getGameState().playerStates.get('player3')?.score).toBe(0);
+    });
 
-     it('should maintain cumulative scores (assuming success logic existed)', () => {
+    it('should maintain cumulative scores (assuming success logic existed)', () => {
        // This test is less meaningful without success logic,
        // but we can check that scores remain 0 after failed rounds.
        for (let round = 0; round < 2; round++) {
@@ -370,6 +374,30 @@ describe('GameManager', () => {
      });
 
      // TODO: Add tests for score increase on successful solution
+
+     it('should calculate rankings correctly at game end', () => {
+       // Mock scores before ending the game
+       // @ts-expect-error // Accessing private property for test setup
+       gameManager.gameState.playerStates.get('player1').score = 5;
+       // @ts-expect-error
+       gameManager.gameState.playerStates.get('player2').score = 10;
+       // @ts-expect-error
+       gameManager.gameState.playerStates.get('player3').score = 5; // Tie with player1
+
+       // Force game end by setting remaining cards to 1 and simulating a failed round
+       // @ts-expect-error
+       gameManager.gameState.remainingCards = 1;
+       simulateFailedRound(gameManager, mockPlayers, testRules);
+
+       const state = gameManager.getGameState();
+       expect(state.phase).toBe(GamePhase.FINISHED);
+       expect(state.rankings).toBeDefined();
+       expect(state.rankings).toEqual([
+         { playerId: 'player2', score: 10, rank: 1 },
+         { playerId: 'player1', score: 5, rank: 2 }, // Tied score, same rank
+         { playerId: 'player3', score: 5, rank: 2 }, // Tied score, same rank
+       ]);
+     });
    });
 
 });
