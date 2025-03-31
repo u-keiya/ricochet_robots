@@ -46,3 +46,44 @@ classname: CreateRoomForm (Function Component)
 function name: (Component Logic & JSX)
 short description: Modified to prevent room creation before player registration is confirmed. Fetches 'currentPlayer' from useGameStore. Disables the submit button and displays "プレイヤー情報登録中..." if 'currentPlayer' is null.
 input / output: Uses 'currentPlayer' from useGameStore state to control button 'disabled' state and text. Calls 'createRoom' action only when enabled.
+---
+file name: src/services/socketService.ts
+classname: SocketService
+function name: connect
+short description: Modified to return a Promise resolving with the socket ID upon successful connection.
+input / output: Takes no input. Returns `Promise<string>`.
+
+---
+file name: src/stores/gameStore.ts
+classname: GameStore (Interface)
+property name: socketId
+short description: Added optional `socketId` state to store the current socket connection ID.
+input / output: type: string | null
+
+---
+file name: src/stores/gameStore.ts
+classname: useGameStore (Zustand Hook/Store)
+function name: connect (Action)
+short description: Modified to await the socket ID from `socketService.connect` and store it in the `socketId` state. Also resets `socketId` on initiation and error.
+input / output: Takes no input. Returns `Promise<void>`. Updates `isConnected`, `isConnecting`, `connectionError`, `socketId` state.
+
+---
+file name: src/stores/gameStore.ts
+classname: useGameStore (Zustand Hook/Store)
+function name: disconnect (Action)
+short description: Modified to reset the `socketId` state to null upon disconnection.
+input / output: Takes no input. Returns `void`. Updates `isConnected`, `currentPlayer`, `currentRoom`, `availableRooms`, `game`, `socketId` state.
+
+---
+file name: src/pages/CreateRoomPage.tsx
+classname: CreateRoomPage (Function Component)
+function name: (useEffect hook for player registration)
+short description: Modified the condition to trigger player registration (`registerPlayer`) to also check for the presence of `socketId` in the `gameStore` state, ensuring registration only happens after a successful connection with an ID. Added `socketId` to the dependency array.
+input / output: Uses `isConnected`, `socketId`, `currentPlayer`, `isConnecting` from `useGameStore`. Calls `registerPlayer`.
+
+---
+file name: src/pages/JoinRoomPage.tsx
+classname: JoinRoomPage (Function Component)
+function name: (useEffect hook for player registration)
+short description: Modified the condition to trigger player registration (`registerPlayer`) to also check for the presence of `socketId` in the `gameStore` state, ensuring registration only happens after a successful connection with an ID. Added `socketId` to the dependency array.
+input / output: Uses `isConnected`, `socketId`, `currentPlayer`, `isConnecting` from `useGameStore`. Calls `registerPlayer`.
