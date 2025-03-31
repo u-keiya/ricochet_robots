@@ -65,11 +65,17 @@ const CreateRoomPage: React.FC = () => {
           </div>
         )}
 
-        {isConnecting ? (
+        {isConnecting && ( // 接続中表示
           <div className="text-center text-gray-600">
             接続中...
           </div>
-        ) : (
+        )}
+        {!isConnecting && !currentPlayer && ( // プレイヤー登録待ち表示
+          <div className="text-center text-gray-600">
+            プレイヤー情報を登録中...
+          </div>
+        )}
+        {!isConnecting && currentPlayer && ( // 接続完了かつプレイヤー登録済みの場合のみフォーム表示
           <CreateRoomForm onSuccess={handleCreateSuccess} />
         )}
 

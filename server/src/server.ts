@@ -76,7 +76,8 @@ io.on('connection', (socket: Socket) => {
         lastConnected: new Date()
       });
 
-      socket.emit('registered', { playerId, name });
+      // ★ 修正: 完全な Player オブジェクトを送信する
+      socket.emit('registered', player);
       logger.info(`Player registered: ${name} (${playerId})`);
     } catch (error) {
       logger.error('Error in register:', error);
