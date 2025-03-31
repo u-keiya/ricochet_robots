@@ -162,8 +162,8 @@ private emit<Event extends keyof ClientToServerEvents>(
   }
 
   // --- Room Event Listeners ---
-  public onPlayerRegistered(callback: ServerToClientEvents['playerRegistered']): void {
-    this.registerEventListener('playerRegistered', callback);
+  public onRegistered(callback: ServerToClientEvents['registered']): void { // Rename method and update event name/type
+    this.registerEventListener('registered', callback);
   }
 
   public onRoomCreated(callback: ServerToClientEvents['roomCreated']): void {

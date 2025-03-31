@@ -93,8 +93,8 @@ const useGameStore = create<GameStore>((set, get) => ({
       const connectedSocketId = await socketService.connect(); // Get socket ID
       set({ isConnected: true, isConnecting: false, socketId: connectedSocketId }); // Store socket ID
 
-      socketService.onPlayerRegistered((player) => {
-        console.log('[GameStore] Received playerRegistered event:', player); // ログ追加
+      socketService.onRegistered((player) => { // Call onRegistered instead
+        console.log('[GameStore] Received registered event:', player); // Log updated
         set({ currentPlayer: player });
         console.log('[GameStore] currentPlayer state updated.'); // ログ追加
       });
