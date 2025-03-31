@@ -11,10 +11,12 @@ const CreateRoomForm: React.FC<CreateRoomFormProps> = ({ onSuccess }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false); // ローディング状態を追加
-  const { createRoom, connectionError } = useGameStore();
+  // currentPlayer を取得
+  const { createRoom, connectionError, currentPlayer } = useGameStore();
 
   const handleSubmit = async (e: React.FormEvent) => { // async に変更
     e.preventDefault();
+    // currentPlayer が存在しない場合も処理しない
     if (isLoading) return; // ローディング中は処理しない
 
     setError(null);
@@ -83,14 +85,16 @@ const CreateRoomForm: React.FC<CreateRoomFormProps> = ({ onSuccess }) => {
 
       <button
         type="submit"
-        disabled={isLoading} // isLoading で無効化
+        // isLoading または currentPlayer が null の場合に無効化
+        disabled={isLoading || !currentPlayer}
         className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
-          isLoading
-            ? 'bg-indigo-400 cursor-not-allowed' // ローディング中のスタイル
+          (isLoading || !currentPlayer)
+            ? 'bg-indigo-400 cursor-not-allowed' // ローディング中または未登録時のスタイル
             : 'bg-indigo-600 hover:bg-indigo-700' // 通常時のスタイル
         }`}
       >
-        {isLoading ? '作成中...' : 'ルームを作成'} {/* ローディングテキスト */}
+        {/* currentPlayer が null の場合は登録中と表示 */}
+        {isLoading ? '作成中...' : !currentPlayer ? 'プレイヤー情報登録中...' : 'ルームを作成'}
       </button>
     </form>
   );

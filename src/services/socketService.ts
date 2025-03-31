@@ -20,10 +20,10 @@ class SocketService {
     return SocketService.instance;
   }
 
-  public connect(): Promise<void> {
+  public connect(): Promise<string> { // Return string (socket ID)
     return new Promise((resolve, reject) => {
-      if (this.socket?.connected) { // 接続済みなら即解決
-        resolve();
+      if (this.socket?.connected && this.socket.id) { // 接続済みかつIDがあれば即解決
+        resolve(this.socket.id);
         return;
       }
       try {
@@ -36,9 +36,9 @@ class SocketService {
         });
 
         this.socket.on('connect', () => {
-          console.log('Socket connected:', this.socket?.id); // IDもログ出力
+          console.log('Socket connected:', this.socket?.id);
           this.reconnectAttempts = 0;
-          resolve();
+          resolve(this.socket?.id || ''); // Resolve with ID (fallback to empty string)
         });
 
         this.socket.on('connect_error', (error) => {
@@ -162,8 +162,8 @@ private emit<Event extends keyof ClientToServerEvents>(
   }
 
   // --- Room Event Listeners ---
-  public onPlayerRegistered(callback: ServerToClientEvents['playerRegistered']): void {
-    this.registerEventListener('playerRegistered', callback);
+  public onRegistered(callback: ServerToClientEvents['registered']): void { // Rename method and update event name/type
+    this.registerEventListener('registered', callback);
   }
 
   public onRoomCreated(callback: ServerToClientEvents['roomCreated']): void {

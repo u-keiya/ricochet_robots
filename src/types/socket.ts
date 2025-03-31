@@ -5,7 +5,7 @@ import { MultiplayerGameState } from '../stores/gameStore'; // gameStoreから�
 import { RobotColor, Position } from './game'; // RobotColor, Positionをインポート
 
 export interface ServerToClientEvents {
-  playerRegistered: (player: Player) => void;
+  registered: (player: Player) => void; // Rename from playerRegistered
   roomCreated: (room: Room) => void;
   roomJoined: (room: Room) => void;
   roomLeft: (payload: { roomId: string; updatedRoom: Room }) => void; // サーバーの実装に合わせる
