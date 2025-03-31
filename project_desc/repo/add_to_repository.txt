@@ -40,3 +40,9 @@ file name: src/stores/gameStore.ts
 function name: isMultiplayerGameState (Type Guard)
 short description: Added a type guard function to check if a given state object has all the necessary properties of the 'MultiplayerGameState' interface. Used within 'onRoomUpdated' handler for safer type assertion.
 input / output: Takes 'state: any'. Returns 'boolean' (true if state is MultiplayerGameState).
+---
+file name: src/components/room/CreateRoomForm.tsx
+classname: CreateRoomForm (Function Component)
+function name: (Component Logic & JSX)
+short description: Modified to prevent room creation before player registration is confirmed. Fetches 'currentPlayer' from useGameStore. Disables the submit button and displays "プレイヤー情報登録中..." if 'currentPlayer' is null.
+input / output: Uses 'currentPlayer' from useGameStore state to control button 'disabled' state and text. Calls 'createRoom' action only when enabled.
