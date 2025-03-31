@@ -54,6 +54,7 @@ export interface MultiplayerGameState {
     positions: Position[];
     timestamp: number;
   }[];
+  rankings?: { playerId: string; score: number; rank: number }[]; // Added for final rankings
 }
 
 export interface GameRules {
