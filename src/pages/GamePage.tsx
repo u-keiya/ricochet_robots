@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import GameBoard from '../components/GameBoard/GameBoard';
 import useGameStore from '../stores/gameStore'; // useGameStoreをインポート
 import { DeclarationCardList } from '../components/DeclarationCard'; // DeclarationCardListをインポート
+import GameResultDisplay from '../components/GameResultDisplay'; // GameResultDisplayをインポート
 import { Player } from '../types/player'; // Player型をインポート
 // Direction と Card['color'] (CardColorの代わり) をインポート
 import { RobotColor, Position, GamePhase, Direction, Card } from '../types/game';
@@ -241,19 +242,12 @@ const GamePage: FC = () => {
                 </div>
               </div>
             )}
-             {/* 勝者表示 (game が存在する場合) */}
+             {/* ゲーム結果表示 (game が存在する場合) */}
              {game && game.phase === 'finished' && (
-                <div className="bg-white rounded-lg shadow p-4 text-center">
-                  <h2 className="text-lg font-bold mb-2">ゲーム終了！</h2>
-                  {game.winner ? (
-                    <p><span className="font-semibold">{game.winner.name}</span> の勝利！</p>
-                  ) : (
-                    <p>引き分け！</p>
-                  )}
-                  <button className="btn btn-secondary mt-4" onClick={handleLeaveRoom}>
-                    ルームを出る
-                  </button>
-                </div>
+               <GameResultDisplay
+                 players={playersArray} // playersArray を渡す
+                 onLeaveRoom={handleLeaveRoom} // handleLeaveRoom を渡す
+               />
              )}
           </div>
         </div>

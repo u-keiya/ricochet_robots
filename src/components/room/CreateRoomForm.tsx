@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import useGameStore from '../../stores/gameStore';
+import { Room } from '../../types/room'; // Room型をインポート
 
 interface CreateRoomFormProps {
-  onSuccess?: () => void;
+  onSuccess?: (room: Room) => void; // 引数に Room を追加
 }
 
 const CreateRoomForm: React.FC<CreateRoomFormProps> = ({ onSuccess }) => {
@@ -26,13 +27,13 @@ const CreateRoomForm: React.FC<CreateRoomFormProps> = ({ onSuccess }) => {
     }
 
     try {
-      await createRoom({ // await を追加
+      const createdRoom = await createRoom({ // await を追加し、戻り値を受け取る
         name: name.trim(),
         password: password.trim() || undefined,
       });
-      // 成功した場合、onSuccess を呼び出す (リダイレクトは親コンポーネントの useEffect で行われる)
+      // 成功した場合、作成された Room オブジェクトを onSuccess に渡す
       if (onSuccess) {
-        onSuccess();
+        onSuccess(createdRoom); // createdRoom を引数として渡す
       }
     } catch (err) {
       // エラーは gameStore でセットされるので、ここではローディング解除のみ

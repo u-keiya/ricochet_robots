@@ -76,7 +76,8 @@ io.on('connection', (socket: Socket) => {
         lastConnected: new Date()
       });
 
-      socket.emit('registered', { playerId, name });
+      // ★ 修正: 完全な Player オブジェクトを送信する
+      socket.emit('registered', player);
       logger.info(`Player registered: ${name} (${playerId})`);
     } catch (error) {
       logger.error('Error in register:', error);
@@ -98,7 +99,8 @@ io.on('connection', (socket: Socket) => {
 
       const room = roomManager.createRoom(player, { name, password, maxPlayers });
       socket.join(room.id);
-      socket.emit('roomCreated', { roomId: room.id });
+      // ★ 修正: Room オブジェクト全体を送信する
+      socket.emit('roomCreated', room);
       io.emit('roomListUpdated', roomManager.getRoomSummaries());
       logger.info(`Room created: ${room.id} by ${player.name}`);
     } catch (error) {

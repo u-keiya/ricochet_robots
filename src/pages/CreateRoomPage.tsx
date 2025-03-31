@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CreateRoomForm from '../components/room/CreateRoomForm';
 import useGameStore from '../stores/gameStore';
+import { Room } from '../types/room'; // Room型をインポート
 
 const CreateRoomPage: React.FC = () => {
   const navigate = useNavigate();
@@ -31,15 +32,17 @@ const CreateRoomPage: React.FC = () => {
     }
   }, [isConnected, currentPlayer, registerPlayer, isConnecting]); // isConnectingを依存配列に追加
 
+  // useEffect フックは削除
 
-  useEffect(() => {
-    if (currentRoom) {
-      navigate(`/game/${currentRoom.id}`);
+  const handleCreateSuccess = (room: Room) => { // 引数に room: Room を追加
+    console.log('[CreateRoomPage] handleCreateSuccess received room:', room); // ★ ログ追加
+    // ルーム作成に成功した場合、受け取った room の ID を使ってリダイレクト
+    if (room && room.id) { // ★ room と room.id の存在を確認
+      navigate(`/game/${room.id}`);
+    } else {
+      console.error('[CreateRoomPage] Received room object is invalid or missing ID:', room); // ★ エラーログ追加
+      // TODO: エラー処理 (例: エラーメッセージを表示)
     }
-  }, [currentRoom, navigate]);
-
-  const handleCreateSuccess = () => {
-    // ルーム作成に成功した場合、currentRoomの更新を待ってリダイレクト
   };
 
   return (
@@ -62,11 +65,17 @@ const CreateRoomPage: React.FC = () => {
           </div>
         )}
 
-        {isConnecting ? (
+        {isConnecting && ( // 接続中表示
           <div className="text-center text-gray-600">
             接続中...
           </div>
-        ) : (
+        )}
+        {!isConnecting && !currentPlayer && ( // プレイヤー登録待ち表示
+          <div className="text-center text-gray-600">
+            プレイヤー情報を登録中...
+          </div>
+        )}
+        {!isConnecting && currentPlayer && ( // 接続完了かつプレイヤー登録済みの場合のみフォーム表示
           <CreateRoomForm onSuccess={handleCreateSuccess} />
         )}
 
