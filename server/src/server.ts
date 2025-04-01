@@ -191,6 +191,49 @@ io.on('connection', (socket: Socket) => {
       socket.emit('pong');
     }
   });
+
+  // startGame イベントハンドラを追加
+  socket.on('startGame', ({ roomId }: { roomId: string }) => {
+    try {
+      const playerId = socket.id;
+      const player = sessions.get(playerId);
+
+      // Player session check
+      if (!player) {
+        throw new Error('Player session not found.');
+      }
+
+      // Room and host check
+      const room = roomManager.getRoom(roomId);
+      if (!room) {
+        throw new Error('Room not found');
+      }
+      if (room.hostId !== playerId) {
+        throw new Error('Only the host can start the game');
+      }
+
+      logger.info(`startGame event received for room ${roomId} from host ${player.name}`);
+
+      // Start game using GameManager
+      const gameManager = room.gameManager;
+      gameManager.startGame(); // This might throw errors based on game logic
+
+      // Get updated game state
+      const initialGameState = gameManager.getGameState();
+
+      // Emit gameStarted event to all clients in the room
+      io.to(roomId).emit('gameStarted', initialGameState);
+
+      logger.info(`Game started in room ${roomId}. Initial state sent.`);
+
+    } catch (error) {
+      logger.error(`Error in startGame for room ${roomId}:`, error);
+      // Ensure error message is sent correctly
+      const message = error instanceof Error ? error.message : 'Failed to start game';
+      socket.emit('error', { message });
+    }
+  });
+
 });
 
 const PORT = process.env.PORT || 3001;

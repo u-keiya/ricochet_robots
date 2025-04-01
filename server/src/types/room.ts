@@ -1,5 +1,6 @@
 import { Player } from './player';
-
+import { MultiplayerGameState, GamePhase } from './game'; // MultiplayerGameState と GamePhase をインポート
+import { GameManager } from '../services/gameManager'; // GameManager をインポート
 export interface Room {
   id: string;
   name: string;
@@ -7,22 +8,13 @@ export interface Room {
   hostId: string;
   players: Map<string, Player>;
   maxPlayers: number;
-  gameState: GameState;
+  gameState: MultiplayerGameState | null; // 型を MultiplayerGameState | null に変更
+  gameManager: GameManager; // GameManager インスタンスを追加
   created: Date;
   lastActivity: Date;
 }
 
-export interface GameState {
-  status: GameStatus;
-  currentBoard: string | null;
-  targetCard: string | null;
-  declarations: Map<string, number>; // playerId -> declared moves
-  currentTurn: string | null; // playerId of current player showing solution
-  timeLimit: number; // time limit in seconds for showing solution
-  turnStartTime: number | null; // timestamp when current turn started
-}
-
-export type GameStatus = 'waiting' | 'declaration' | 'solution' | 'completed';
+// GameState インターフェースと GameStatus 型を削除
 
 export interface RoomSummary {
   id: string;
@@ -30,7 +22,7 @@ export interface RoomSummary {
   hasPassword: boolean;
   playerCount: number;
   maxPlayers: number;
-  status: GameStatus;
+  status: GamePhase; // 型を GamePhase に変更
 }
 
 export interface RoomOptions {
