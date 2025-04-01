@@ -58,6 +58,9 @@ setInterval(() => {
 io.on('connection', (socket: Socket) => {
   logger.info(`New connection: ${socket.id}`);
 
+  // 新規接続時に現在のルームリストを送信
+  socket.emit('roomListUpdated', roomManager.getRoomSummaries());
+
   socket.on('register', ({ name }: { name: string }) => {
     try {
       const playerId = socket.id;

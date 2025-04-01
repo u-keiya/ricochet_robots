@@ -142,7 +142,7 @@ const useGameStore = create<GameStore>((set, get) => ({
         }
       });
       // ルームリスト更新リスナーを追加
-      socketService.onAvailableRoomsUpdated((rooms) => {
+      socketService.onRoomListUpdated((rooms) => { // メソッド名を修正
         set({ availableRooms: rooms });
       });
       // --- ここまで ---

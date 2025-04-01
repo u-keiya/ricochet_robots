@@ -182,8 +182,8 @@ private emit<Event extends keyof ClientToServerEvents>(
     this.registerEventListener('roomUpdated', callback);
   }
 
-  public onAvailableRoomsUpdated(callback: ServerToClientEvents['availableRoomsUpdated']): void { // 型を更新 (RoomSummary[])
-    this.registerEventListener('availableRoomsUpdated', callback);
+  public onRoomListUpdated(callback: ServerToClientEvents['roomListUpdated']): void { // メソッド名とイベント名を修正
+    this.registerEventListener('roomListUpdated', callback);
   }
 
   public onError(callback: ServerToClientEvents['error']): void {

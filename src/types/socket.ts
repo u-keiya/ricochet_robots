@@ -10,7 +10,7 @@ export interface ServerToClientEvents {
   roomJoined: (room: Room) => void;
   roomLeft: (payload: { roomId: string; updatedRoom: Room }) => void; // サーバーの実装に合わせる
   roomUpdated: (room: Room) => void;
-  availableRoomsUpdated: (rooms: RoomSummary[]) => void; // ルームリスト更新イベント (RoomSummaryを使用)
+  roomListUpdated: (rooms: RoomSummary[]) => void; // ルームリスト更新イベント (RoomSummaryを使用) - イベント名を修正
   error: (error: { message: string }) => void;
   // --- ゲームイベントを追加 ---
   gameStarted: (initialGameState: MultiplayerGameState) => void;
