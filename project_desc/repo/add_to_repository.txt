@@ -158,3 +158,52 @@ file name: server/src/server.ts
 function name: (event handler) 'startGame'
 short description: Implemented the 'startGame' event handler. It retrieves the player and room, verifies host privileges, calls 'room.gameManager.startGame()', retrieves the initial game state, and emits the 'gameStarted' event to all clients in the room. Includes error handling.
 input / output: Receives '{ roomId }'. Calls 'gameManager.startGame()'. Emits 'gameStarted' with 'MultiplayerGameState'. Emits 'error' on failure.
+
+---
+file name: server/src/services/gameManager.ts
+classname: GameManager
+function name: getGameState
+short description: Modified to return a plain object copy of the game state, ensuring Maps are not directly exposed for serialization. Internal logic now uses Record instead of Map.
+input / output: Returns `MultiplayerGameState` (with Records).
+
+---
+file name: server/src/types/game.ts
+classname: MultiplayerGameState (Interface)
+property name: declarations, playerStates, robotPositions
+short description: Changed type from Map<...> to Record<...> to ensure proper serialization over Socket.IO.
+input / output: type: Record<string, Declaration>, Record<string, PlayerGameState>, Record<RobotColor, Position>
+
+---
+file name: server/src/services/gameManager.ts
+classname: GameManager
+function name: (various methods) initializeGameState, startDeclarationPhase, declareMoves, endDeclarationPhase, moveRobot, successCurrentSolution, failCurrentSolution, endGame
+short description: Modified internal logic to use plain object operations (Record) instead of Map methods (.set, .get, .clear, .values, .entries) for declarations, playerStates, and robotPositions properties.
+input / output: N/A (Internal logic change)
+
+---
+file name: src/types/game.ts
+classname: MultiplayerGameState (Interface)
+function name: (definition)
+short description: Added MultiplayerGameState interface definition consistent with the server-side type (using Record instead of Map) to ensure correct client-side type checking and state management. Imported Player type.
+input / output: N/A (Type definition added)
+
+---
+file name: src/stores/gameStore.ts
+classname: useGameStore (Zustand Hook/Store)
+function name: (module scope & onDeclarationMade handler)
+short description: Removed duplicate internal definitions of MultiplayerGameState and Declaration. Updated the onDeclarationMade event handler to correctly process the declarations data received as a Record<string, Declaration> from the server.
+input / output: N/A (Refactoring and handler logic update)
+
+---
+file name: src/services/socketService.ts
+classname: SocketService
+function name: (import statement)
+short description: Corrected the import path for MultiplayerGameState to import from '../types/game' instead of '../stores/gameStore'.
+input / output: N/A (Import path correction)
+
+---
+file name: src/types/socket.ts
+classname: (module scope)
+function name: (import statement)
+short description: Corrected the import path for MultiplayerGameState to import from './game' instead of '../stores/gameStore'.
+input / output: N/A (Import path correction)
