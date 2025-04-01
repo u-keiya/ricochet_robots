@@ -119,3 +119,42 @@ classname: useGameStore (Zustand Hook/Store)
 function name: connect (Action)
 short description: Modified the event listener registration within the connect action to use `socketService.onRoomListUpdated` instead of `socketService.onAvailableRoomsUpdated`.
 input / output: Calls `onRoomListUpdated` to register the listener for room list updates.
+---
+file name: server/src/types/room.ts
+classname: Room (Interface)
+property name: gameManager
+short description: Added a mandatory 'gameManager' property to hold the GameManager instance responsible for the room's game logic. Replaced the previous simple 'gameState' property.
+input / output: type: GameManager
+
+---
+file name: server/src/types/room.ts
+classname: (Removed) GameState, GameStatus
+short description: Removed the outdated 'GameState' interface and 'GameStatus' type as game state is now managed by 'GameManager' and represented by 'MultiplayerGameState'.
+input / output: N/A
+
+---
+file name: server/src/types/room.ts
+classname: RoomSummary (Interface)
+property name: status
+short description: Changed the type of the 'status' property from the removed 'GameStatus' to 'GamePhase' (imported from '../types/game') to align with the 'MultiplayerGameState'.
+input / output: type: GamePhase
+
+---
+file name: server/src/services/roomManager.ts
+classname: RoomManager
+function name: createRoom
+short description: Modified to instantiate a 'GameManager' upon room creation. The 'GameManager' instance is stored in the 'room.gameManager' property, and the initial game state from the manager is stored in 'room.gameState'.
+input / output: Instantiates GameManager, sets room.gameManager and room.gameState.
+
+---
+file name: server/src/services/roomManager.ts
+classname: RoomManager
+function name: getRoomSummaries
+short description: Modified to retrieve the game status from 'room.gameState?.phase' instead of the removed 'room.gameState.status'. Added a nullish coalescing operator to default to 'GamePhase.WAITING' if gameState is null.
+input / output: Reads 'room.gameState.phase', returns 'GamePhase'.
+
+---
+file name: server/src/server.ts
+function name: (event handler) 'startGame'
+short description: Implemented the 'startGame' event handler. It retrieves the player and room, verifies host privileges, calls 'room.gameManager.startGame()', retrieves the initial game state, and emits the 'gameStarted' event to all clients in the room. Includes error handling.
+input / output: Receives '{ roomId }'. Calls 'gameManager.startGame()'. Emits 'gameStarted' with 'MultiplayerGameState'. Emits 'error' on failure.

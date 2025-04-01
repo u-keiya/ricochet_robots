@@ -1,6 +1,8 @@
-import { Room, RoomOptions, RoomSummary, GameStatus } from '../types/room';
+import { Room, RoomOptions, RoomSummary } from '../types/room'; // GameStatus を削除
 import { Player } from '../types/player';
 import { v4 as uuidv4 } from 'uuid';
+import { GameManager } from './gameManager'; // GameManager をインポート
+import { DEFAULT_GAME_RULES, GamePhase } from '../types/game'; // DEFAULT_GAME_RULES と GamePhase をインポート
 
 export class RoomManager {
   private rooms: Map<string, Room>;
@@ -14,27 +16,27 @@ export class RoomManager {
     // ホストプレイヤーのisHostとroomIdを設定
     hostPlayer.isHost = true;
     hostPlayer.roomId = roomId; // roomIdも設定
+    // GameManager を先にインスタンス化
+    const gameManager = new GameManager([hostPlayer], DEFAULT_GAME_RULES);
     const room: Room = {
       id: roomId,
       name: options.name,
       password: options.password || null,
       hostId: hostPlayer.id,
       players: new Map([[hostPlayer.id, hostPlayer]]),
+      gameManager: gameManager, // gameManager を設定
       maxPlayers: options.maxPlayers || 8,
-      gameState: {
-        status: 'waiting',
-        currentBoard: null,
-        targetCard: null,
-        declarations: new Map(),
-        currentTurn: null,
-        timeLimit: 60,
-        turnStartTime: null
-      },
+      // GameManager を初期化し、その状態を gameState に設定
+      gameState: null, // まず null で初期化
       created: new Date(),
       lastActivity: new Date()
     };
 
     this.rooms.set(roomId, room);
+
+    // gameState も gameManager から取得して設定
+    room.gameState = gameManager.getGameState();
+
     return room;
   }
 
@@ -109,7 +111,8 @@ export class RoomManager {
       hasPassword: !!room.password,
       playerCount: room.players.size,
       maxPlayers: room.maxPlayers,
-      status: room.gameState.status
+      // gameState が null の可能性を考慮し、 ?. と ?? を使用
+      status: room.gameState?.phase ?? GamePhase.WAITING
     }));
   }
 

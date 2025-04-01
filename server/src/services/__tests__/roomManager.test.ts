@@ -1,10 +1,12 @@
 import { describe, expect, it, beforeEach, afterEach, jest } from '@jest/globals';
 import { RoomManager } from '../roomManager';
 import { Player } from '../../types/player';
+import { GamePhase } from '../../types/game'; // GamePhase をインポート
 
 describe('RoomManager', () => {
   let roomManager: RoomManager;
   let mockPlayer: Player;
+  let mockPlayer2: Player; // mockPlayer2 を追加
 
   beforeEach(() => {
     roomManager = new RoomManager();
@@ -14,7 +16,18 @@ describe('RoomManager', () => {
       roomId: null,
       score: 0,
       connected: true,
-      isHost: false
+      isHost: false,
+      lastConnected: new Date() // lastConnected を追加
+    };
+    // mockPlayer2 を初期化
+    mockPlayer2 = {
+      id: 'testPlayer2',
+      name: 'Test Player 2',
+      roomId: null,
+      score: 0,
+      connected: true,
+      isHost: false,
+      lastConnected: new Date()
     };
   });
 
@@ -32,7 +45,7 @@ describe('RoomManager', () => {
       expect(room.hostId).toBe(mockPlayer.id);
       expect(room.players.size).toBe(1);
       expect(room.players.get(mockPlayer.id)).toEqual(mockPlayer);
-      expect(room.gameState.status).toBe('waiting');
+      expect(room.gameState?.phase).toBe(GamePhase.WAITING); // gameState.phase と null チェックに変更
     });
 
     it('should create a room with default maxPlayers when not specified', () => {
@@ -65,12 +78,12 @@ describe('RoomManager', () => {
   describe('joinRoom', () => {
     it('should allow a player to join an existing room', () => {
       const room = roomManager.createRoom(mockPlayer, { name: 'Test Room' });
-      const result = roomManager.joinRoom('testPlayer2', room.id);
+      const result = roomManager.joinRoom(mockPlayer2, room.id); // Player オブジェクトを渡す
 
       const updatedRoom = roomManager.getRoom(room.id);
       expect(result).toBe(true);
       expect(updatedRoom?.players.size).toBe(2);
-      expect(updatedRoom?.players.has('testPlayer2')).toBe(true);
+      expect(updatedRoom?.players.has(mockPlayer2.id)).toBe(true); // ID で確認
     });
 
     it('should throw error when room is full', () => {
@@ -80,7 +93,7 @@ describe('RoomManager', () => {
       });
 
       expect(() => {
-        roomManager.joinRoom('testPlayer2', room.id);
+        roomManager.joinRoom(mockPlayer2, room.id); // Player オブジェクトを渡す
       }).toThrow('Room is full');
     });
 
@@ -91,13 +104,13 @@ describe('RoomManager', () => {
       });
 
       expect(() => {
-        roomManager.joinRoom('testPlayer2', room.id, 'incorrect');
+        roomManager.joinRoom(mockPlayer2, room.id, 'incorrect'); // Player オブジェクトを渡す
       }).toThrow('Invalid password');
     });
 
     it('should throw error when room does not exist', () => {
       expect(() => {
-        roomManager.joinRoom('testPlayer1', 'nonexistent-room');
+        roomManager.joinRoom(mockPlayer, 'nonexistent-room'); // Player オブジェクトを渡す
       }).toThrow('Room not found');
     });
   });
@@ -113,12 +126,12 @@ describe('RoomManager', () => {
 
     it('should assign new host when host leaves', () => {
       const room = roomManager.createRoom(mockPlayer, { name: 'Test Room' });
-      roomManager.joinRoom('testPlayer2', room.id);
+      roomManager.joinRoom(mockPlayer2, room.id); // Player オブジェクトを渡す
       roomManager.leaveRoom(mockPlayer.id, room.id);
 
       const updatedRoom = roomManager.getRoom(room.id);
-      expect(updatedRoom?.hostId).toBe('testPlayer2');
-      const newHost = updatedRoom?.players.get('testPlayer2');
+      expect(updatedRoom?.hostId).toBe(mockPlayer2.id); // ID で確認
+      const newHost = updatedRoom?.players.get(mockPlayer2.id); // ID で取得
       expect(newHost?.isHost).toBe(true);
     });
 
@@ -143,6 +156,11 @@ describe('RoomManager', () => {
       const room = roomManager.createRoom(mockPlayer, { name: 'Test Room' });
       const oldDate = new Date(Date.now() - 31 * 60 * 1000);
       room.lastActivity = oldDate;
+      // プレイヤーも切断状態にする
+      const player = room.players.get(mockPlayer.id);
+      if (player) {
+        player.connected = false;
+      }
 
       roomManager.cleanupInactiveRooms();
       expect(roomManager.getRoom(room.id)).toBeUndefined();
@@ -178,7 +196,7 @@ describe('RoomManager', () => {
         hasPassword: true,
         playerCount: 1,
         maxPlayers: 4,
-        status: 'waiting'
+        status: GamePhase.WAITING // GamePhase を使用
       });
     });
   });
@@ -192,17 +210,27 @@ describe('RoomManager', () => {
       expect(updatedRoom?.players.get(mockPlayer.id)?.connected).toBe(false);
     });
 
-    it('should throw error when player is not found', () => {
+    it('should warn and return when player is not found', () => {
       const room = roomManager.createRoom(mockPlayer, { name: 'Test Room' });
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {}); // console.warn をスパイ
+
       expect(() => {
         roomManager.updatePlayerConnection('nonexistent-player', room.id, false);
-      }).toThrow('Player not found');
+      }).not.toThrow(); // エラーがスローされないことを確認
+      expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('Player nonexistent-player not found')); // 警告が出力されることを確認
+
+      consoleWarnSpy.mockRestore(); // スパイを解除
     });
 
-    it('should throw error when room is not found', () => {
+    it('should warn and return when room is not found', () => {
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {}); // console.warn をスパイ
+
       expect(() => {
         roomManager.updatePlayerConnection(mockPlayer.id, 'nonexistent-room', false);
-      }).toThrow('Room not found');
+      }).not.toThrow(); // エラーがスローされないことを確認
+      expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('Room nonexistent-room not found')); // 警告が出力されることを確認
+
+      consoleWarnSpy.mockRestore(); // スパイを解除
     });
   });
 });
