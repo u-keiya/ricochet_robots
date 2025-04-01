@@ -93,3 +93,29 @@ classname: useGameStore (Zustand Hook/Store)
 function name: startGame (Action)
 short description: Uncommented the call to `socketService.startGame` to ensure the 'startGame' event is emitted to the server when the action is called.
 input / output: Takes no input. Calls `socketService.startGame` with `currentRoom.id`.
+---
+file name: server/src/server.ts
+function name: (event handler) 'connection'
+short description: Modified to emit the 'roomListUpdated' event with the current room summaries to the newly connected client. This ensures the client receives the initial room list upon connecting.
+input / output: Emits 'roomListUpdated' event with `RoomSummary[]` payload to the connecting socket.
+
+---
+file name: src/types/socket.ts
+classname: ServerToClientEvents (Interface)
+property name: roomListUpdated
+short description: Renamed the 'availableRoomsUpdated' event to 'roomListUpdated' for consistency with the server-side event name.
+input / output: Event name changed from 'availableRoomsUpdated' to 'roomListUpdated'. Payload remains `RoomSummary[]`.
+
+---
+file name: src/services/socketService.ts
+classname: SocketService
+function name: onRoomListUpdated
+short description: Renamed the 'onAvailableRoomsUpdated' method to 'onRoomListUpdated' and updated the registered event listener to listen for 'roomListUpdated' instead of 'availableRoomsUpdated'.
+input / output: Method name changed. Listens for 'roomListUpdated' event.
+
+---
+file name: src/stores/gameStore.ts
+classname: useGameStore (Zustand Hook/Store)
+function name: connect (Action)
+short description: Modified the event listener registration within the connect action to use `socketService.onRoomListUpdated` instead of `socketService.onAvailableRoomsUpdated`.
+input / output: Calls `onRoomListUpdated` to register the listener for room list updates.
