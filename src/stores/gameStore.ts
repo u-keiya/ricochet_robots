@@ -2,8 +2,7 @@ import { create } from 'zustand';
 import { Player } from '../types/player';
 import { Room, RoomSummary } from '../types/room';
 import SocketService from '../services/socketService';
-import { Board, Card, GamePhase, Position, RobotColor, GameState } from '../types/game'; // GameState関連の型をインポート
-
+import { Board, Card, GamePhase, Position, RobotColor, GameState, MultiplayerGameState, Declaration } from '../types/game'; // Import MultiplayerGameState and Declaration
 // --- 型ガード関数 ---
 function isMultiplayerGameState(state: any): state is MultiplayerGameState {
   return (
@@ -25,29 +24,7 @@ function isMultiplayerGameState(state: any): state is MultiplayerGameState {
 // --- ここまで ---
 
 
-// --- マルチプレイヤーゲーム状態の型定義を追加 ---
-interface Declaration {
-  playerId: string;
-  moves: number | null; // nullの場合は未宣言
-}
-
-export interface MultiplayerGameState { // exportを追加
-  board: Board | null;
-  currentCard: Card | null;
-  phase: GamePhase;
-  timer: number;
-  declarations: Declaration[]; // プレイヤーごとの宣言
-  currentPlayerTurn: string | null; // 現在手番のプレイヤーID
-  scores: Record<string, number>; // プレイヤーごとのスコア { playerId: score }
-  moveHistory: Position[]; // 解法提示中の移動履歴
-  remainingCards: number; // 残りカード数
-  totalCards: number; // 全カード数
-  winner: Player | null; // ゲームの勝者
-  declarationOrder?: string[]; // 解答権の順序 (プレイヤーIDの配列)
-  rankings?: { playerId: string; score: number; rank: number }[]; // ゲーム終了時のランキング
-}
-
-
+// Remove internal duplicate definitions of Declaration and MultiplayerGameState
 interface GameStore {
   isConnected: boolean;
   isConnecting: boolean;
@@ -168,13 +145,17 @@ const useGameStore = create<GameStore>((set, get) => ({
         console.log(`[GameStore] Declaration made by ${playerId}: ${moves}`);
         set((state) => {
           if (!state.game) return {};
-          const updatedDeclarations = state.game.declarations.map(d =>
-            d.playerId === playerId ? { ...d, moves } : d
-          );
-          // Ensure the player exists in declarations if they weren't there before
-          if (!updatedDeclarations.some(d => d.playerId === playerId)) {
-             updatedDeclarations.push({ playerId, moves });
-          }
+          // declarations is now Record<string, Declaration>
+          const updatedDeclarations = {
+            ...state.game.declarations,
+            [playerId]: {
+              ...(state.game.declarations[playerId] || { playerId, timestamp: Date.now() }), // Keep existing timestamp if available
+              moves: moves ?? 0, // Use received moves, default to 0 if null (adjust as needed)
+              // Note: Server sends Declaration type which has non-null moves.
+              // Client internal Declaration type had nullable moves, which is removed now.
+              // Assuming server sends valid number or handle potential null if server logic changes.
+            }
+          };
           return { game: { ...state.game, declarations: updatedDeclarations } };
         });
       });
