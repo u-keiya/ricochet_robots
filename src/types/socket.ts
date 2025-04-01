@@ -1,7 +1,7 @@
 import { Socket } from 'socket.io-client';
 import { Player } from './player';
 import { Room, RoomSummary } from './room'; // RoomSummaryを追加
-import { MultiplayerGameState } from '../stores/gameStore'; // gameStoreからインポート
+import { MultiplayerGameState } from './game'; // Import from types/game instead of stores/gameStore
 import { RobotColor, Position } from './game'; // RobotColor, Positionをインポート
 
 export interface ServerToClientEvents {

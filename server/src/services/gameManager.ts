@@ -16,24 +16,24 @@ export class GameManager {
   }
 
   private initializeGameState(): MultiplayerGameState {
-    const playerStates = new Map<string, PlayerGameState>();
+    const playerStates: Record<string, PlayerGameState> = {}; // Initialize as empty object
     this.players.forEach(player => {
-      playerStates.set(player.id, {
+      playerStates[player.id] = { // Use object assignment
         score: 0,
         declarations: [],
         isReady: false
-      });
+      };
     });
 
     return {
       phase: GamePhase.WAITING,
       remainingCards: 17,
       totalCards: 17,
-      declarations: new Map(),
+      declarations: {}, // Initialize as empty object
       playerStates,
       timer: 0,
       timerStartedAt: Date.now(), // Initialize with a value
-      robotPositions: new Map(),
+      robotPositions: {} as Record<RobotColor, Position>, // Cast to satisfy type checker initially
       moveHistory: []
     };
   }
@@ -54,7 +54,7 @@ export class GameManager {
   private startDeclarationPhase(): void {
     this.cleanup(); // Clear any existing timers
     this.gameState.phase = GamePhase.DECLARATION;
-    this.gameState.declarations.clear();
+    this.gameState.declarations = {}; // Use object assignment
     this.gameState.timer = this.rules.declarationTimeLimit;
     this.gameState.timerStartedAt = Date.now();
     // this.penaltyApplied.clear(); // No longer needed
@@ -108,7 +108,7 @@ export class GameManager {
       timestamp: Date.now()
     };
 
-    this.gameState.declarations.set(playerId, declaration);
+    this.gameState.declarations[playerId] = declaration; // Use object assignment
 
     // Declaration phase now always waits for the timer to end
     // The following check is removed:
@@ -120,7 +120,7 @@ private endDeclarationPhase(): void {
   this.cleanup(); // Clear declaration timer
 
   // 1. Collect valid declarations
-  const validDeclarations = Array.from(this.gameState.declarations.values());
+  const validDeclarations = Object.values(this.gameState.declarations); // Use Object.values
 
   // 2. Sort declarations: ascending moves, then ascending timestamp
   validDeclarations.sort((a, b) => {
@@ -166,7 +166,7 @@ private endDeclarationPhase(): void {
       throw new Error('Not your turn');
     }
 
-    const declaration = this.gameState.declarations.get(playerId);
+    const declaration = this.gameState.declarations[playerId]; // Use object access
     if (!declaration) {
       // This should ideally not happen if logic is correct
       throw new Error('No declaration found for player');
@@ -201,7 +201,7 @@ private endDeclarationPhase(): void {
 
     const currentPlayer = this.gameState.currentPlayer;
     if (currentPlayer) {
-      const playerState = this.gameState.playerStates.get(currentPlayer);
+      const playerState = this.gameState.playerStates[currentPlayer]; // Use object access
       if (playerState) {
         playerState.score += this.rules.successPoints; // Award points
       }
@@ -261,7 +261,7 @@ private endDeclarationPhase(): void {
     this.gameState.phase = GamePhase.FINISHED;
 
     // Calculate final rankings
-    const playerScores = Array.from(this.gameState.playerStates.entries())
+    const playerScores = Object.entries(this.gameState.playerStates) // Use Object.entries
       .map(([playerId, state]) => ({ playerId, score: state.score }));
 
     // Sort players by score descending
@@ -279,6 +279,7 @@ private endDeclarationPhase(): void {
 
   public getGameState(): MultiplayerGameState {
     // Return a copy to prevent direct modification
+    // Internal state uses Records, so just copy.
     return { ...this.gameState };
   }
 

@@ -1,4 +1,5 @@
 import { TargetSymbol } from './board';
+import { Player } from './player'; // Import Player type
 
 // ボードの位置を表す型
 export type Position = {
@@ -97,3 +98,49 @@ export type GameState = {
 
 // 移動の方向を表す型
 export type Direction = 'up' | 'right' | 'down' | 'left';
+
+// --- Multiplayer Game State (Matches server/src/types/game.ts using Record) ---
+export interface Declaration { // Already defined in server/src/types/game.ts, ensure consistency if needed
+  playerId: string;
+  moves: number;
+  timestamp: number;
+}
+
+export interface PlayerGameState { // Already defined in server/src/types/game.ts, ensure consistency if needed
+  score: number;
+  declarations: Declaration[]; // Assuming this remains an array on the server for player state
+  isReady: boolean;
+}
+
+export interface MultiplayerGameState {
+  phase: GamePhase;
+  currentCard?: Card; // Make optional to match server
+  remainingCards: number;
+  totalCards: number;
+  declarations: Record<string, Declaration>; // Use Record
+  currentPlayer?: string; // Make optional to match server
+  playerStates: Record<string, PlayerGameState>; // Use Record
+  timer: number;
+  timerStartedAt: number;
+  declarationOrder?: string[];
+  robotPositions: Record<RobotColor, Position>; // Use Record
+  moveHistory: {
+    robotColor: RobotColor;
+    positions: Position[];
+    timestamp: number;
+  }[];
+  rankings?: { playerId: string; score: number; rank: number }[];
+  // Add winner property if needed based on server type
+  winner?: Player | null; // Assuming Player type exists or needs to be imported/defined
+}
+
+// Assuming Player type needs to be defined or imported for 'winner'
+// If Player type is defined elsewhere (e.g., src/types/player.ts), import it.
+// Otherwise, define a basic Player interface here for type checking.
+// Example:
+// export interface Player {
+//   id: string;
+//   name: string;
+//   // other properties...
+// }
+// Make sure to import Player if defined elsewhere: import { Player } from './player';

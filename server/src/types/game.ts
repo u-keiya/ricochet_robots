@@ -42,13 +42,13 @@ export interface MultiplayerGameState {
   currentCard?: Card;
   remainingCards: number;
   totalCards: number;
-  declarations: Map<string, Declaration>;
+  declarations: Record<string, Declaration>; // Changed from Map
   currentPlayer?: string;
-  playerStates: Map<string, PlayerGameState>;
+  playerStates: Record<string, PlayerGameState>; // Changed from Map
   timer: number;
   timerStartedAt: number;
   declarationOrder?: string[]; // Added: Order of players eligible to present solution
-  robotPositions: Map<RobotColor, Position>;
+  robotPositions: Record<RobotColor, Position>; // Changed from Map
   moveHistory: {
     robotColor: RobotColor;
     positions: Position[];
