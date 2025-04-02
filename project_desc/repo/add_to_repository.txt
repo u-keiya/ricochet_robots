@@ -8,3 +8,28 @@ File: server/src/server.ts
 Function: (Socket.IO 'startGame' event handler)
 Short description: Modified to retrieve the current list of players from the room and pass it to gameManager.startGame.
 Input / Output: Input: { roomId: string } from client / Output: Emits 'gameStarted' or 'error' to client
+
+File: src/services/socketService.ts
+Function: joinRoom
+Short description: Reverted to a void function that only emits the 'joinRoom' event. Promise logic and timeout removed to simplify and rely on gameStore's event listener.
+Input / Output: Input: roomId: string, password?: string / Output: void
+
+File: src/stores/gameStore.ts
+Function: joinRoom (Action)
+Short description: Reverted to a void action that calls socketService.joinRoom. Async/await and try/catch removed.
+Input / Output: Input: roomId: string, password?: string / Output: void
+
+File: src/stores/gameStore.ts
+Function: (onRoomJoined event handler)
+Short description: Added checks to validate the received 'room' object and its 'players' property before updating the state. Added more detailed error logging for invalid data.
+Input / Output: Input: room: Room (from server event) / Output: Updates store state
+
+File: src/pages/JoinRoomPage.tsx
+Function: (React Component)
+Short description: Modified to display a loading message until the player is registered (currentPlayer exists in gameStore) before showing the RoomList. Removed handleJoinSuccess and onJoinSuccess prop.
+Input / Output: N/A (Component rendering logic)
+
+File: src/components/room/RoomList.tsx
+Function: handleJoinRoom
+Short description: Modified to be a synchronous function. Removed async/await and try/catch. Calls the void joinRoom action. Added isLoading state for UI feedback.
+Input / Output: Input: e: React.FormEvent / Output: void (Calls joinRoom action)
