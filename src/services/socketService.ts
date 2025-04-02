@@ -125,12 +125,12 @@ private emit<Event extends keyof ClientToServerEvents>(
     });
   }
 
+// 元の void 関数に戻す
+public joinRoom(roomId: string, password?: string): void {
+  this.emit('joinRoom', { roomId, password }); // payloadオブジェクトに変更
+}
 
-  public joinRoom(roomId: string, password?: string): void {
-    this.emit('joinRoom', { roomId, password }); // payloadオブジェクトに変更
-  }
-
-  public leaveRoom(roomId: string): void {
+public leaveRoom(roomId: string): void {
     this.emit('leaveRoom', { roomId }); // payloadオブジェクトに変更
   }
 

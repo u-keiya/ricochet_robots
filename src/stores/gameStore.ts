@@ -81,15 +81,33 @@ const useGameStore = create<GameStore>((set, get) => ({
       });
 
       socketService.onRoomJoined((room) => {
+        // room オブジェクトと players プロパティが存在するかチェック
+        // room オブジェクトと players プロパティが存在するか、より詳細にチェック
+        if (!room || typeof room !== 'object') {
+          console.error('[GameStore] Received invalid room object in onRoomJoined:', room);
+          return;
+        }
+        if (!room.players || typeof room.players !== 'object') {
+           console.error('[GameStore] Received room object without valid players property in onRoomJoined:', room);
+          return; // 不正なデータの場合は更新しない
+        }
+
         set((state) => {
-          // 自分のプレイヤー情報がルームにあれば currentPlayer を更新
-          const myPlayerInfo = room.players[state.currentPlayer?.id ?? ''];
+          // currentPlayer が null でないことを確認してから id を使用
+          const playerId = state.currentPlayer?.id;
+          // room.players が存在することを前提にアクセス
+          const myPlayerInfo = playerId ? room.players[playerId] : undefined;
+
+          // currentPlayer が存在し、かつ myPlayerInfo が見つかった場合のみ更新
+          const updatedPlayer = (state.currentPlayer && myPlayerInfo)
+            ? { ...state.currentPlayer, ...myPlayerInfo }
+            : state.currentPlayer; // それ以外は既存の currentPlayer を維持
+
           return {
             currentRoom: room,
-            // ルーム参加時はゲーム状態をリセット (サーバーから gameStarted が来るまで null)
+            // ルーム参加時はゲーム状態をリセット
             game: null,
-            // 自分の情報がルームにあれば currentPlayer を更新、なければ null のまま
-            currentPlayer: myPlayerInfo ? { ...state.currentPlayer, ...myPlayerInfo } : state.currentPlayer,
+            currentPlayer: updatedPlayer,
           };
         });
       });
@@ -230,8 +248,12 @@ const useGameStore = create<GameStore>((set, get) => ({
     }
   },
 
-  joinRoom: (roomId: string, password?: string) => {
+  // void を返すように戻す
+  joinRoom: (roomId: string, password?: string): void => {
     const socketService = SocketService.getInstance();
+    set({ connectionError: null }); // エラーをクリア
+    // joinRoom は void を返すようになったため、try...catch は不要
+    // エラーハンドリングは onError イベントリスナーで行う
     socketService.joinRoom(roomId, password);
   },
 
