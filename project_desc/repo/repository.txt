@@ -90,800 +90,570 @@ vite.config.ts
 Files
 ================================================================
 
-Okay, here is the source code description for each file, formatted as you requested:
+**project_desc/definition.md**
+* short description: Defines the requirements and specifications for the multiplayer mode of the Ricochet Robots game, including technology stack, features (room management, game flow, scoring, player management), non-functional requirements, UI details, and development phases[cite: 17, 18].
 
-### public/vite.svg
+**project_desc/requirements.md**
+* short description: Outlines the requirements for the browser-based Ricochet Robots game, covering system architecture, tech stack (React, TypeScript, Node.js, Socket.io), functional requirements (title screen, online play, room management, gameplay, card system, game flow), and development phases[cite: 19].
 
-* Short description: This is an SVG file for the Vite logo[cite: 14].
+**public/vite.svg**
+* short description: An SVG image file representing the Vite logo[cite: 20].
 
-### src/assets/react.svg
+**server/coverage/lcov-report/base.css**
+* short description: Base CSS styling for the LCOV code coverage report, defining styles for layout, typography, tables, and coverage indicators[cite: 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55].
 
-* Short description: This is an SVG file for the React logo[cite: 15].
-
-### src/pages/CreateRoomPage.tsx
-
-* CreateRoomPage (Function Component)
-    * handleCreateRoom
-        * short description: Validates the room name and password, then navigates to the game room. Placeholder for actual WebSocket room creation[cite: 21, 23].
-        * input / output: Takes no input, returns `void`. Uses state variables `roomName` and `password`[cite: 20, 21]. Sets `error` state if validation fails[cite: 21, 22]. Navigates using `react-router-dom`[cite: 19, 23].
-
-### src/pages/JoinRoomPage.tsx
-
-* JoinRoomPage (Function Component)
-    * handleJoinRoom
-        * short description: Validates that a room is selected and a password is entered, then navigates to the game room. Placeholder for actual WebSocket room joining[cite: 36, 38].
-        * input / output: Takes no input, returns `void`. Uses state variables `selectedRoom` and `password`[cite: 33, 34, 36]. Sets `error` state if validation fails[cite: 36, 37]. Navigates using `react-router-dom`[cite: 31, 38].
-
-### src/pages/OnlinePage.tsx
-
-* OnlinePage (Function Component)
-    * short description: Renders buttons to navigate to the "Create Room" or "Join Room" pages, or back to the title page[cite: 49, 50, 51].
-    * input / output: Takes no input, returns JSX elements. Uses `react-router-dom` for navigation[cite: 48, 49].
-
-### src/utils/boardValidator.ts
-
-* BoardValidator (Class) [cite: 54]
-    * isValidPosition (static private)
-        * short description: Checks if a given (x, y) coordinate is within the bounds of the board[cite: 54].
-        * input / output: Takes `x` (number), `y` (number), `size` (number). Returns `boolean`[cite: 54].
-    * isValidTargetColor (static private)
-        * short description: Checks if a target color is valid, considering if it's a vortex target[cite: 55].
-        * input / output: Takes `color` (TargetColor), `isVortex` (boolean). Returns `boolean`[cite: 55].
-    * validateBoard (static public)
-        * short description: Validates a single board pattern for correct size, wall positions, reflector positions, and target positions/colors[cite: 57].
-        * input / output: Takes `board` (BoardPattern | RawBoardPattern). Returns `boolean`[cite: 57]. Logs warnings for invalid elements[cite: 57, 58, 59, 60, 61, 62].
-    * validateBoardSet (static public)
-        * short description: Validates an array of board patterns[cite: 64].
-        * input / output: Takes `pattern` (string), `boards` (BoardPattern[] | RawBoardPattern[]). Returns an object `{ valid: boolean; errors: string[] }`[cite: 64, 65]. Logs errors for invalid boards[cite: 66].
-
-### src/index.css
-
-* Short description: Defines base styles, component styles (like buttons), and utility classes using Tailwind CSS directives[cite: 68, 69, 70, 71, 72].
-
-### src/main.tsx
-
-* Short description: The main entry point for the React application. It renders the root `App` component into the DOM[cite: 72].
-
-### src/vite-env.d.ts
-
-* Short description: TypeScript declaration file for Vite client types[cite: 72].
-
-### .env.development
-
-* Short description: Environment variables for development, specifically setting the WebSocket URL[cite: 72].
-
-### .gitignore
-
-* Short description: Specifies intentionally untracked files that Git should ignore, such as log files, node\_modules, build outputs, and editor-specific files[cite: 72].
-
-### eslint.config.js
-
-* Short description: Configuration file for ESLint, setting up rules, plugins (like react-hooks, react-refresh), language options, and ignoring the `dist` directory for linting[cite: 73, 74].
-
-### index.html
-
-* Short description: The main HTML file for the single-page application. It includes the root div where the React app is mounted and loads the main JavaScript module (`/src/main.tsx`)[cite: 74].
-
-### package.json
-
-* Short description: Defines project metadata, scripts (dev, build, lint, preview), dependencies (React, React Router), and devDependencies (TypeScript, Vite, ESLint, Tailwind CSS, etc.)[cite: 86, 87].
-
-### postcss.config.js
-
-* Short description: Configuration file for PostCSS, specifying plugins like `tailwindcss/nesting`, `tailwindcss`, and `autoprefixer`[cite: 87, 88].
-
-### README.md
-
-* Short description: Provides a basic introduction to the Vite + React + TypeScript template, mentioning available plugins and suggesting how to expand ESLint configuration for type-aware linting and React-specific rules[cite: 88, 89, 90].
-
-### requirements.md
-
-* Short description: Defines the requirements for the Ricochet Robots game, including system architecture, technology stack (React, TypeScript, Tailwind, Node.js, Socket.io), functional requirements for different screens (Title, Online, Gameplay), and development phases[cite: 90, 91, 92].
-
-### tailwind.config.js
-
-* Short description: Configuration file for Tailwind CSS. It specifies the content files to scan for classes, extends the theme (e.g., adding primary and secondary colors), and lists any plugins used[cite: 92, 93].
-
-### tsconfig.app.json
-
-* Short description: TypeScript configuration file specifically for the application source code (`src` directory). It sets compiler options like target (ES2020), libraries, module system (ESNext), JSX mode, and enables strict linting rules[cite: 93, 94].
-
-### tsconfig.json
-
-* Short description: The root TypeScript configuration file. It references the `tsconfig.app.json` and `tsconfig.node.json` files, indicating a composite project structure[cite: 94].
-
-### tsconfig.node.json
-
-* Short description: TypeScript configuration file for Node.js-specific files, like `vite.config.ts`. It sets compiler options suitable for a Node.js environment (e.g., target ES2022, module ESNext) and includes strict linting rules[cite: 94, 95].
-
-### vite.config.ts
-
-* Short description: Configuration file for the Vite build tool. It imports and uses the `@vitejs/plugin-react` plugin[cite: 95, 96].
-
-### src/components/GameInfo.tsx
-
-* GameInfo (Function Component) [cite: 99]
-    * short description: Displays game information like score, move count, declared moves, timer, current target card, and remaining cards. Also includes a button to draw the next card[cite: 96, 97, 98, 99].
-    * input / output: Takes props like `score`, `moveCount`, `declaredMoves`, `timer`, `currentCard`, `remainingCards`, `phase`, `onDrawCard`. Returns JSX elements[cite: 97, 98, 99].
-
-### src/pages/GamePage.tsx
-
-* GamePage (Function Component) [cite: 112]
-    * short description: Renders the main online game screen, including player list, game board, and game info/controls. Uses `useGameState` hook and placeholders for WebSocket communication[cite: 111, 113, 114, 119, 120, 123, 125].
-    * handleStartGame
-        * short description: Placeholder function to signal game start via WebSocket[cite: 115].
-        * input / output: Takes no input, returns `void`[cite: 115].
-    * handleFlipCard
-        * short description: Placeholder function to signal card flip via WebSocket[cite: 116].
-        * input / output: Takes no input, returns `void`[cite: 116].
-    * handleDeclareMoves
-        * short description: Placeholder function to signal move declaration via WebSocket, calling the `declareMoves` function from the `useGameState` hook[cite: 117].
-        * input / output: Takes `moves` (number). Returns `void`[cite: 117].
-
-### src/utils/constants.ts
-
-* Short description: Defines constant mappings and arrays used throughout the application, such as the mapping from target symbol names to display characters (`SYMBOL_MAP`), an array of all target symbols (`SYMBOLS`), and an array of robot colors (`ROBOT_COLORS`)[cite: 131, 132].
-
-### src/utils/robotMovement.ts
-
-* calculateReflection
-    * short description: Calculates the new direction of a robot after hitting a reflector based on the initial direction and the reflector's orientation[cite: 135].
-    * input / output: Takes `direction` (Direction), `reflectorDirection` ('／' | '＼'). Returns `Direction`[cite: 135].
-* getNextPosition
-    * short description: Calculates the next grid position based on the current position and movement direction[cite: 137].
-    * input / output: Takes `position` (Position), `direction` (Direction). Returns `Position`[cite: 137].
-* hasCollision
-    * short description: Checks if a move from a current position to the next position results in a collision with board boundaries, other robots, or walls[cite: 139].
-    * input / output: Takes `board` (Board), `position` (Position), `nextPosition` (Position), `direction` (Direction). Returns `boolean`[cite: 139].
-* calculatePath
-    * short description: Calculates the full path a robot takes in a given direction until it hits an obstacle or reflects, including intermediate positions[cite: 144].
-    * input / output: Takes `board` (Board), `robot` (Robot), `initialDirection` (Direction). Returns `Position[]` (an array of positions in the path)[cite: 144].
-* calculateFinalPosition
-    * short description: Calculates only the final stopping position of a robot moving in a given direction[cite: 153].
-    * input / output: Takes `board` (Board), `robot` (Robot), `direction` (Direction). Returns `Position`[cite: 153].
-
-### src/components/DeclarationCard.tsx
-
-* DeclarationCard (Function Component) [cite: 155]
-    * short description: Renders a single card used for declaring the number of moves. Shows the number and selection/disabled state[cite: 154, 155].
-    * input / output: Takes `number`, `isSelected`, `isDisabled`, `onClick` function. Returns a button element (JSX)[cite: 154, 155].
-* ChevronLeft (Function Component) [cite: 157]
-    * short description: Renders an SVG icon for a left-pointing chevron[cite: 157].
-    * input / output: Takes no input, returns SVG JSX[cite: 157].
-* ChevronRight (Function Component) [cite: 158]
-    * short description: Renders an SVG icon for a right-pointing chevron[cite: 158].
-    * input / output: Takes no input, returns SVG JSX[cite: 158].
-* DeclarationCardList (Function Component) [cite: 160]
-    * short description: Renders a horizontally scrollable list of `DeclarationCard` components, allowing the player to select their move count declaration[cite: 159, 160]. Includes navigation arrows[cite: 163, 164, 167].
-    * handlePrevClick
-        * short description: Decrements the starting index for the visible cards, handling boundary conditions[cite: 161].
-        * input / output: Takes no input, returns `void`. Modifies `startIndex` state[cite: 161].
-    * handleNextClick
-        * short description: Increments the starting index for the visible cards, handling boundary conditions[cite: 162].
-        * input / output: Takes no input, returns `void`. Modifies `startIndex` state[cite: 162].
-    * input / output: Takes `selectedNumber`, `maxNumber`, `onSelect` function, `className`. Returns JSX elements[cite: 159, 160].
-
-### src/pages/BoardTestPage.tsx
-
-* BoardTestPage (Function Component) [cite: 171]
-    * short description: A development/testing page to load, display, rotate, select, and combine board patterns. It uses `BoardLoader`, `GameBoard`, `generateBoardFromPattern`, `rotateBoard`, and `createCompositeBoardPattern`[cite: 170, 171, 172, 174, 175, 183]. Validates loaded boards[cite: 175, 181].
-    * handleBoardSelect
-        * short description: Updates the state for the selected board in a specific quadrant (topLeft, topRight, etc.)[cite: 177].
-        * input / output: Takes `position` (keyof typeof selectedBoards), `board` (BoardPattern). Returns `void`. Updates `selectedBoards` state[cite: 177].
-    * handleCreateComposite
-        * short description: Creates a composite board pattern from the four selected quadrant boards and updates the state[cite: 178].
-        * input / output: Takes no input, returns `void`. Uses `selectedBoards` state[cite: 178]. Calls `createCompositeBoardPattern`[cite: 179]. Updates `compositeBoard` state[cite: 180].
-
-### src/pages/TitlePage.tsx
-
-* TitlePage (Function Component) [cite: 198]
-    * short description: Renders the main title screen with buttons to navigate to Single Player, Online Play (disabled), and a Board Test page[cite: 198, 199, 200, 201].
-    * input / output: Takes no input, returns JSX elements. Uses `react-router-dom` for navigation[cite: 198].
-
-### src/utils/boardRotation.ts
-
-* rotateWallDirection
-    * short description: Calculates the new wall direction after rotating the board by 90, 180, or 270 degrees[cite: 203].
-    * input / output: Takes `direction` (WallDirection), `rotation` (number). Returns `WallDirection`[cite: 203].
-* rotateReflectorDirection
-    * short description: Calculates the new reflector orientation ('／' or '＼') after rotating the board. Only changes for 90 or 270 degrees[cite: 205].
-    * input / output: Takes `direction` (ReflectorDirection), `rotation` (number). Returns `ReflectorDirection`[cite: 205].
-* rotatePosition
-    * short description: Calculates the new (x, y) coordinates of a point on the board after rotation[cite: 207].
-    * input / output: Takes `x` (number), `y` (number), `size` (number), `rotation` (number). Returns `[number, number]` (new x, new y)[cite: 207].
-* rotateBoard
-    * short description: Rotates an entire `BoardPattern` (walls, reflectors, targets) by the specified angle (90, 180, 270)[cite: 211].
-    * input / output: Takes `board` (BoardPattern), `rotation` (number). Returns a new, rotated `BoardPattern`[cite: 211].
-* createCompositeBoardPattern
-    * short description: Combines four 8x8 `BoardPattern` objects into a single 16x16 `BoardPattern`, applying the necessary rotations and coordinate transformations to place them in the correct quadrants[cite: 216].
-    * transformCoordinates (Helper inside `createCompositeBoardPattern`)
-        * short description: Converts coordinates from a smaller 8x8 board to the larger 16x16 composite board based on the quadrant[cite: 219].
-        * input / output: Takes `x`, `y`, `quadrant`. Returns `[number, number]`[cite: 219].
-    * transformElements (Helper inside `createCompositeBoardPattern`)
-        * short description: Applies coordinate transformation to an array of elements (like walls, targets)[cite: 223].
-        * input / output: Takes `elements` array, `quadrant`. Returns a new array with transformed elements[cite: 223, 224].
-    * input / output: Takes `topLeft`, `topRight`, `bottomLeft`, `bottomRight` (all BoardPattern). Returns a new composite `BoardPattern`[cite: 216].
-
-### src/App.tsx
-
-* App (Function Component) [cite: 230]
-    * short description: Sets up the application's routing using `react-router-dom`. Defines routes for the Title page, Single Player page, Board Test page, and commented-out routes for online features[cite: 227, 228, 230, 231].
-    * input / output: Takes no input, returns JSX elements (`Router`, `Routes`, `Route`)[cite: 227, 230].
-
-### src/assets/boards.json
-
-* Short description: A JSON file containing the definitions for different sets of board patterns (A, B, C, D). Each pattern includes size, wall positions, reflector positions (optional), and target positions with colors and symbols[cite: 232, 249, 266, 283, 297, 301]. Includes definitions for the special "vortex" target[cite: 287, 292, 296, 301].
-
-### src/components/GameBoard/Robot.tsx
-
-* DirectionArrow (Function Component) [cite: 304]
-    * short description: Renders a clickable arrow button used for directing robot movement[cite: 304, 306].
-    * input / output: Takes `direction`, `onClick` function, `position` ('top' | 'right' | 'bottom' | 'left'). Returns a button element (JSX)[cite: 304, 305].
-* Robot (Function Component) [cite: 308]
-    * short description: Renders a single robot piece on the game board, handling its position, color, selection state, click events, and displaying movement arrows when active and selected[cite: 302, 303, 304, 308, 314].
-    * getPositionStyle
-        * short description: Calculates the CSS style for positioning and sizing the robot based on board size and cell percentage[cite: 308].
-        * input / output: Takes no input, returns `CSSProperties` object[cite: 308].
-    * getColorStyle
-        * short description: Returns Tailwind CSS class names for the robot's background color based on its `color` prop[cite: 311].
-        * input / output: Takes no input, returns `string`[cite: 311].
-    * handleMove
-        * short description: Calls the `onMove` prop function when a direction arrow is clicked[cite: 312].
-        * input / output: Takes `direction` (Direction). Returns `void`. Calls `onMove` prop[cite: 312].
-    * input / output: Takes props like `color`, `position`, `boardSize`, `isActive`, `isSelected`, `onMove`, `onClick`. Returns a div element (JSX)[cite: 302, 303, 304].
-
-### src/types/board.ts
-
-* Short description: Defines TypeScript types and interfaces related to board patterns as loaded from JSON, including walls, reflectors, targets, colors, and symbols. Also includes type guards (`isValidBoardPattern`, `isValidBoardCollection`) for validating loaded data[cite: 317, 318, 319, 320, 321, 322, 323, 324, 325, 330, 336].
-
-### src/utils/cardGenerator.ts
-
-* CardDeck (Class) [cite: 341]
-    * constructor
-        * short description: Initializes the deck by generating, shuffling cards, and setting the index[cite: 342].
-        * input / output: Takes `board` (Board). Returns `void`[cite: 341, 342].
-    * generateCards (private)
-        * short description: Creates the initial set of 17 cards (4 colors x 4 symbols + 1 vortex) without positions[cite: 343].
-        * input / output: Takes no input. Returns `Omit<Card, 'position'>[]`[cite: 343].
-    * findTargetPosition (private)
-        * short description: Searches the board for the cell matching the given card's color and symbol to determine its position[cite: 346].
-        * input / output: Takes `color` (CardColor), `symbol` (TargetSymbol). Returns `Position | null`[cite: 346, 347].
-    * shuffle (private)
-        * short description: Randomizes the order of cards in the deck using the Fisher-Yates algorithm[cite: 351].
-        * input / output: Takes no input, returns `void`. Modifies the internal `cards` array[cite: 351].
-    * drawNext
-        * short description: Draws the next card from the deck, finds its position on the board, and returns the complete card object. Returns null if the deck is empty or the target can't be found[cite: 352, 353, 355].
-        * input / output: Takes no input. Returns `Card | null`[cite: 352, 353].
-    * getRemaining
-        * short description: Returns the number of cards left in the deck[cite: 358].
-        * input / output: Takes no input. Returns `number`[cite: 358].
-    * getTotalCards
-        * short description: Returns the total number of cards the deck started with[cite: 359].
-        * input / output: Takes no input. Returns `number`[cite: 359].
-
-### src/pages/SinglePlayerPage.tsx
-
-* SinglePlayerPage (Function Component) [cite: 362]
-    * short description: Renders the user interface for the single-player game mode, including the game board, game info panel, and the declaration card list during the declaration phase. Manages layout scaling[cite: 360, 361, 362, 368, 370, 371, 373].
-    * getBoardScale
-        * short description: Calculates a scaling factor for the game board based on window dimensions to ensure it fits within the available space alongside the side panel and declaration area[cite: 364].
-        * input / output: Takes no input. Returns `number` (scale factor)[cite: 364].
-    * input / output: Takes no input, returns JSX elements. Uses `useGameState` hook and `react-router-dom`[cite: 360, 363].
-
-### src/utils/boardLoader.ts
-
-* BoardLoader (Class) [cite: 376]
-    * constructor (private)
-        * short description: Loads the raw board data from the imported JSON file[cite: 377]. Only called internally by `getInstance`[cite: 377].
-        * input / output: Takes no input. Returns `void`[cite: 377].
-    * getInstance (static public)
-        * short description: Implements the Singleton pattern to ensure only one instance of BoardLoader exists[cite: 378].
-        * input / output: Takes no input. Returns the singleton `BoardLoader` instance[cite: 378].
-    * getPatternKey (private)
-        * short description: Generates the key string (e.g., 'boards\_A') used to access board data in the JSON object[cite: 379].
-        * input / output: Takes `pattern` (string). Returns `keyof RawBoardSet`[cite: 379].
-    * getBoardSetByPattern (public)
-        * short description: Retrieves, transforms (adds string ID), and validates all board patterns for a given set (e.g., 'A')[cite: 380, 382]. Filters out invalid boards[cite: 382].
-        * input / output: Takes `pattern` (string). Returns `BoardPattern[]`[cite: 380].
-    * getBoardById (public)
-        * short description: Retrieves a specific board pattern by its string ID (e.g., "board\_A0") and validates it[cite: 383, 387].
-        * input / output: Takes `boardId` (string). Returns `BoardPattern | undefined`[cite: 383, 384].
-    * getRandomGameBoards (public)
-        * short description: Selects one random board pattern from each set (A, B, C, D) to create the set of 4 boards used for a game[cite: 388].
-        * input / output: Takes no input. Returns `BoardPattern[]`[cite: 388].
-    * debugPrintState (public)
-        * short description: Logs the current state of the loaded board data for debugging purposes[cite: 390].
-        * input / output: Takes no input. Returns `void`[cite: 390].
-    * validateAllBoards (public)
-        * short description: Validates all board patterns loaded from the JSON data across all sets[cite: 392].
-        * input / output: Takes no input. Returns `{ valid: boolean; errors: string[] }`[cite: 392].
-
-### src/components/GameBoard/BoardCell.tsx
-
-* BoardCell (Function Component - memoized) [cite: 398]
-    * short description: Renders a single cell of the game board, including its background, walls, target (if any), and reflector (if any)[cite: 397, 398, 410, 411].
-    * getWallClasses
-        * short description: Determines the CSS classes needed to display the correct walls for the cell[cite: 398].
-        * input / output: Takes no input. Returns `string` (CSS class list)[cite: 398].
-    * getTargetClasses
-        * short description: Determines the CSS classes for styling the target element within the cell, including background color/gradient[cite: 399].
-        * input / output: Takes no input. Returns `string` (CSS class list)[cite: 399].
-    * getReflectorClasses
-        * short description: Determines the CSS classes for styling the reflector element within the cell[cite: 401].
-        * input / output: Takes no input. Returns `string` (CSS class list)[cite: 401, 403].
-    * renderReflector
-        * short description: Renders the reflector symbol ('／' or '＼') if the cell has one[cite: 403]. Uses layered text for thickness[cite: 404, 405].
-        * input / output: Takes no input. Returns JSX element or `null`[cite: 403].
-    * renderTargetSymbol
-        * short description: Renders the target symbol (e.g., '☽', '⚙') if the cell is a target[cite: 406]. Handles vortex animation[cite: 407, 408].
-        * input / output: Takes no input. Returns JSX element or `null`[cite: 406].
-    * input / output: Takes props `cell`, `x`, `y`, `size`. Returns a div element (JSX)[cite: 397, 398].
-
-### src/components/GameBoard/GameBoard.tsx
-
-* GameBoard (Function Component - memoized) [cite: 415]
-    * short description: Renders the main game board grid, including all `BoardCell` components and `Robot` components. Handles robot selection and keyboard/click events for initiating moves[cite: 412, 413, 414, 415, 422, 423, 425].
-    * handleKeyDown
-        * short description: Handles arrow key presses to trigger robot movement if a robot is selected and it's the player's turn[cite: 415].
-        * input / output: Takes `e` (React.KeyboardEvent). Returns `void`. Calls `handleRobotMove`[cite: 415].
-    * handleRobotMove
-        * short description: Calculates the path for the selected robot in the chosen direction and calls the `onRobotMove` prop to update the game state. Sets `isMoving` state during animation[cite: 416, 418, 419].
-        * input / output: Takes `color` (RobotColor), `direction` (Direction). Returns `void`. Calls `calculatePath` and `onRobotMove` prop[cite: 416, 417, 418].
-    * handleRobotClick
-        * short description: Toggles the selection state of a robot when clicked[cite: 420].
-        * input / output: Takes `color` (RobotColor). Returns `void`. Updates `selectedRobot` state[cite: 420].
-    * input / output: Takes props `board`, `isPlayerTurn`, `onRobotMove`. Returns a div element (JSX)[cite: 414, 415].
-
-### src/types/game.ts
-
-* Short description: Defines core TypeScript types used in the game logic, including `Position`, `RobotColor`, `GameMode`, `Robot`, `Reflector`, `CellType`, `Cell`, `Board`, `Card`, `GamePhase`, `SinglePlayerState`, `GameState`, and `Direction`[cite: 429, 430, 431, 432, 433, 434, 442, 444, 445, 446, 448, 451, 452].
-
-### src/utils/boardGenerator.ts
-
-* createEmptyCell
-    * short description: Creates a default, empty `Cell` object with all walls set to false[cite: 454].
-    * input / output: Takes no input. Returns `Cell`[cite: 454].
-* getTargetSymbol
-    * short description: Converts a `TargetSymbol` enum value (e.g., 'moon') into its display character (e.g., '☽') using `SYMBOL_MAP`[cite: 455].
-    * input / output: Takes `symbol` (TargetSymbol). Returns `string`[cite: 455].
-* createEmptyBoard
-    * short description: Creates a `Board` object of a given size, filled with empty cells[cite: 456].
-    * input / output: Takes `size` (number). Returns `Board`[cite: 456].
-* placeWalls
-    * short description: Modifies a `Board` object by setting wall properties on cells based on a `BoardPattern`. Also sets the corresponding wall on the adjacent cell[cite: 457].
-    * input / output: Takes `board` (Board), `pattern` (BoardPattern). Returns `void` (modifies board)[cite: 457].
-* placeReflectors
-    * short description: Modifies a `Board` object by adding reflector properties to cells based on a `BoardPattern`[cite: 460].
-    * input / output: Takes `board` (Board), `pattern` (BoardPattern). Returns `void` (modifies board)[cite: 460].
-* placeTargets
-    * short description: Modifies a `Board` object by setting target properties on cells based on a `BoardPattern`[cite: 461].
-    * input / output: Takes `board` (Board), `pattern` (BoardPattern). Returns `void` (modifies board)[cite: 461].
-* isCenterArea
-    * short description: Checks if a given coordinate falls within the central 2x2 area (assuming a 16x16 board) which is typically restricted for initial robot placement[cite: 462].
-    * input / output: Takes `x` (number), `y` (number). Returns `boolean`[cite: 462].
-* getRandomEmptyPosition
-    * short description: Finds a random empty cell on the board that is not a target, not already occupied, and not in the center area. Used for initial robot placement[cite: 463].
-    * input / output: Takes `board` (Board), `occupiedPositions` (Position[]), `maxAttempts` (number). Returns `Position`[cite: 463].
-* placeRobots
-    * short description: Modifies a `Board` object by adding the four robots (red, blue, yellow, green) to random valid starting positions[cite: 467].
-    * input / output: Takes `board` (Board). Returns `void` (modifies board)[cite: 467].
-* generateBoardFromPattern
-    * short description: Creates a complete `Board` object ready for gameplay, by taking a `BoardPattern`, creating an empty board, and then placing walls, reflectors, targets, and robots[cite: 469].
-    * input / output: Takes `pattern` (BoardPattern). Returns `Board`[cite: 469].
-
-### src/hooks/useGameState.ts
-
-* useGameState (Custom Hook) [cite: 474]
-    * short description: Manages the entire game state, including the board, current card, game phase, player scores, moves, declarations, and timers. Provides functions to interact with the game (draw card, declare moves, move robot). Handles game logic like goal checking and robot movement animation[cite: 470, 471, 473, 474, 476, 477, 478, 482, 495, 498, 505].
-    * declareMoves
-        * short description: Updates the game state with the number of moves declared by the player during the declaration phase. Handles logic for changing declarations and setting maximums[cite: 489, 491].
-        * input / output: Takes `moves` (number). Returns `void`. Updates `gameState`[cite: 489].
-    * checkGoal
-        * short description: Checks if the moved robot has reached the target specified by the current card, considering both position and color rules[cite: 492, 495].
-        * input / output: Takes `robot` (Robot). Returns `boolean`[cite: 492].
-    * drawNextCard
-        * short description: Draws the next card from the `CardDeck`, updates the `currentCard` in the state, and transitions the game phase to 'declaration', resetting timers and move counts[cite: 495, 496]. Transitions to 'finished' if no cards left[cite: 497].
-        * input / output: Takes no input. Returns the drawn `Card | null`. Updates `gameState`[cite: 495].
-    * moveRobot
-        * short description: Initiates a robot's movement. Calculates the path, triggers the animation state (`movingRobot`), updates the move count, and checks if the goal was reached or if the declared moves were exceeded[cite: 498, 499, 500, 501]. Updates score and completed cards on goal[cite: 502].
-        * input / output: Takes `robotColor` (RobotColor), `direction` (Direction). Returns `void`. Updates `gameState` and `movingRobot` state[cite: 498].
-    * input / output: Takes `mode` ('single' | 'multi'). Returns an object containing `gameState`, interaction functions (`moveRobot`, `declareMoves`, `drawNextCard`), `remainingCards`, and `totalCards`[cite: 474, 505].
-
-
-### server/coverage/lcov-report/base.css
-
-* Short description: A CSS file providing base styling for the LCOV code coverage report generated by Istanbul[cite: 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277]. It includes styles for layout, typography, tables, coverage indicators (low, medium, high), and general visual elements of the report.
-
-### server/coverage/lcov-report/block-navigation.js
-
-* Short description: A JavaScript file for the LCOV code coverage report that enables keyboard navigation (using 'n', 'j', 'b', 'p', 'k' keys) to jump between uncovered code blocks or low-coverage files in the report view[cite: 278, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290].
+**server/coverage/lcov-report/block-navigation.js**
 * init (IIFE)
-    * short description: Initializes the keyboard navigation functionality by querying relevant elements and setting up event listeners. Returns the `jump` function.
-    * input / output: Input: None. Output: `jump` function.
-    * toggleClass (Inner function)
-        * short description: Adds/removes the 'highlighted' class from coverage elements.
-        * input / output: Input: `index` (number). Output: `void`. Modifies element classes[cite: 279, 280].
-    * makeCurrent (Inner function)
-        * short description: Highlights the element at the given index and scrolls it into view.
-        * input / output: Input: `index` (number). Output: `void`. Calls `toggleClass` and scrolls[cite: 281].
-    * goToPrevious (Inner function)
-        * short description: Calculates the index of the previous coverage element and jumps to it.
-        * input / output: Input: None. Output: `void`. Calls `makeCurrent`[cite: 282, 283, 284, 285].
-    * goToNext (Inner function)
-        * short description: Calculates the index of the next coverage element and jumps to it.
-        * input / output: Input: None. Output: `void`. Calls `makeCurrent`[cite: 286, 287].
-    * jump (Returned function)
-        * short description: Event handler for keydown events, triggers navigation if appropriate keys are pressed and search input is not focused.
-        * input / output: Input: `event` (KeyboardEvent). Output: `void`. Calls `goToNext` or `goToPrevious`[cite: 288, 289, 290].
+    * short description: Initializes keyboard navigation ('n', 'j', 'b', 'p', 'k') for jumping between uncovered code blocks in the LCOV report view[cite: 278, 289]. Queries elements and sets up listeners, returning the `jump` function[cite: 281, 282, 283, 284, 285, 286, 287, 288, 289, 290].
+    * input / output: Takes no input. Returns the `jump` function.
+* toggleClass (Inner function)
+    * short description: Adds or removes the 'highlighted' class for visual navigation feedback[cite: 279].
+    * input / output: Takes `index` (number). Returns `void`. Modifies element classes[cite: 279, 280].
+* makeCurrent (Inner function)
+    * short description: Highlights the element at the given index and scrolls it into view[cite: 281].
+    * input / output: Takes `index` (number). Returns `void`.
+* goToPrevious (Inner function)
+    * short description: Calculates and jumps to the previous coverage element index[cite: 282].
+    * input / output: Takes no input. Returns `void`. Calls `makeCurrent`[cite: 282, 283, 284, 285].
+* goToNext (Inner function)
+    * short description: Calculates and jumps to the next coverage element index[cite: 286].
+    * input / output: Takes no input. Returns `void`. Calls `makeCurrent`[cite: 286, 287].
+* jump (Returned function)
+    * short description: Handles keydown events to trigger navigation, ignoring input if the search box is focused[cite: 288].
+    * input / output: Takes `event` (KeyboardEvent). Returns `void`. Calls `goToNext` or `goToPrevious`[cite: 289, 290].
 
-### server/coverage/lcov-report/index.html
+**server/coverage/lcov-report/prettify.css**
+* short description: CSS file for syntax highlighting in the LCOV report using Google Code Prettify conventions[cite: 301].
 
-* Short description: The main HTML file for the LCOV code coverage report[cite: 291]. It displays a summary table of coverage statistics (statements, branches, functions, lines) for the covered files[cite: 292, 293, 294, 295]. It includes links to detailed reports for each file and utilizes JavaScript for sorting and navigation[cite: 297, 298, 299, 300].
+**server/coverage/lcov-report/prettify.js**
+* short description: Google Code Prettify JavaScript library for syntax highlighting source code within the LCOV report[cite: 301, 302, 303]. It parses code and applies CSS classes for styling.
 
-### server/coverage/lcov-report/prettify.css
+**server/coverage/lcov-report/roomManager.ts.html**
+* short description: HTML file displaying the detailed code coverage report for `roomManager.ts`, showing covered/uncovered lines, statements, and branches with statistics[cite: 305, 306, 307, 308, 309, 311, 312, 313, 314, 315, 316].
 
-* Short description: CSS file defining styles for syntax highlighting within the LCOV code coverage report, using the "prettify" library conventions. It specifies colors for different code elements (keywords, strings, comments, etc.) for both screen and print media[cite: 301].
+**server/coverage/lcov-report/sorter.js**
+* addSorting (IIFE)
+    * short description: Adds click-to-sort functionality to table columns and a search filter box to the LCOV coverage report[cite: 317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344, 345, 346, 347, 348, 349, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363, 364, 365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386].
+    * input / output: Takes no input. Returns a function that initializes the UI enhancements.
+* getTable / getTableHeader / getTableBody / getNthColumn (Inner functions)
+    * short description: Helper functions to select elements within the coverage summary table.
+    * input / output: Various inputs (e.g., column index). Return DOM elements.
+* onFilterInput (Inner function)
+    * short description: Filters table rows based on the search input value.
+    * input / output: Takes no input. Returns `void`. Modifies row display style.
+* addSearchBox (Inner function)
+    * short description: Adds the search input box to the report UI.
+    * input / output: Takes no input. Returns `void`. Modifies the DOM.
+* loadColumns (Inner function)
+    * short description: Reads table header attributes to define sortable columns and their types.
+    * input / output: Takes no input. Returns an array of column definition objects.
+* loadRowData (Inner function)
+    * short description: Extracts data values from a table row's cells based on column definitions.
+    * input / output: Takes `tableRow` (HTMLTableRowElement). Returns a data object for the row.
+* loadData (Inner function)
+    * short description: Attaches data objects to all rows in the table body.
+    * input / output: Takes no input. Returns `void`. Modifies row elements.
+* sortByIndex (Inner function)
+    * short description: Sorts the table rows based on the data in the specified column index.
+    * input / output: Takes `index` (number), `desc` (boolean). Returns `void`. Modifies row order in the DOM.
+* removeSortIndicators / addSortIndicators (Inner functions)
+    * short description: Manage CSS classes on table headers to show the current sort order.
+    * input / output: Take no input. Returns `void`. Modifies header element classes.
+* enableUI (Inner function)
+    * short description: Attaches click event listeners to sortable column headers.
+    * input / output: Takes no input. Returns `void`. Adds event listeners.
 
-### server/coverage/lcov-report/prettify.js
+**server/.env.development**
+* short description: Defines environment variables for the server's development mode, including `PORT`, `HOST`, `NODE_ENV`, and `CORS_ORIGIN`[cite: 427].
 
-* Short description: JavaScript library (Google Code Prettify) used for syntax highlighting of source code within the LCOV report. It includes logic for parsing code, identifying language elements, and applying CSS classes for styling[cite: 301, 302, 303].
+**server/jest.config.js**
+* short description: Jest configuration file specifying the preset (`ts-jest`), environment (`node`), test locations, coverage collection settings, and coverage thresholds[cite: 428].
 
-### server/coverage/lcov-report/roomManager.ts.html
+**server/package.json**
+* short description: Node.js project manifest defining metadata, scripts (start, dev, build, test, etc.), dependencies (`express`, `socket.io`, `uuid`, etc.), and dev dependencies (types, Jest, ESLint, TypeScript, etc.)[cite: 429].
 
-* Short description: An HTML file showing the detailed code coverage report specifically for the `roomManager.ts` file[cite: 305]. It displays the source code line by line, highlighting covered and uncovered lines, statements, and branches[cite: 306, 307, 308, 309]. It includes coverage statistics for this specific file[cite: 306, 307, 308, 309, 311, 312, 313, 314, 315, 316].
+**server/tsconfig.json**
+* short description: TypeScript configuration for the server project, setting compiler options (target, module, outDir, strict, etc.) and specifying included/excluded files[cite: 430].
 
-### server/coverage/lcov-report/sorter.js
+**src/assets/boards.json**
+* short description: JSON file containing definitions for various 8x8 Ricochet Robots board patterns (sets A, B, C, D), detailing wall, reflector, and target placements with their properties[cite: 650, 651, 652].
 
-* Short description: JavaScript file for the LCOV report that adds click-to-sort functionality to the columns in the coverage summary table and includes a search/filter input box[cite: 346, 347, 348, 349, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363, 364, 365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386].
+**src/assets/react.svg**
+* short description: SVG image file for the React logo[cite: 157].
 
-### server/coverage/clover.xml
+**src/components/GameBoard/BoardCell.tsx**
+* BoardCell (Function Component - memoized) [cite: 398, 701]
+    * getWallClasses
+        * short description: Determines CSS classes for displaying cell walls based on the `cell.walls` properties[cite: 702].
+        * input / output: Takes no input. Returns `string` (CSS classes).
+    * getTargetClasses
+        * short description: Determines CSS classes for styling the target element, including background color/gradient and handling the vortex animation[cite: 704].
+        * input / output: Takes no input. Returns `string` (CSS classes).
+    * getReflectorClasses
+        * short description: Determines CSS classes for styling the reflector element[cite: 706].
+        * input / output: Takes no input. Returns `string` (CSS classes).
+    * renderReflector
+        * short description: Renders the reflector symbol ('／' or '＼') if present, using layered text for thickness[cite: 708, 709].
+        * input / output: Takes no input. Returns JSX element or `null`.
+    * renderTargetSymbol
+        * short description: Renders the target symbol (e.g., '☽') if the cell is a target, handling vortex animation[cite: 710, 711].
+        * input / output: Takes no input. Returns JSX element or `null`.
+    * short description: Renders a single cell of the game board, including background, walls, target, and reflector[cite: 701].
+    * input / output: Takes props `cell`, `x`, `y`, `size`. Returns JSX `div` element[cite: 712].
 
-* Short description: An XML file representing the code coverage results in the Clover format, typically used for integration with CI/CD systems or other analysis tools[cite: 388, 389, 390, 391, 392]. It contains detailed metrics about covered statements, conditionals, and methods for each file.
+**src/components/GameBoard/GameBoard.tsx**
+* GameBoard (Function Component - memoized) [cite: 415, 713]
+    * handleKeyDown
+        * short description: Handles arrow key presses to trigger robot movement via `handleRobotMove` if a robot is selected and it's the player's turn[cite: 715].
+        * input / output: Takes `e` (React.KeyboardEvent). Returns `void`.
+    * handleRobotMove
+        * short description: Calculates the robot's path, calls the `onRobotMove` prop, and sets the moving state[cite: 717, 718].
+        * input / output: Takes `color` (RobotColor), `direction` (Direction). Returns `void`.
+    * handleRobotClick
+        * short description: Toggles the selection state of a clicked robot[cite: 719].
+        * input / output: Takes `color` (RobotColor). Returns `void`. Updates `selectedRobot` state.
+    * short description: Renders the game board grid, cells (`BoardCell`), and robots (`Robot`), handling robot selection and movement initiation (keyboard/click)[cite: 713, 714].
+    * input / output: Takes props `board`, `isPlayerTurn`, `onRobotMove`. Returns JSX `div` element[cite: 721].
 
-### server/coverage/coverage-final.json
+**src/components/GameBoard/Robot.tsx**
+* DirectionArrow (Function Component) [cite: 304, 653]
+    * short description: Renders a clickable arrow button for directing robot movement[cite: 653].
+    * input / output: Takes `direction`, `onClick`, `position`. Returns JSX `button` element[cite: 654, 655].
+* Robot (Function Component) [cite: 308, 655]
+    * getPositionStyle
+        * short description: Calculates CSS styles for positioning and sizing the robot[cite: 656].
+        * input / output: Takes no input. Returns `CSSProperties` object.
+    * getColorStyle
+        * short description: Returns Tailwind CSS classes for the robot's background color[cite: 658].
+        * input / output: Takes no input. Returns `string`.
+    * handleMove
+        * short description: Calls the `onMove` prop function when a direction arrow is clicked[cite: 660].
+        * input / output: Takes `direction` (Direction). Returns `void`. Calls `onMove` prop[cite: 661].
+    * short description: Renders a robot piece, handling position, color, selection, clicks, and displaying movement arrows[cite: 655].
+    * input / output: Takes props `color`, `position`, `boardSize`, `isActive`, `isSelected`, `onMove`, `onClick`, `style`. Returns JSX `div` element[cite: 662, 663].
 
-* Short description: A JSON file containing the raw, detailed code coverage data generated by Istanbul. This file is often used by other tools or reporters (like LCOV) to generate human-readable reports.
+**src/components/DeclarationCard.tsx**
+* DeclarationCard (Function Component) [cite: 155, 613]
+    * short description: Renders a card for declaring moves, showing number and state (selected/disabled)[cite: 613, 614].
+    * input / output: Takes `number`, `isSelected`, `isDisabled`, `onClick`. Returns JSX `button` element[cite: 614, 615].
+* ChevronLeft (Function Component) [cite: 157, 615]
+    * short description: Renders an SVG icon for a left chevron[cite: 615].
+    * input / output: Takes no input. Returns SVG JSX[cite: 616].
+* ChevronRight (Function Component) [cite: 158, 617]
+    * short description: Renders an SVG icon for a right chevron[cite: 617].
+    * input / output: Takes no input. Returns SVG JSX[cite: 618].
+* DeclarationCardList (Function Component) [cite: 160, 619]
+    * handlePrevClick
+        * short description: Decrements the starting index for visible cards[cite: 620].
+        * input / output: Takes no input. Returns `void`. Modifies `startIndex` state[cite: 621].
+    * handleNextClick
+        * short description: Increments the starting index for visible cards[cite: 622].
+        * input / output: Takes no input. Returns `void`. Modifies `startIndex` state[cite: 623].
+    * short description: Renders a scrollable list of `DeclarationCard`s for move count selection, with navigation arrows[cite: 619, 620].
+    * input / output: Takes `selectedNumber`, `maxNumber`, `onSelect`, `className`. Returns JSX elements[cite: 624].
 
-### server/coverage/lcov.info
+**src/components/GameInfo.tsx**
+* GameInfo (Function Component) [cite: 99]
+    * short description: Displays game info: score, move count, declared moves, timer, current target card, remaining cards, and a button to draw the next card[cite: 590, 591].
+    * input / output: Takes props `score`, `moveCount`, `declaredMoves`, `timer`, `isDeclarationPhase`, `currentCard`, `remainingCards`, `onDrawCard`, `phase`. Returns JSX elements[cite: 592, 593].
 
-* Short description: A text file containing code coverage data in the LCOV format. This format is widely used by coverage reporting tools and services (like Coveralls or Codecov) to display coverage information.
+**src/components/GameResultDisplay.tsx**
+* GameResultDisplay (Function Component)
+    * short description: Displays game results including rankings and scores when the game phase is 'finished'[cite: 914]. Retrieves ranking data and maps player names[cite: 915]. Includes a button to leave the room[cite: 188].
+    * input / output: Takes props `players: Player[]`, `onLeaveRoom: () => void`. Returns JSX `div` element[cite: 915].
 
-### server/src/services/\_\_tests\_\_/roomManager.test.ts
-
-* Short description: Contains Jest unit tests for the `RoomManager` class[cite: 573, 574]. It tests functionalities like room creation[cite: 575, 576, 577, 578], joining rooms (including error cases like full rooms or wrong passwords)[cite: 579, 580, 581, 582], leaving rooms (including host reassignment)[cite: 583, 584, 585], retrieving room summaries[cite: 587, 588], updating player connections[cite: 589, 590], and cleaning up inactive rooms[cite: 586].
-
-### server/src/services/roomManager.ts
-
-* RoomManager (Class) [cite: 592]
-    * constructor
-        * short description: Initializes the `RoomManager` with an empty map to store rooms[cite: 593].
-        * input / output: Input: None. Output: `void`.
-    * createRoom
-        * short description: Creates a new game room with a unique ID, sets the host player, and stores it[cite: 594, 595, 596, 597].
-        * input / output: Input: `hostPlayer: Player`, `options: RoomOptions`. Output: `Room`[cite: 594].
-    * joinRoom
-        * short description: Adds a player to an existing room, performing checks for room existence, password validity, and player count limits[cite: 598, 599, 600, 601, 602, 603].
-        * input / output: Input: `playerId: string`, `roomId: string`, `password?: string`. Output: `boolean` (throws errors on failure)[cite: 598].
-    * leaveRoom
-        * short description: Removes a player from a room. If the room becomes empty, it's deleted. If the host leaves, a new host is assigned[cite: 604, 605, 606, 607, 608].
-        * input / output: Input: `playerId: string`, `roomId: string`. Output: `boolean` (throws errors on failure)[cite: 604].
-    * getRoomSummaries
-        * short description: Returns an array of summary objects for all current rooms, suitable for displaying a list of available rooms[cite: 609].
-        * input / output: Input: None. Output: `RoomSummary[]`.
-    * getRoom
-        * short description: Retrieves the full details of a specific room by its ID[cite: 610].
-        * input / output: Input: `roomId: string`. Output: `Room | undefined`.
-    * updatePlayerConnection
-        * short description: Updates the `connected` status of a player within a specific room[cite: 611, 612, 613, 614].
-        * input / output: Input: `playerId: string`, `roomId: string`, `connected: boolean`. Output: `void` (throws errors if room or player not found).
-    * cleanupInactiveRooms
-        * short description: Iterates through all rooms and removes those that haven't had activity for a set period (e.g., 30 minutes)[cite: 615, 616, 617].
-        * input / output: Input: None. Output: `void`.
-
-### server/src/types/player.ts
-
-* Short description: Defines TypeScript interfaces and types related to players for the server-side, including `Player` details, `PlayerSession` for tracking connections, and `PlayerStatus` enums[cite: 393, 394].
-
-### server/src/types/room.ts
-
-* Short description: Defines TypeScript interfaces and types related to game rooms for the server-side, including the main `Room` structure, `GameState`, `GameStatus` enums, `RoomSummary` for listing, and `RoomOptions` for creation[cite: 395, 396, 397, 398, 399, 400, 401, 402].
-
-### server/src/server.ts
-
-* Short description: The main entry point for the Node.js WebSocket server using Socket.IO[cite: 403, 404]. It sets up an Express server, initializes Socket.IO with CORS configuration, instantiates the `RoomManager`, and defines event handlers for client connections, disconnections, player registration, room creation, joining, and leaving[cite: 405, 407, 408, 410, 411, 412, 414, 415, 416, 417, 418, 419, 420, 421]. Includes basic session tracking and periodic cleanup for inactive connections and rooms[cite: 409, 410]. Sets up logging using Winston [cite: 406] and basic error handling[cite: 425, 426]. Listens on a configured port[cite: 423, 424].
-* Event Handlers:
-    * connection: Logs new connection, sets up listeners for other events for that socket[cite: 410].
-    * register: Creates a player record, stores session info, emits 'registered' event back to client[cite: 411].
-    * createRoom: Uses `RoomManager` to create a room, makes the socket join the room, emits 'roomCreated', and updates the global room list[cite: 414, 415].
-    * joinRoom: Uses `RoomManager` to add player to a room, makes the socket join the room, notifies others in the room, emits 'roomJoined' to the client, and updates the global room list[cite: 417, 418].
-    * leaveRoom: Uses `RoomManager` to remove player, makes the socket leave the room, notifies others, and updates the global room list[cite: 419].
-    * disconnect: Finds the player's room (if any), updates their connection status via `RoomManager`, notifies others in the room, and removes the session[cite: 420, 421].
-    * ping: Updates the session's `lastConnected` time and emits 'pong' for health checks[cite: 422].
-
-### server/.env.development
-
-* Short description: Environment variables specifically for the development environment of the server[cite: 427]. Sets the `PORT`, `HOST`, `NODE_ENV`, and the `CORS_ORIGIN` for allowing connections from the frontend development server[cite: 427].
-
-### server/jest.config.js
-
-* Short description: Configuration file for the Jest testing framework[cite: 428]. It specifies the preset (`ts-jest`), test environment (`node`), test file locations, and enables code coverage collection, setting thresholds for branches, functions, lines, and statements[cite: 428].
-
-### server/package.json
-
-* Short description: Defines the Node.js server project's metadata, scripts (start, dev, build, test, lint, format), dependencies (`dotenv`, `express`, `socket.io`, `uuid`, `winston`), and development dependencies (types, linters, testing tools, TypeScript)[cite: 429].
-
-### server/tsconfig.json
-
-* Short description: The TypeScript configuration file for the server project[cite: 430]. It sets compiler options like target (`ES2020`), module system (`commonjs`), output directory (`./dist`), root directory (`./src`), enables strict type checking, ES module interop, and source map generation[cite: 430]. It includes all files in `src` but excludes tests and `node_modules`.
-
-### src/components/room/CreateRoomForm.tsx
-
+**src/components/room/CreateRoomForm.tsx**
 * CreateRoomForm (Function Component)
-    * short description: Renders a form for creating a new game room, allowing users to input a room name and an optional password[cite: 435, 441, 442, 443]. Uses the `useGameStore` hook to call the `createRoom` action upon submission[cite: 436, 439]. Handles basic input validation and displays connection errors[cite: 437, 438, 444]. Calls `onSuccess` prop if provided and creation is successful[cite: 440].
     * handleSubmit
-        * short description: Prevents default form submission, validates input, calls `createRoom` from the store, and triggers the `onSuccess` callback.
-        * input / output: Input: `e: React.FormEvent`. Output: `void`.
+        * short description: Validates input, calls `createRoom` action from game store, handles loading state, and triggers `onSuccess` callback[cite: 436, 437, 438, 439, 440, 831].
+        * input / output: Takes `e: React.FormEvent`. Returns `Promise<void>`. Uses/sets `name`, `password`, `error`, `isLoading` state. Calls `createRoom` and `onSuccess`.
+    * short description: Renders a form to create a game room (name, optional password)[cite: 827]. Prevents creation until player is registered[cite: 935]. Uses `useGameStore`[cite: 828]. Handles errors and loading state[cite: 829].
+    * input / output: Takes `onSuccess` prop. Returns JSX `form` element. Uses `useGameStore`.
 
-### src/components/room/RoomList.tsx
-
+**src/components/room/RoomList.tsx**
 * RoomList (Function Component)
-    * short description: Displays a list of available game rooms[cite: 446]. Allows users to select a room and, if required, enter a password to join[cite: 447, 448, 459, 466]. Uses the `useGameStore` hook to get the room list and call the `joinRoom` action[cite: 448, 450]. Displays status text for each room and handles errors[cite: 452, 461, 469]. Shows a lock icon for password-protected rooms[cite: 462]. Calls `onJoinSuccess` prop if provided and join is successful[cite: 451].
     * handleJoinRoom
-        * short description: Prevents default form submission, validates selection and password (if needed), calls `joinRoom` from the store, and triggers the `onJoinSuccess` callback.
-        * input / output: Input: `e: React.FormEvent`. Output: `void`[cite: 449].
+        * short description: Validates room selection and password, calls `joinRoom` action from game store, handles errors, and triggers `onJoinSuccess` callback[cite: 449, 450, 451, 837].
+        * input / output: Takes `e: React.FormEvent`. Returns `void`[cite: 838]. Uses `selectedRoom`, `password` state. Sets `error` state. Calls `joinRoom` and `onJoinSuccess`.
     * getStatusText
-        * short description: Converts the room status enum ('waiting', 'declaration', etc.) into human-readable Japanese text.
-        * input / output: Input: `status: string`. Output: `string`[cite: 452, 453, 454, 455, 456].
+        * short description: Converts room status enum ('waiting', etc.) to Japanese text[cite: 452].
+        * input / output: Takes `status: string`. Returns `string`[cite: 840].
+    * short description: Displays a list of available game rooms, allowing selection and password entry for joining[cite: 832, 833]. Shows status and lock icon[cite: 835]. Uses `useGameStore`[cite: 834].
+    * input / output: Takes `rooms`, `onJoinSuccess`. Returns JSX elements. Uses `useGameStore`.
 
-### src/services/\_\_tests\_\_/socketService.test.ts
+**src/hooks/useGameState.ts**
+* useGameState (Custom Hook) [cite: 474, 743]
+    * declareMoves
+        * short description: Updates state with the player's declared move count during the declaration phase, handling logic for changing declarations[cite: 746].
+        * input / output: Takes `moves` (number). Returns `void`. Updates `gameState`[cite: 747, 748].
+    * checkGoal
+        * short description: Checks if the moved robot reached the current card's target (position and color)[cite: 748].
+        * input / output: Takes `robot` (Robot). Returns `boolean`[cite: 749].
+    * drawNextCard
+        * short description: Draws the next card, updates state (`currentCard`, `phase` to 'declaration'), resets timers/moves[cite: 750]. Transitions to 'finished' if deck empty[cite: 751].
+        * input / output: Takes no input. Returns `Card | null`. Updates `gameState`[cite: 751, 752].
+    * moveRobot
+        * short description: Initiates robot movement, calculates path, triggers animation, updates move count, checks for goal/overshoot, updates score/completed cards[cite: 753, 754].
+        * input / output: Takes `robotColor` (RobotColor), `direction` (Direction). Returns `void`. Updates `gameState`, `movingRobot` state[cite: 754, 755].
+    * short description: Manages the entire single-player game state (board, card, phase, score, moves, declarations, timer, animations) and provides interaction functions[cite: 743, 744, 745]. Initializes the board and card deck[cite: 470, 471, 473, 474, 476, 477, 478, 482, 495, 498, 505].
+    * input / output: Takes `mode` ('single'). Returns object with `gameState`, interaction functions, `remainingCards`, `totalCards`[cite: 755, 756].
 
-* Short description: Contains Vitest unit tests for the `SocketService` class[cite: 477]. It mocks the `socket.io-client` library [cite: 478] and tests the singleton pattern[cite: 480], connection logic (success and error/retry cases)[cite: 481, 483, 484, 485], room operations (`createRoom`, `joinRoom`, `leaveRoom`) by checking if the correct events are emitted[cite: 486, 487, 488, 489], event handler registration (`onPlayerRegistered`, `onRoomCreated`, `onError`)[cite: 490, 491, 492], and the disconnect method[cite: 493].
+**src/index.css**
+* short description: Defines base styles, component styles (buttons), and utility classes using Tailwind CSS[cite: 70].
 
-### src/services/socketService.ts
+**src/main.tsx**
+* short description: Main entry point for the React application, rendering the root `App` component[cite: 72].
 
-* SocketService (Class - Singleton) [cite: 495]
-    * getInstance (static public)
-        * short description: Provides access to the single instance of the `SocketService`. Creates the instance if it doesn't exist[cite: 497].
-        * input / output: Input: None. Output: `SocketService` instance.
-    * connect
-        * short description: Establishes a connection to the WebSocket server using the URL from environment variables. Sets up handlers for 'connect', 'connect\_error', and 'disconnect' events. Handles reconnection attempts[cite: 498, 499].
-        * input / output: Input: None. Output: `Promise<void>` (resolves on successful connection, rejects after max reconnection attempts).
-    * disconnect
-        * short description: Disconnects the socket if it's currently connected and clears the internal socket reference[cite: 500, 501].
-        * input / output: Input: None. Output: `void`.
-    * registerPlayer
-        * short description: Emits the 'register' event to the server with the player's name[cite: 502].
-        * input / output: Input: `name: string`. Output: `void`.
-    * createRoom
-        * short description: Emits the 'createRoom' event to the server with room options[cite: 503].
-        * input / output: Input: `options: { name: string; password?: string }`. Output: `void`.
-    * joinRoom
-        * short description: Emits the 'joinRoom' event to the server with room ID and optional password[cite: 504].
-        * input / output: Input: `roomId: string`, `password?: string`. Output: `void`.
-    * leaveRoom
-        * short description: Emits the 'leaveRoom' event to the server with the room ID[cite: 505].
-        * input / output: Input: `roomId: string`. Output: `void`.
-    * onPlayerRegistered / onRoomCreated / onRoomJoined / onRoomLeft / onRoomUpdated / onError
-        * short description: Methods to register callbacks for specific events received from the server[cite: 506, 507, 508, 509, 510, 511].
-        * input / output: Input: `callback: (data: any) => void`. Output: `void`.
-    * removeAllListeners
-        * short description: Removes all registered event listeners from the socket instance[cite: 512].
-        * input / output: Input: None. Output: `void`.
+**src/pages/BoardTestPage.tsx**
+* BoardTestPage (Function Component) [cite: 171, 625]
+    * handleBoardSelect
+        * short description: Updates state for the selected board in a specific quadrant[cite: 627].
+        * input / output: Takes `position`, `board`. Returns `void`. Updates `selectedBoards` state[cite: 628].
+    * handleCreateComposite
+        * short description: Creates and sets the composite board pattern from selected quadrants[cite: 629].
+        * input / output: Takes no input. Returns `void`. Uses `selectedBoards`, calls `createCompositeBoardPattern`, updates `compositeBoard` state[cite: 630].
+    * short description: Development page to load, display, rotate, select, combine, and validate board patterns using various utility functions and components[cite: 625, 626].
+    * input / output: Takes no input. Returns JSX elements. Uses `BoardLoader`, `GameBoard`, utils.
 
-### src/stores/gameStore.ts
+**src/pages/CreateRoomPage.tsx**
+* CreateRoomPage (Function Component)
+    * handleCreateSuccess
+        * short description: Navigates to the game page using the created room's ID upon successful room creation[cite: 1325]. Handles potential errors if room data is invalid[cite: 1327].
+        * input / output: Takes `room: Room`. Returns `void`. Uses `Maps`.
+    * short description: Page for creating a new online game room. Handles connection status, player registration status, and displays the `CreateRoomForm`[cite: 1320, 1322, 1323, 1324, 1332]. Redirects to the game page on success[cite: 1325].
+    * input / output: Takes no input. Returns JSX elements. Uses `useGameStore`, `CreateRoomForm`, `useNavigate`.
 
-* Short description: Defines a Zustand store for managing the global game state on the client-side[cite: 513, 517]. It holds connection status, player info, current room details, and a list of available rooms[cite: 514]. It provides actions to connect/disconnect, register the player, and interact with rooms (create, join, leave) by calling the `SocketService`[cite: 515, 516, 522, 523, 524, 525, 526, 527, 528, 529]. It also includes setters/getters for managing connection errors and updating state based on socket events received via `SocketService` callbacks[cite: 518, 519, 520, 521].
-* useGameStore (Zustand Hook/Store)
-    * State: `isConnected`, `isConnecting`, `connectionError`, `currentPlayer`, `currentRoom`, `availableRooms`.
-    * Actions: `connect`, `disconnect`, `registerPlayer`, `createRoom`, `joinRoom`, `leaveRoom`, `setConnectionError`.
-
-### src/types/player.ts
-
-* Short description: Defines TypeScript interfaces related to players for the client-side, including `Player` details, `PlayerSession` (potentially unused client-side but defined), and `PlayerStatus` enums[cite: 531, 532]. *Note: This file shares the same path as the server-side type definition but might contain different content specific to the client.*
-
-### src/types/room.ts
-
-* Short description: Defines TypeScript interfaces and types related to game rooms for the client-side, including `Room`, `GameState`, `GameStatus`, `RoomSummary`, and `RoomOptions`[cite: 533, 534, 535, 536, 537, 538, 539]. *Note: This file shares the same path as the server-side type definition but might contain different content specific to the client, particularly how `players` and `declarations` are structured (object vs Map).*
-
-### src/types/socket.ts
-
-* Short description: Defines TypeScript interfaces for WebSocket communication events between the server and client using Socket.IO[cite: 540, 541, 542, 543]. It specifies the event names and payload types for both `ServerToClientEvents` and `ClientToServerEvents`, and defines the `GameSocket` type by combining these with the base Socket type[cite: 544].
-
-### server/src/types/game.ts
-
-* Short description: Defines TypeScript types for multiplayer game state management.
-* Key types:
-  - GamePhase: Enum for game phases (waiting, declaration, solution, finished)
-  - Position: Interface for robot positions (x, y coordinates)
-  - RobotColor: Enum for robot colors (red, blue, green, yellow)
-  - Card: Interface for game cards (color, symbol, position)
-  - Declaration: Interface for move declarations
-  - PlayerGameState: Interface for player-specific game state
-  - MultiplayerGameState: Interface for overall game state
-  - GameRules: Interface for game configuration
-  - DEFAULT_GAME_RULES: Constant with default game rules
-
-### server/src/services/gameManager.ts
-
-* GameManager (Class)
-  * constructor
-    * short description: Initializes game manager with players and rules
-    * input / output: Takes `players: Player[]`, `rules: GameRules`. Returns `void`.
-  * startGame
-    * short description: Starts the game if enough players are present
-    * input / output: Takes no input. Returns `void`. Throws if game already started or too few players.
-  * declareMoves
-    * short description: Handles player's move count declarations
-    * input / output: Takes `playerId: string`, `moves: number`. Returns `void`. Throws if invalid phase or moves.
-  * moveRobot
-    * short description: Handles robot movement during solution phase
-    * input / output: Takes `playerId: string`, `robotColor: RobotColor`, `positions: Position[]`. Returns `void`.
-  * getGameState
-    * short description: Returns current game state
-    * input / output: Takes no input. Returns `MultiplayerGameState`.
-
-### server/src/services/__tests__/gameManager.test.ts
-
-* Short description: Contains comprehensive tests for GameManager class.
-* Test suites:
-  - Game Initialization: Tests game setup and starting conditions
-  - Declaration Phase: Tests move declaration validation and timing
-  - Solution Phase: Tests robot movement validation and player turns
-  - Game End: Tests game completion conditions
-
-================================================================
-Implementation Details
-================================================================
-
-### Multiplayer Game Logic
-- Game state management using GameManager class
-- Phase-based gameplay (waiting → declaration → solution)
-- Timer system for declaration and solution phases
-- Move validation and scoring system
-- Player turn management
-
-### Game Flow
-1. Game starts with 2+ players
-2. Players declare move counts (1-30 moves)
-3. Lowest declarer attempts solution
-4. Success: +1 point, new card
-5. Failure: -1 point, next lowest declarer tries
-6. Game ends when all cards are used
-
-### Testing
-- Unit tests cover all major functionality
-- Mock timers for testing time-dependent features
-- Edge cases tested (invalid moves, timeouts)
-- Player interaction scenarios verified
-
-================================================================
-Notes
-================================================================
-
-TODO:
-1. Card deck implementation
-2. Goal achievement validation logic
-3. Integration with Socket.IO events
-
-================================================================
-Added/Modified Frontend Components/Hooks/Stores (Issue #7)
-================================================================
-
-### src/stores/gameStore.ts
-
-* useGameStore (Zustand Hook/Store)
-  * short description: Extended to manage multiplayer game state (`game`) including board, phase, timer, declarations, scores, etc. Added actions (`startGame`, `declareMoves`, `moveRobot`) to interact with the server via Socket.IO. Added listeners for server-sent game events (`gameStarted`, `gameStateUpdated`, etc.) to update the local state.
-  * input / output: Provides game state and actions to components.
-
-### src/pages/GamePage.tsx
-
+**src/pages/GamePage.tsx**
 * GamePage (Function Component)
-  * short description: Refactored to use `useGameStore` for multiplayer game state and actions. Displays player list with scores and connection status, game board, game info (phase, timer, card), declarations, and game controls (start game button for host). Renders `DeclarationCardList` during the declaration phase. Handles player turns and game over display.
-  * input / output: Takes no props. Renders the main game UI. Uses `useGameStore`, `GameBoard`, `DeclarationCardList`.
+    * getPhaseText (Helper)
+        * short description: Converts `GamePhase` enum to display text.
+        * input / output: Takes `phase: GamePhase`. Returns `string`.
+    * getTargetColorClass (Helper)
+        * short description: Returns Tailwind CSS class for target color[cite: 1583].
+        * input / output: Takes `color: Card['color']`. Returns `string`.
+    * handleStartGame
+        * short description: Calls the `startGame` action from the game store[cite: 1589].
+        * input / output: Takes no input. Returns `void`.
+    * handleDeclareMoves
+        * short description: Calls the `declareMoves` action from the game store[cite: 1590].
+        * input / output: Takes `moves: number`. Returns `void`.
+    * handleRobotMove
+        * short description: Calculates the robot's path using `calculatePath` and calls the `moveRobot` action from the game store with the path[cite: 1591, 1593, 1594].
+        * input / output: Takes `robotColor: RobotColor`, `direction: Direction`. Returns `void`.
+    * handleLeaveRoom
+        * short description: Calls the `leaveRoom` action from the game store and navigates back to the online menu[cite: 1595].
+        * input / output: Takes no input. Returns `void`.
+    * short description: Renders the main online multiplayer game screen, displaying player list, scores, game board, game info, declarations, game controls (for host), and results. Manages UI based on game state from `useGameStore`[cite: 112, 1578, 1579, 1580, 1581, 1587, 1588, 1601, 1608, 1613, 1618, 1625].
+    * input / output: Takes no input. Returns JSX elements. Uses `useGameStore`, `GameBoard`, `DeclarationCardList`, `GameResultDisplay`, utils.
 
-### src/components/DeclarationCard.tsx
+**src/pages/JoinRoomPage.tsx**
+* JoinRoomPage (Function Component)
+    * handleJoinSuccess
+        * short description: Placeholder function intended to handle actions after successfully joining a room (navigation is handled by `useEffect` watching `currentRoom`)[cite: 525].
+        * input / output: Takes no input. Returns `void`.
+    * short description: Page for joining an existing online game room. Handles connection, player registration, displays available rooms using `RoomList`, and navigates to the game page upon joining[cite: 520, 521, 522, 523, 524, 528, 529].
+    * input / output: Takes no input. Returns JSX elements. Uses `useGameStore`, `RoomList`, `useNavigate`.
 
-* DeclarationCardList (Function Component)
-  * short description: Modified `selectedNumber` prop to accept `number | null`. Adjusted internal logic to handle `null` value for `selectedNumber` when calculating disabled state.
-  * input / output: Takes `selectedNumber: number | null`, `maxNumber: number`, `onSelect: (num: number) => void`. Returns JSX.
+**src/pages/OnlinePage.tsx**
+* OnlinePage (Function Component)
+    * short description: Displays buttons to navigate to "Create Room", "Join Room", or back to the title page[cite: 195, 196, 197].
+    * input / output: Takes no input. Returns JSX elements. Uses `useNavigate`.
 
-### src/types/socket.ts
+**src/pages/SinglePlayerPage.tsx**
+* SinglePlayerPage (Function Component) [cite: 362, 680]
+    * getBoardScale
+        * short description: Calculates a scale factor for the game board based on window size to fit UI elements[cite: 682].
+        * input / output: Takes no input. Returns `number`[cite: 683].
+    * short description: Renders the single-player game UI, including the board, info panel, and declaration cards, managing layout scaling[cite: 680, 681].
+    * input / output: Takes no input. Returns JSX elements. Uses `useGameState`, `GameBoard`, `GameInfo`, `DeclarationCardList`[cite: 684].
 
-* ServerToClientEvents / ClientToServerEvents (Interfaces)
-  * short description: Added event definitions for multiplayer game interactions: `gameStarted`, `gameStateUpdated`, `declarationMade`, `turnChanged`, `solutionAttemptResult`, `gameOver`, `startGame`, `declareMoves`, `moveRobot`, `getAvailableRooms`, `availableRoomsUpdated`. Updated existing event payloads for consistency.
-  * input / output: Defines the contract for client-server communication via Socket.IO.
+**src/pages/TitlePage.tsx**
+* TitlePage (Function Component) [cite: 198, 532, 631]
+    * short description: Renders the main title screen with buttons to navigate to Single Player, Online Play, and Board Test pages[cite: 631].
+    * input / output: Takes no input. Returns JSX elements. Uses `useNavigate`[cite: 632].
 
-### src/services/socketService.ts
+**src/services/socketService.ts**
+* SocketService (Class - Singleton) [cite: 495, 843]
+    * getInstance (static public)
+        * short description: Provides access to the single `SocketService` instance, creating it if necessary[cite: 843].
+        * input / output: Takes no input. Returns `SocketService` instance[cite: 844].
+    * connect
+        * short description: Establishes WebSocket connection, handles events ('connect', 'connect_error', 'disconnect'), manages reconnection attempts, and resolves with the socket ID on success[cite: 845, 846].
+        * input / output: Takes no input. Returns `Promise<string>`[cite: 847, 938].
+    * disconnect
+        * short description: Disconnects the socket and clears the internal reference[cite: 848].
+        * input / output: Takes no input. Returns `void`.
+    * emit (private helper)
+        * short description: Safely emits a specified event with arguments if the socket is connected.
+        * input / output: Takes `event` (keyof ClientToServerEvents), `...args`. Returns `void`.
+    * registerPlayer
+        * short description: Emits the 'register' event with the player's name[cite: 849].
+        * input / output: Takes `name: string`. Returns `void`.
+    * createRoom
+        * short description: Emits 'createRoom' event and returns a Promise that resolves with the created Room object or rejects on error/timeout[cite: 850].
+        * input / output: Takes `options: { name: string; password?: string }`. Returns `Promise<Room>`.
+    * joinRoom
+        * short description: Emits 'joinRoom' event with room ID and optional password[cite: 852].
+        * input / output: Takes `roomId: string`, `password?: string`. Returns `void`.
+    * leaveRoom
+        * short description: Emits 'leaveRoom' event with room ID[cite: 854].
+        * input / output: Takes `roomId: string`. Returns `void`.
+    * getAvailableRooms
+        * short description: Emits 'getAvailableRooms' event to request the room list[cite: 1540].
+        * input / output: Takes no input. Returns `void`.
+    * startGame
+        * short description: Emits 'startGame' event with room ID[cite: 1541].
+        * input / output: Takes `roomId: string`. Returns `void`.
+    * declareMoves
+        * short description: Emits 'declareMoves' event with room ID and move count[cite: 1542].
+        * input / output: Takes `roomId: string`, `moves: number`. Returns `void`.
+    * moveRobot
+        * short description: Emits 'moveRobot' event with room ID, robot color, and calculated path[cite: 1543].
+        * input / output: Takes `roomId: string`, `robotColor: RobotColor`, `path: Position[]`. Returns `void`.
+    * registerEventListener (private helper)
+        * short description: Registers a callback for a specific server event, removing any previous listener first.
+        * input / output: Takes `event` (keyof ServerToClientEvents), `callback`. Returns `void`.
+    * onRegistered / onRoomCreated / onRoomJoined / onRoomLeft / onRoomUpdated / onRoomListUpdated / onError / onGameStarted / onGameStateUpdated / onDeclarationMade / onTurnChanged / onSolutionAttemptResult / onGameOver
+        * short description: Methods to register callbacks for specific server-sent events using `registerEventListener`[cite: 855, 954].
+        * input / output: Takes `callback: (data: any) => void`. Returns `void`.
+    * removeAllListeners
+        * short description: Removes all registered event listeners from the socket[cite: 857].
+        * input / output: Takes no input. Returns `void`.
 
-* SocketService (Class - Singleton)
-  * short description: Added methods to emit new game-related events (`startGame`, `declareMoves`, `moveRobot`, `getAvailableRooms`). Added methods to register listeners for new server-sent game events (`onGameStarted`, `onGameStateUpdated`, etc.). Refined the `emit` helper and listener registration logic.
-  * input / output: Provides methods for components/stores to interact with the WebSocket server.
+**src/services/__tests__/socketService.test.ts**
+* short description: Vitest unit tests for `SocketService`, mocking `socket.io-client`[cite: 841]. Tests singleton pattern, connection (success/error), room operations (checking emitted events), event handler registration, and disconnection[cite: 842].
 
+**src/stores/gameStore.ts**
+* isMultiplayerGameState (Type Guard)
+    * short description: Checks if a state object conforms to the `MultiplayerGameState` interface[cite: 932].
+    * input / output: Takes `state: any`. Returns `boolean`[cite: 933, 934].
+* useGameStore (Zustand Hook/Store)
+    * connect (Action)
+        * short description: Connects using `SocketService`, sets connection state, stores the socket ID, and registers listeners for server events[cite: 1675]. Handles errors[cite: 1676, 1677, 1678, 1679, 1680, 1681, 1683, 1684, 1685, 1686, 1687, 1690, 1691, 1692].
+        * input / output: Takes no input. Returns `Promise<void>`. Updates store state.
+    * disconnect (Action)
+        * short description: Disconnects using `SocketService` and resets relevant store state, including `socketId`[cite: 1694, 942].
+        * input / output: Takes no input. Returns `void`. Updates store state.
+    * registerPlayer (Action)
+        * short description: Calls `socketService.registerPlayer`[cite: 1696].
+        * input / output: Takes `name: string`. Returns `void`.
+    * createRoom (Action)
+        * short description: Calls `socketService.createRoom` and returns the resulting `Room` object, handling errors[cite: 1697, 1698, 1699, 1700, 1701].
+        * input / output: Takes `options`. Returns `Promise<Room>`[cite: 1702].
+    * joinRoom (Action)
+        * short description: Calls `socketService.joinRoom`[cite: 1702].
+        * input / output: Takes `roomId`, `password?`. Returns `void`.
+    * leaveRoom (Action)
+        * short description: Calls `socketService.leaveRoom` if currently in a room[cite: 1703, 1704].
+        * input / output: Takes no input. Returns `void`.
+    * setConnectionError (Action)
+        * short description: Updates the `connectionError` state[cite: 1705].
+        * input / output: Takes `error: string | null`. Returns `void`.
+    * startGame (Action)
+        * short description: Calls `socketService.startGame` if in a room[cite: 1706, 1707].
+        * input / output: Takes no input. Returns `void`.
+    * declareMoves (Action)
+        * short description: Placeholder/future implementation for calling `socketService.declareMoves`[cite: 1709, 1710, 1711, 1712].
+        * input / output: Takes `moves: number`. Returns `void`.
+    * moveRobot (Action)
+        * short description: Placeholder/future implementation for calling `socketService.moveRobot`[cite: 1713, 1714, 1715, 1716].
+        * input / output: Takes `robotColor`, `path`. Returns `void`.
+    * short description: Zustand store managing client-side global state: connection, player info, room details, available rooms, socket ID, and multiplayer game state[cite: 858, 859, 860]. Provides actions interacting with `SocketService` and updates state based on socket events[cite: 861, 862, 863].
 
+**src/types/board.ts**
+* short description: Defines TypeScript types/interfaces for board patterns (raw from JSON and processed), including `WallDirection`, `ReflectorDirection`, `TargetSymbol`, `TargetColor`, `BaseBoardPattern`, `RawBoardPattern`, `BoardPattern`, `RawBoardSet`, `WallPosition`, `ReflectorPosition`, `TargetPosition`, `BoardCollection`. Includes type guards `isValidBoardPattern` and `isValidBoardCollection` for validation[cite: 663, 1187, 1188, 1189, 1190, 1191, 1192, 1193, 1194, 1195, 1196, 1197, 1198, 1199, 1200, 1201, 1202, 1203, 1204, 1205, 1206, 1207, 1208].
 
----
-file name: server/src/types/game.ts
-classname: MultiplayerGameState (Interface)
-property name: declarationOrder?
-short description: Optional array of player IDs representing the order in which players are eligible to present their solution, sorted by declared moves and timestamp.
-input / output: type: string[] | undefined
+**src/types/game.ts**
+* short description: Defines core TypeScript types for game logic: `Position`, `RobotColor`, `GameMode`, `Robot`, `Reflector`, `CellType`, `Cell`, `Board`, `Card`, `GamePhase`, `SinglePlayerState`, `GameState`, `Direction`, `Declaration`, `PlayerGameState`, `MultiplayerGameState` (using Record for relevant properties)[cite: 722, 1627, 1628, 1629, 1630, 1631, 1632, 1633, 1634, 1635, 1636, 1637, 1638, 1639, 1640, 1641, 1642, 1643, 1644, 1645, 1646, 1647, 1648, 1649, 1650, 1651, 1652, 1653, 1654, 1655, 1656, 1657, 1658]. Includes basic Player interface for type checking within `MultiplayerGameState`[cite: 1659].
 
----
-file name: server/src/services/gameManager.ts
-classname: GameManager
-function name: endDeclarationPhase (private)
-short description: Modified to sort valid declarations by moves (asc) then timestamp (asc), store the resulting player order in `gameState.declarationOrder`, and set the first player in the order as the `currentPlayer` to start the solution phase. If no valid declarations, proceeds to draw the next card.
-input / output: Takes no input. Returns `void`. Modifies `gameState.phase`, `gameState.declarationOrder`, `gameState.currentPlayer`. Calls `startSolutionPhase()` or `drawNextCard()`.
+**src/types/player.ts**
+* short description: Defines the client-side `Player` interface, `PlayerSession` (potentially unused), and `PlayerStatus` enum[cite: 863]. *Note: May differ slightly from server definition.*
 
----
-file name: server/src/services/gameManager.ts
-classname: GameManager
-function name: failCurrentSolution (private)
-short description: Modified to remove the current player from `gameState.declarationOrder`. If players remain in the order, sets the next player as `currentPlayer` and starts their solution phase. Otherwise, draws the next card.
-input / output: Takes no input. Returns `void`. Modifies `gameState.declarationOrder`, `gameState.currentPlayer`. Calls `startSolutionPhase()` or `drawNextCard()`.
+**src/types/room.ts**
+* short description: Defines client-side interfaces for `Room`, `GameState`, `RoomSummary`, and `RoomOptions`, and the `GameStatus` enum[cite: 864]. *Note: May differ slightly from server definition (e.g., Map vs Record).*
 
----
-file name: server/src/services/gameManager.ts
-classname: GameManager
-function name: moveToNextPlayer (private)
-short description: Removed. Logic is now handled within `failCurrentSolution`.
-input / output: N/A
+**src/types/socket.ts**
+* short description: Defines TypeScript interfaces for Socket.IO events (`ServerToClientEvents`, `ClientToServerEvents`) and the combined `GameSocket` type, specifying event names and payload types for client-server communication[cite: 865, 866, 886]. Event names like 'roomListUpdated' reflect recent changes[cite: 952].
 
----
-file name: src/stores/gameStore.ts
-classname: MultiplayerGameState (Interface)
-property name: declarationOrder?
-short description: Optional array of player IDs representing the order in which players are eligible to present their solution. Added to align with backend changes.
-input / output: type: string[] | undefined
+**src/utils/boardGenerator.ts**
+* createEmptyCell
+    * short description: Creates a default empty `Cell` object[cite: 723].
+    * input / output: Takes no input. Returns `Cell`.
+* getTargetSymbol
+    * short description: Converts `TargetSymbol` enum to its display character[cite: 725].
+    * input / output: Takes `symbol` (TargetSymbol). Returns `string`.
+* createEmptyBoard
+    * short description: Creates a `Board` object filled with empty cells[cite: 727].
+    * input / output: Takes `size` (number). Returns `Board`.
+* placeWalls
+    * short description: Adds walls to a board based on a pattern, setting walls on adjacent cells too[cite: 729].
+    * input / output: Takes `board`, `pattern`. Returns `void` (modifies board)[cite: 730, 731].
+* placeReflectors
+    * short description: Adds reflectors to board cells based on a pattern[cite: 731].
+    * input / output: Takes `board`, `pattern`. Returns `void` (modifies board)[cite: 732].
+* placeTargets
+    * short description: Adds targets to board cells based on a pattern[cite: 733].
+    * input / output: Takes `board`, `pattern`. Returns `void` (modifies board)[cite: 734].
+* isCenterArea
+    * short description: Checks if coordinates are in the central 2x2 area (for 16x16 board)[cite: 735].
+    * input / output: Takes `x`, `y`. Returns `boolean`.
+* getRandomEmptyPosition
+    * short description: Finds a random valid starting position for a robot (not target, occupied, or center)[cite: 737].
+    * input / output: Takes `board`, `occupiedPositions`, `maxAttempts`. Returns `Position`.
+* placeRobots
+    * short description: Adds the four robots to random valid starting positions on the board[cite: 739].
+    * input / output: Takes `board`. Returns `void` (modifies board).
+* generateBoardFromPattern
+    * short description: Creates a complete `Board` object from a `BoardPattern` by placing walls, reflectors, targets, and robots[cite: 741].
+    * input / output: Takes `pattern`. Returns `Board`.
 
----
-file name: src/pages/GamePage.tsx
-classname: GamePage (Function Component)
-function name: (JSX rendering)
-short description: Modified the player list rendering to display the declaration order (e.g., "(解答権: 1)") next to the player's name during the 'playing' phase, using the `game.declarationOrder` state from `useGameStore`.
-input / output: N/A (UI rendering change)
+**src/utils/boardLoader.ts**
+* BoardLoader (Class - Singleton) [cite: 376, 685]
+    * constructor (private)
+        * short description: Loads raw board data from JSON[cite: 685].
+        * input / output: Takes no input. Returns `void`.
+    * getInstance (static public)
+        * short description: Implements Singleton pattern for `BoardLoader`[cite: 687].
+        * input / output: Takes no input. Returns `BoardLoader` instance.
+    * getPatternKey (private)
+        * short description: Generates key string (e.g., 'boards\_A') for accessing JSON data[cite: 689].
+        * input / output: Takes `pattern`. Returns `keyof RawBoardSet`.
+    * getBoardSetByPattern (public)
+        * short description: Retrieves, transforms (adds string ID), validates, and returns all valid boards for a given pattern set (A, B, C, or D)[cite: 691, 692].
+        * input / output: Takes `pattern`. Returns `BoardPattern[]`.
+    * getBoardById (public)
+        * short description: Retrieves and validates a specific board by its string ID (e.g., "board\_A0")[cite: 693].
+        * input / output: Takes `boardId`. Returns `BoardPattern | undefined`.
+    * getRandomGameBoards (public)
+        * short description: Selects one random board from each set (A, B, C, D)[cite: 695].
+        * input / output: Takes no input. Returns `BoardPattern[]`.
+    * debugPrintState (public)
+        * short description: Logs the current state of loaded board data for debugging[cite: 697].
+        * input / output: Takes no input. Returns `void`.
+    * validateAllBoards (public)
+        * short description: Validates all loaded board patterns across all sets[cite: 699].
+        * input / output: Takes no input. Returns `{ valid: boolean; errors: string[] }`.
 
----
-file name: server/src/types/game.ts
-classname: MultiplayerGameState (Interface)
-property name: rankings?
-short description: Optional array of player IDs, scores, and ranks, calculated at the end of the game.
-input / output: type: { playerId: string; score: number; rank: number }[] | undefined
+**src/utils/boardRotation.ts**
+* rotateWallDirection
+    * short description: Calculates the new wall direction after board rotation[cite: 633].
+    * input / output: Takes `direction`, `rotation`. Returns `WallDirection`.
+* rotateReflectorDirection
+    * short description: Calculates new reflector orientation after rotation (changes for 90/270 deg)[cite: 635].
+    * input / output: Takes `direction`, `rotation`. Returns `ReflectorDirection`.
+* rotatePosition
+    * short description: Calculates new (x, y) coordinates after board rotation[cite: 637].
+    * input / output: Takes `x`, `y`, `size`, `rotation`. Returns `[number, number]`.
+* rotateBoard
+    * short description: Rotates an entire `BoardPattern` (walls, reflectors, targets)[cite: 639].
+    * input / output: Takes `board`, `rotation`. Returns new rotated `BoardPattern`.
+* createCompositeBoardPattern
+    * transformCoordinates (Helper)
+        * short description: Converts 8x8 coordinates to 16x16 composite coordinates based on quadrant[cite: 642].
+        * input / output: Takes `x`, `y`, `quadrant`. Returns `[number, number]`.
+    * transformElements (Helper)
+        * short description: Applies coordinate transformation to an array of elements[cite: 644].
+        * input / output: Takes `elements`, `quadrant`. Returns transformed array[cite: 645].
+    * short description: Combines four 8x8 boards into one 16x16 board, applying rotations and coordinate transformations[cite: 641].
+    * input / output: Takes four `BoardPattern`s. Returns composite `BoardPattern`.
 
----
-file name: server/src/services/gameManager.ts
-classname: GameManager
-function name: successCurrentSolution (private)
-short description: Awards success points to the current player upon successful solution.
-input / output: Takes no input. Returns `void`. Modifies `gameState.playerStates`. Calls `drawNextCard()`.
+**src/utils/boardValidator.ts**
+* BoardValidator (Class) [cite: 54, 560]
+    * isValidPosition (static private)
+        * short description: Checks if (x, y) is within board bounds[cite: 560].
+        * input / output: Takes `x`, `y`, `size`. Returns `boolean`.
+    * isValidTargetColor (static private)
+        * short description: Checks if target color is valid (handles vortex)[cite: 562].
+        * input / output: Takes `color`, `isVortex`. Returns `boolean`.
+    * validateBoard (static public)
+        * short description: Validates a single board pattern (size, walls, reflectors, targets)[cite: 564]. Logs warnings[cite: 566].
+        * input / output: Takes `board`. Returns `boolean`.
+    * validateBoardSet (static public)
+        * short description: Validates an array of board patterns[cite: 567]. Logs errors[cite: 66].
+        * input / output: Takes `pattern`, `boards`. Returns `{ valid: boolean; errors: string[] }`.
 
----
-file name: server/src/services/gameManager.ts
-classname: GameManager
-function name: failCurrentSolution (private)
-short description: Handles player failure during the solution phase. Removes the player from the declaration order and moves to the next player or the next card. Does not apply penalties.
-input / output: Takes no input. Returns `void`. Modifies `gameState.declarationOrder`, `gameState.currentPlayer`. Calls `startSolutionPhase()` or `drawNextCard()`.
+**src/utils/cardGenerator.ts**
+* CardDeck (Class) [cite: 341, 665]
+    * constructor
+        * short description: Initializes the deck: generates cards, shuffles, sets index[cite: 665].
+        * input / output: Takes `board` (Board). Returns `void`.
+    * generateCards (private)
+        * short description: Creates the initial 17 cards (4 colors x 4 symbols + 1 vortex) without positions[cite: 667].
+        * input / output: Takes no input. Returns `Omit<Card, 'position'>[]`.
+    * findTargetPosition (private)
+        * short description: Finds the board position matching a card's color and symbol[cite: 669].
+        * input / output: Takes `color`, `symbol`. Returns `Position | null`.
+    * shuffle (private)
+        * short description: Randomizes card order using Fisher-Yates[cite: 671].
+        * input / output: Takes no input. Returns `void`. Modifies internal `cards`.
+    * drawNext
+        * short description: Draws the next card, finds its position, returns the complete card, or null if deck empty/target not found[cite: 673, 674].
+        * input / output: Takes no input. Returns `Card | null`.
+    * getRemaining
+        * short description: Returns the number of cards left[cite: 676].
+        * input / output: Takes no input. Returns `number`.
+    * getTotalCards
+        * short description: Returns the total initial number of cards[cite: 678].
+        * input / output: Takes no input. Returns `number`.
 
----
-file name: server/src/services/gameManager.ts
-classname: GameManager
-function name: drawNextCard (private)
-short description: Decrements remaining cards. If cards remain, starts the next declaration phase. If no cards remain, ends the game.
-input / output: Takes no input. Returns `void`. Modifies `gameState.remainingCards`. Calls `startDeclarationPhase()` or `endGame()`.
+**src/utils/constants.ts**
+* short description: Defines constants: `SYMBOL_MAP` (symbol name to character), `SYMBOLS` (array of symbol names), `ROBOT_COLORS` (array of color names)[cite: 601].
 
----
-file name: server/src/services/gameManager.ts
-classname: GameManager
-function name: endGame (private)
-short description: Sets the game phase to FINISHED, clears timers, and calculates final player rankings based on scores.
-input / output: Takes no input. Returns `void`. Modifies `gameState.phase`, `gameState.rankings`. Calls `cleanup()`.
+**src/utils/robotMovement.ts**
+* calculateReflection
+    * short description: Calculates robot's new direction after hitting a reflector[cite: 602].
+    * input / output: Takes `direction`, `reflectorDirection`. Returns `Direction`.
+* getNextPosition
+    * short description: Calculates the next grid position based on direction[cite: 604].
+    * input / output: Takes `position`, `direction`. Returns `Position`.
+* hasCollision
+    * short description: Checks for collisions with boundaries, other robots, or walls[cite: 606].
+    * input / output: Takes `board`, `position`, `nextPosition`, `direction`. Returns `boolean`.
+* calculatePath
+    * short description: Calculates the full path (array of positions) a robot takes in a direction until stopping/reflecting[cite: 608].
+    * input / output: Takes `board`, `robot`, `initialDirection`. Returns `Position[]`.
+* calculateFinalPosition
+    * short description: Calculates only the final stopping position of a robot's move[cite: 611].
+    * input / output: Takes `board`, `robot`, `direction`. Returns `Position`.
 
----
-file name: src/components/GameResultDisplay.tsx
-classname: GameResultDisplay (Function Component)
-function name: GameResultDisplay
-short description: Displays the game results including rankings and final scores when the game phase is 'finished'. Retrieves ranking data from useGameStore and maps player names.
-input / output: Props: `players: Player[]`, `onLeaveRoom: () => void`. Returns JSX.
+**src/vite-env.d.ts**
+* short description: TypeScript declaration file for Vite client types[cite: 73].
+
+**.env.development**
+* short description: Environment variables for frontend development, setting the `VITE_SOCKET_URL` for the WebSocket server[cite: 74].
+
+**.gitignore**
+* short description: Specifies files and directories for Git to ignore (logs, node_modules, build output, editor files)[cite: 75].
+
+**eslint.config.js**
+* short description: ESLint configuration using `@eslint/js` and `typescript-eslint`, enabling plugins for React Hooks and Refresh, defining globals, and ignoring the `dist` directory[cite: 76].
+
+**index.html**
+* short description: Main HTML file for the SPA, including the root div and script tag for `main.tsx`[cite: 78].
+
+**package.json**
+* short description: Frontend project manifest defining metadata, scripts (dev, build, lint, preview), dependencies (React, Zustand, React Router), and dev dependencies (Vite, TypeScript, ESLint, Tailwind, etc.)[cite: 79].
+
+**postcss.config.js**
+* short description: PostCSS configuration specifying plugins: `tailwindcss/nesting`, `tailwindcss`, `autoprefixer`[cite: 80].
+
+**README.md**
+* short description: Introduction to the Vite + React + TypeScript template, mentioning plugins and suggesting ESLint extensions[cite: 81].
+
+**tailwind.config.js**
+* short description: Tailwind CSS configuration specifying content files, extending the theme (colors), and listing plugins[cite: 83].
+
+**tsconfig.app.json**
+* short description: TypeScript configuration for the `src` directory, setting options for bundler mode, JSX, strict linting, etc[cite: 85].
+
+**tsconfig.json**
+* short description: Root TypeScript configuration referencing `tsconfig.app.json` and `tsconfig.node.json` for a composite project[cite: 86].
+
+**tsconfig.node.json**
+* short description: TypeScript configuration for Node.js-related files (like `vite.config.ts`), setting appropriate compiler options[cite: 88].
+
+**vite.config.ts**
+* short description: Vite build tool configuration, enabling the React plugin[cite: 89].
 
 ================================================================
 End of Codebase
