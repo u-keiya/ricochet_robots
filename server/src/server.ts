@@ -216,12 +216,14 @@ io.on('connection', (socket: Socket) => {
 
       // Start game using GameManager
       const gameManager = room.gameManager;
-      gameManager.startGame(); // This might throw errors based on game logic
+      const currentPlayers = Array.from(room.players.values()); // Get current players from the room
+      gameManager.startGame(currentPlayers); // Pass players to startGame
 
       // Get updated game state
       const initialGameState = gameManager.getGameState();
 
       // Emit gameStarted event to all clients in the room
+      logger.info(`Emitting gameStarted for room ${roomId} with state:`, initialGameState); // Add log here
       io.to(roomId).emit('gameStarted', initialGameState);
 
       logger.info(`Game started in room ${roomId}. Initial state sent.`);

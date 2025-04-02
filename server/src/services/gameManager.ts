@@ -38,7 +38,11 @@ export class GameManager {
     };
   }
 
-  public startGame(): void {
+  // Add players parameter to startGame
+  public startGame(players: Player[]): void {
+    // Update internal players list
+    this.players = players;
+
     if (this.gameState.phase !== GamePhase.WAITING) {
       throw new Error('Game has already started');
     }
