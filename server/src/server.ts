@@ -125,7 +125,7 @@ io.on('connection', (socket: Socket) => {
         if (room) {
           // 他のプレイヤーに通知する際は、完全な Player オブジェクトを渡す方が良いかもしれない
           socket.to(roomId).emit('playerJoined', player); // playerJoined イベントに Player オブジェクトを渡す
-          socket.emit('roomJoined', { room });
+          socket.emit('roomJoined', room); // room オブジェクトを直接送信
           io.emit('roomListUpdated', roomManager.getRoomSummaries());
           logger.info(`Player ${player.name} joined room ${roomId}`);
         }
