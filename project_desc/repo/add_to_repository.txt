@@ -1,0 +1,10 @@
+File: server/src/services/gameManager.ts
+Class: GameManager
+Function: startGame
+Short description: Modified to accept the current list of players in the room to correctly check the minimum player count before starting the game.
+Input / Output: Input: players: Player[] / Output: void
+
+File: server/src/server.ts
+Function: (Socket.IO 'startGame' event handler)
+Short description: Modified to retrieve the current list of players from the room and pass it to gameManager.startGame.
+Input / Output: Input: { roomId: string } from client / Output: Emits 'gameStarted' or 'error' to client

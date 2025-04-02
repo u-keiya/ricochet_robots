@@ -71,13 +71,17 @@ const GamePage: FC = () => {
 
   // GameBoardから方向を受け取り、パスを計算してstoreのアクションを呼ぶ
   const handleRobotMove = (robotColor: RobotColor, direction: Direction) => { // 引数を direction に変更
-    if (!game?.board || !currentPlayer) return; // ボードやプレイヤー情報がない場合は何もしない
+    // if (!game?.board || !currentPlayer) return; // コメントアウト
+    if (!game || !currentPlayer) return; // game の存在のみチェック
 
-    const robot = game.board.robots.find(r => r.color === robotColor);
-    if (!robot) return;
+    // const robot = game.board.robots.find(r => r.color === robotColor); // コメントアウト
+    // if (!robot) return; // コメントアウト
+    const robotPosition = game.robotPositions?.[robotColor]; // MultiplayerGameState から位置を取得
+    if (!robotPosition) return; // ロボットの位置情報がない場合は終了
 
-    // パスを計算
-    const path = calculatePath(game.board, robot, direction);
+    // パス計算は board がないとできないためコメントアウト
+    // const path = calculatePath(game.board, robot, direction);
+    const path: Position[] = []; // ダミーの空パス
 
     if (path.length > 1) { // 移動があった場合のみ送信
        storeMoveRobot(robotColor, path); // 計算したパスを渡す
@@ -136,7 +140,7 @@ const GamePage: FC = () => {
                   key={player.id}
                   className={`flex justify-between items-center p-2 rounded ${
                     // game が存在する かつ 手番プレイヤーの場合に強調
-                    game && player.id === game.currentPlayerTurn ? 'bg-blue-100 ring-2 ring-blue-300' : 'bg-gray-50'
+                    game && player.id === game.currentPlayer ? 'bg-blue-100 ring-2 ring-blue-300' : 'bg-gray-50'
                   } ${
                     !player.connected ? 'opacity-50' : '' // 非接続プレイヤーを薄く表示
                   }`}
@@ -154,7 +158,7 @@ const GamePage: FC = () => {
                     )}
                   </span>
                   {/* game が存在するならスコア表示 */}
-                  <span className="font-bold">{game && game.scores[player.id] !== undefined ? `${game.scores[player.id]}pt` : '0pt'}</span>
+                  <span className="font-bold">{game && game.playerStates[player.id] !== undefined ? `${game.playerStates[player.id].score}pt` : '0pt'}</span>
                 </div>
               ))}
             </div>
@@ -164,7 +168,7 @@ const GamePage: FC = () => {
                   <h3 className="text-md font-semibold mb-2">宣言</h3>
                   <div className="space-y-1 text-sm">
                     {/* game.declarations が存在する場合 */}
-                    {game.declarations && game.declarations.map(decl => (
+                    {game.declarations && Object.values(game.declarations).map(decl => ( // Use Object.values() here
                       <div key={decl.playerId} className="flex justify-between">
                         {/* playersArray を使用して find */}
                         <span>{playersArray.find((p: Player) => p.id === decl.playerId)?.name ?? '不明'}</span>
@@ -180,22 +184,24 @@ const GamePage: FC = () => {
           <div className="col-span-2 bg-white rounded-lg shadow p-4 flex flex-col">
             <div className="aspect-square flex items-center justify-center flex-grow">
               {/* game と game.board が存在するなら GameBoard を表示 */}
-              {game && game.board ? (
-                <GameBoard
-                  board={game.board}
-                  onRobotMove={handleRobotMove}
-                  // 自分のターンか、かつ playing フェーズか
-                  isPlayerTurn={game.phase === 'playing' && game.currentPlayerTurn === currentPlayer?.id}
-                />
-              ) : (
-                <div className="text-gray-500">ボードを待っています...</div>
-              )}
+              {/* {game && game.board ? ( */}
+                {/* <GameBoard
+                    board={game.board} // board がないのでエラーになる
+                    onRobotMove={handleRobotMove}
+                    isPlayerTurn={game.phase === 'playing' && game.currentPlayer === currentPlayer?.id} // (修正点2)
+                  /> */}
+              {/* ) : ( */}
+                <div className="text-gray-500">ボード表示は一時的に無効化されています。</div>
+              {/* )} */}
             </div>
              {/* 宣言カードリスト (game が存在する場合) */}
              {game && game.phase === 'declaration' && (
               <div className="mt-4 pt-4 border-t">
                 <DeclarationCardList
-                  selectedNumber={game.declarations?.find(d => d.playerId === currentPlayer?.id)?.moves ?? null}
+                  selectedNumber={(() => {
+                    const currentMoves = currentPlayer?.id ? game.declarations?.[currentPlayer.id]?.moves : undefined;
+                    return typeof currentMoves === 'number' ? currentMoves : null;
+                  })()}
                   maxNumber={30} // 仮の最大手数
                   onSelect={handleDeclareMoves}
                   className="mt-2"
