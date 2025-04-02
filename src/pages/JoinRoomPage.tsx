@@ -42,10 +42,7 @@ const JoinRoomPage: React.FC = () => {
     }
   }, [currentRoom, navigate]);
 
-  const handleJoinSuccess = () => {
-    // ルーム参加に成功した場合、currentRoomの更新を待ってリダイレクト
-  };
-
+  // handleJoinSuccess は不要になったため削除
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
@@ -66,15 +63,14 @@ const JoinRoomPage: React.FC = () => {
           </div>
         )}
 
-        {isConnecting ? (
-          <div className="text-center text-gray-600">
-            接続中...
+        {isConnecting || !currentPlayer ? ( // currentPlayer が存在しない場合もローディング表示
+          <div className="text-center text-gray-600 py-8">
+            {isConnecting ? 'サーバーに接続中...' : 'プレイヤー情報を取得中...'}
           </div>
         ) : (
           <div className="bg-white shadow sm:rounded-lg p-6">
             <RoomList
               rooms={availableRooms}
-              onJoinSuccess={handleJoinSuccess}
             />
           </div>
         )}
