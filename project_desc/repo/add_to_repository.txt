@@ -33,3 +33,8 @@ File: src/components/room/RoomList.tsx
 Function: handleJoinRoom
 Short description: Modified to be a synchronous function. Removed async/await and try/catch. Calls the void joinRoom action. Added isLoading state for UI feedback.
 Input / Output: Input: e: React.FormEvent / Output: void (Calls joinRoom action)
+
+File: server/src/server.ts
+Function: (Socket.IO 'joinRoom' event handler)
+Short description: Modified to send the room object directly in the 'roomJoined' event payload, instead of nesting it within another object. This fixes an issue where the client received invalid data.
+Input / Output: Input: { roomId: string, password?: string } from client / Output: Emits 'roomJoined' or 'error' to client
