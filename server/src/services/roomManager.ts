@@ -17,7 +17,9 @@ export class RoomManager {
     hostPlayer.isHost = true;
     hostPlayer.roomId = roomId; // roomIdも設定
     // GameManager を先にインスタンス化
-    const gameManager = new GameManager([hostPlayer], DEFAULT_GAME_RULES);
+    // TODO: Implement server-side BoardLoader to get dynamic patterns
+    const boardPatternIds = ['A1', 'B2', 'C3', 'D4']; // Placeholder: Use fixed patterns for now
+    const gameManager = new GameManager([hostPlayer], boardPatternIds, DEFAULT_GAME_RULES);
     const room: Room = {
       id: roomId,
       name: options.name,

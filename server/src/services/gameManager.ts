@@ -15,12 +15,14 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
   private rules: GameRules;
   private players: Player[];
   private timerInterval?: NodeJS.Timeout;
+  private boardPatternIds: string[]; // Added: Store the board pattern IDs
   // private penaltyApplied: Set<string>; // No longer needed with the new rule
 
-  constructor(players: Player[], rules: GameRules = DEFAULT_GAME_RULES) {
+  constructor(players: Player[], boardPatternIds: string[], rules: GameRules = DEFAULT_GAME_RULES) {
     super(); // EventEmitter のコンストラクタを呼び出す
     this.rules = rules;
     this.players = players;
+    this.boardPatternIds = boardPatternIds; // Store the board pattern IDs
     this.gameState = this.initializeGameState();
     // this.penaltyApplied = new Set(); // No longer needed
   }
@@ -44,7 +46,8 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
       timer: 0,
       timerStartedAt: Date.now(), // Initialize with a value
       robotPositions: {} as Record<RobotColor, Position>, // Cast to satisfy type checker initially
-      moveHistory: []
+      moveHistory: [],
+      boardPatternIds: this.boardPatternIds // Add board pattern IDs to the initial state
     };
   }
 

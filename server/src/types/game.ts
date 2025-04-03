@@ -55,6 +55,7 @@ export interface MultiplayerGameState {
     timestamp: number;
   }[];
   rankings?: { playerId: string; score: number; rank: number }[]; // Added for final rankings
+  boardPatternIds: string[]; // Added: IDs of the board patterns used (e.g., ['A1', 'B2', 'C3', 'D4'])
 }
 
 export interface GameRules {
