@@ -1,7 +1,16 @@
+import { EventEmitter } from 'events'; // EventEmitter をインポート
 import { Card, Declaration, GamePhase, GameRules, MultiplayerGameState, PlayerGameState, Position, RobotColor, DEFAULT_GAME_RULES } from '../types/game';
 import { Player } from '../types/player';
 
-export class GameManager {
+// 仮のロボット初期位置 (本来はボード生成時に決定)
+const INITIAL_ROBOT_POSITIONS: Record<RobotColor, Position> = {
+  [RobotColor.RED]: { x: 1, y: 1 },
+  [RobotColor.BLUE]: { x: 14, y: 1 },
+  [RobotColor.GREEN]: { x: 1, y: 14 },
+  [RobotColor.YELLOW]: { x: 14, y: 14 },
+};
+
+export class GameManager extends EventEmitter { // EventEmitter を継承
   private gameState: MultiplayerGameState;
   private rules: GameRules;
   private players: Player[];
@@ -9,6 +18,7 @@ export class GameManager {
   // private penaltyApplied: Set<string>; // No longer needed with the new rule
 
   constructor(players: Player[], rules: GameRules = DEFAULT_GAME_RULES) {
+    super(); // EventEmitter のコンストラクタを呼び出す
     this.rules = rules;
     this.players = players;
     this.gameState = this.initializeGameState();
@@ -51,8 +61,12 @@ export class GameManager {
       throw new Error('Not enough players');
     }
 
+    // ロボットの初期位置を設定
+    this.gameState.robotPositions = { ...INITIAL_ROBOT_POSITIONS };
+
     this.gameState.currentPlayer = this.players[Math.floor(Math.random() * this.players.length)].id;
-    this.startDeclarationPhase();
+    this.startDeclarationPhase(); // この中で emit される
+    this.emit('gameStateUpdated', this.getGameState()); // startGame 完了後の状態を通知
   }
 
   private startDeclarationPhase(): void {
@@ -66,6 +80,7 @@ export class GameManager {
     this.startTimer(() => {
       this.endDeclarationPhase();
     }, this.rules.declarationTimeLimit);
+    this.emit('gameStateUpdated', this.getGameState()); // 状態更新を通知
   }
 
   private startTimer(callback: () => void, duration: number): void {
@@ -86,13 +101,15 @@ export class GameManager {
       const remaining = Math.max(0, duration - elapsed);
 
       // Update timer only if it changed to avoid unnecessary updates
-      if (this.gameState.timer !== remaining) {
+      const timerChanged = this.gameState.timer !== remaining;
+      if (timerChanged) {
         this.gameState.timer = remaining;
+        this.emit('gameStateUpdated', this.getGameState()); // タイマー更新も通知
       }
 
       if (remaining === 0) {
         this.cleanup(); // Clear interval when timer reaches 0
-        callback(); // Execute the callback (e.g., end phase)
+        callback(); // Execute the callback (e.g., end phase) - callback内でemitされる
       }
     }, 1000); // Check every second
   }
@@ -113,6 +130,7 @@ export class GameManager {
     };
 
     this.gameState.declarations[playerId] = declaration; // Use object assignment
+    this.emit('gameStateUpdated', this.getGameState()); // 宣言追加を通知
 
     // Declaration phase now always waits for the timer to end
     // The following check is removed:
@@ -120,32 +138,33 @@ export class GameManager {
     //   this.endDeclarationPhase();
     // }
   }
-private endDeclarationPhase(): void {
-  this.cleanup(); // Clear declaration timer
+  private endDeclarationPhase(): void {
+    this.cleanup(); // Clear declaration timer
 
-  // 1. Collect valid declarations
-  const validDeclarations = Object.values(this.gameState.declarations); // Use Object.values
+    // 1. Collect valid declarations
+    const validDeclarations = Object.values(this.gameState.declarations); // Use Object.values
 
-  // 2. Sort declarations: ascending moves, then ascending timestamp
-  validDeclarations.sort((a, b) => {
-    if (a.moves !== b.moves) {
-      return a.moves - b.moves;
+    // 2. Sort declarations: ascending moves, then ascending timestamp
+    validDeclarations.sort((a, b) => {
+      if (a.moves !== b.moves) {
+        return a.moves - b.moves;
+      }
+      return a.timestamp - b.timestamp;
+    });
+
+    // 3. Set the declaration order
+    this.gameState.declarationOrder = validDeclarations.map(d => d.playerId);
+
+    // 4. Determine the next player and phase
+    if (this.gameState.declarationOrder.length > 0) {
+      // If there are valid declarations, start the solution phase for the first player
+      this.gameState.currentPlayer = this.gameState.declarationOrder[0];
+      this.startSolutionPhase();
+    } else {
+      // If no one made a valid declaration, draw the next card
+      this.drawNextCard(); // この中で emit される
     }
-    return a.timestamp - b.timestamp;
-  });
-
-  // 3. Set the declaration order
-  this.gameState.declarationOrder = validDeclarations.map(d => d.playerId);
-
-  // 4. Determine the next player and phase
-  if (this.gameState.declarationOrder.length > 0) {
-    // If there are valid declarations, start the solution phase for the first player
-    this.gameState.currentPlayer = this.gameState.declarationOrder[0];
-    this.startSolutionPhase();
-  } else {
-    // If no one made a valid declaration, draw the next card
-    this.drawNextCard();
-  }
+    this.emit('gameStateUpdated', this.getGameState()); // フェーズ終了/開始を通知
   }
 
   private startSolutionPhase(): void {
@@ -157,8 +176,9 @@ private endDeclarationPhase(): void {
 
     // Start timer for the solution attempt
     this.startTimer(() => {
-      this.failCurrentSolution(); // Player fails if timer runs out
+      this.failCurrentSolution(); // Player fails if timer runs out - failCurrentSolution 内で emit される
     }, this.rules.solutionTimeLimit);
+    this.emit('gameStateUpdated', this.getGameState()); // フェーズ開始を通知
   }
 
   public moveRobot(playerId: string, robotColor: RobotColor, positions: Position[]): void {
@@ -187,9 +207,11 @@ private endDeclarationPhase(): void {
       timestamp: Date.now()
     });
 
+    this.emit('gameStateUpdated', this.getGameState()); // 移動記録を通知
+
     // Check if the move achieves the goal
     if (this.checkGoal()) {
-      this.successCurrentSolution();
+      this.successCurrentSolution(); // この中で emit される
     }
     // If not goal, player continues their turn until timer runs out or they succeed
   }
@@ -212,7 +234,8 @@ private endDeclarationPhase(): void {
     }
 
     // Move to the next card/round
-    this.drawNextCard();
+    this.drawNextCard(); // この中で emit される
+    this.emit('gameStateUpdated', this.getGameState()); // 成功状態を通知
   }
 
   private failCurrentSolution(): void {
@@ -235,11 +258,12 @@ private endDeclarationPhase(): void {
     if (this.gameState.declarationOrder && this.gameState.declarationOrder.length > 0) {
       // Move to the next player in the order
       this.gameState.currentPlayer = this.gameState.declarationOrder[0];
-      this.startSolutionPhase();
+      this.startSolutionPhase(); // この中で emit される
     } else {
       // No more players left to attempt, draw the next card
-      this.drawNextCard();
+      this.drawNextCard(); // この中で emit される
     }
+    this.emit('gameStateUpdated', this.getGameState()); // 失敗状態/次のターン開始を通知
   }
 
   // moveToNextPlayer method removed as its logic is now handled within failCurrentSolution
@@ -249,15 +273,16 @@ private endDeclarationPhase(): void {
       this.gameState.remainingCards--;
       if (this.gameState.remainingCards === 0) {
         // If that was the last card, end the game
-        this.endGame();
+        this.endGame(); // この中で emit される
       } else {
         // Otherwise, start the declaration phase for the next card
-        this.startDeclarationPhase();
+        this.startDeclarationPhase(); // この中で emit される
       }
     } else {
       // Should not happen if logic is correct, but ensures game ends
-      this.endGame();
+      this.endGame(); // この中で emit される
     }
+    // drawNextCard 自体は状態変化の中間なので、呼び出し元で emit する
   }
 
   private endGame(): void {
@@ -279,6 +304,7 @@ private endDeclarationPhase(): void {
       }
       return { ...player, rank };
     });
+    this.emit('gameStateUpdated', this.getGameState()); // ゲーム終了状態を通知
   }
 
   public getGameState(): MultiplayerGameState {
