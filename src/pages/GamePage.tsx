@@ -39,6 +39,7 @@ const GamePage: FC = () => {
   // useGameStoreから必要な状態とアクションを取得
   const {
     game,
+    generatedBoard, // generatedBoard を取得
     currentRoom,
     currentPlayer,
     startGame,
@@ -71,17 +72,18 @@ const GamePage: FC = () => {
 
   // GameBoardから方向を受け取り、パスを計算してstoreのアクションを呼ぶ
   const handleRobotMove = (robotColor: RobotColor, direction: Direction) => { // 引数を direction に変更
-    // if (!game?.board || !currentPlayer) return; // コメントアウト
-    if (!game || !currentPlayer) return; // game の存在のみチェック
+    // generatedBoard と game、currentPlayer が存在するかチェック
+    if (!generatedBoard || !game || !currentPlayer) return;
 
-    // const robot = game.board.robots.find(r => r.color === robotColor); // コメントアウト
-    // if (!robot) return; // コメントアウト
-    const robotPosition = game.robotPositions?.[robotColor]; // MultiplayerGameState から位置を取得
-    if (!robotPosition) return; // ロボットの位置情報がない場合は終了
+    // generatedBoard からロボット情報を取得
+    const robot = generatedBoard.robots.find(r => r.color === robotColor);
+    if (!robot) {
+      console.error(`[GamePage] Robot with color ${robotColor} not found in generatedBoard.`);
+      return;
+    }
 
-    // パス計算は board がないとできないためコメントアウト
-    // const path = calculatePath(game.board, robot, direction);
-    const path: Position[] = []; // ダミーの空パス
+    // generatedBoard を使ってパスを計算
+    const path = calculatePath(generatedBoard, robot, direction);
 
     if (path.length > 1) { // 移動があった場合のみ送信
        storeMoveRobot(robotColor, path); // 計算したパスを渡す
@@ -183,16 +185,17 @@ const GamePage: FC = () => {
           {/* メインエリア - ゲームボードと宣言 */}
           <div className="col-span-2 bg-white rounded-lg shadow p-4 flex flex-col">
             <div className="aspect-square flex items-center justify-center flex-grow">
-              {/* game と game.board が存在するなら GameBoard を表示 */}
-              {/* {game && game.board ? ( */}
-                {/* <GameBoard
-                    board={game.board} // board がないのでエラーになる
+              {/* generatedBoard が存在するなら GameBoard を表示 */}
+              {generatedBoard ? (
+                <GameBoard
+                    board={generatedBoard} // generatedBoard を渡す
                     onRobotMove={handleRobotMove}
-                    isPlayerTurn={game.phase === 'playing' && game.currentPlayer === currentPlayer?.id} // (修正点2)
-                  /> */}
-              {/* ) : ( */}
-                <div className="text-gray-500">ボード表示は一時的に無効化されています。</div>
-              {/* )} */}
+                    // isPlayerTurn は game state から判断
+                    isPlayerTurn={game?.phase === 'playing' && game?.currentPlayer === currentPlayer?.id}
+                  />
+              ) : (
+                <div className="text-gray-500">ボードを生成中です...</div>
+              )}
             </div>
              {/* 宣言カードリスト (game が存在する場合) */}
              {game && game.phase === 'declaration' && (

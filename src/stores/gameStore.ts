@@ -2,7 +2,11 @@ import { create } from 'zustand';
 import { Player } from '../types/player';
 import { Room, RoomSummary } from '../types/room';
 import SocketService from '../services/socketService';
-import { Board, Card, GamePhase, Position, RobotColor, GameState, MultiplayerGameState, Declaration } from '../types/game'; // Import MultiplayerGameState and Declaration
+import { Board, Card, GamePhase, Position, RobotColor, GameState, MultiplayerGameState, Declaration, Robot } from '../types/game'; // Import MultiplayerGameState, Declaration, Robot
+import BoardLoader from '../utils/boardLoader'; // Import BoardLoader
+import { generateBoardFromPattern } from '../utils/boardGenerator'; // Import board generator
+import { createCompositeBoardPattern } from '../utils/boardRotation'; // Import composite board creator
+import { BoardPattern } from '../types/board'; // Import BoardPattern
 // --- 型ガード関数 ---
 function isMultiplayerGameState(state: any): state is MultiplayerGameState {
   return (
@@ -34,7 +38,8 @@ interface GameStore {
   availableRooms: RoomSummary[];
   socketId: string | null; // Add socketId state
   // --- マルチプレイヤーゲーム状態を追加 ---
-  game: MultiplayerGameState | null; // ゲーム全体の状態
+  game: MultiplayerGameState | null; // ゲーム全体の状態 (動的情報)
+  generatedBoard: Board | null; // クライアント側で生成したボード (静的情報 + 初期ロボット配置)
   // --- ここまで ---
   connect: () => Promise<void>;
   disconnect: () => void;
@@ -60,6 +65,7 @@ const useGameStore = create<GameStore>((set, get) => ({
   socketId: null, // Initial value
   // --- ゲーム状態の初期値を追加 ---
   game: null,
+  generatedBoard: null, // 初期値
   // --- ここまで ---
 
   connect: async () => {
@@ -114,7 +120,7 @@ const useGameStore = create<GameStore>((set, get) => ({
 
       socketService.onRoomLeft(() => {
         // ルーム退出時はゲーム状態もリセット
-        set({ currentRoom: null, game: null });
+        set({ currentRoom: null, game: null, generatedBoard: null }); // generatedBoard もリセット
       });
 
       socketService.onRoomUpdated((room) => {
@@ -148,8 +154,60 @@ const useGameStore = create<GameStore>((set, get) => ({
 
       // --- ゲームイベントリスナーを登録 ---
       socketService.onGameStarted((initialGameState) => {
-        console.log('[GameStore] Game started:', initialGameState);
-        set({ game: initialGameState });
+        console.log('[GameStore] Received gameStarted event. Initial game state:', initialGameState); // ★ログ追加1
+
+        // --- ボード生成ロジック ---
+        let generatedBoard: Board | null = null;
+        if (initialGameState.boardPatternIds && initialGameState.boardPatternIds.length === 4) {
+          console.log('[GameStore] Valid boardPatternIds found:', initialGameState.boardPatternIds); // ★ログ追加2
+          try {
+            const boardLoader = BoardLoader.getInstance();
+            console.log('[GameStore] BoardLoader instance obtained.'); // ★ログ追加3
+
+            const patterns = initialGameState.boardPatternIds.map(serverId => {
+              // サーバーからのID (例: 'A1') を BoardLoader が期待する形式 (例: 'board_A1') に変換
+              const loaderId = `board_${serverId}`;
+              console.log(`[GameStore] Trying to load board with loaderId: ${loaderId}`); // ★ログ追加
+              const pattern = boardLoader.getBoardById(loaderId);
+              if (!pattern) {
+                console.error(`[GameStore] Board pattern with loaderId ${loaderId} (server ID: ${serverId}) not found.`); // ★ログ変更
+                throw new Error(`Board pattern with loaderId ${loaderId} not found.`);
+              }
+              console.log(`[GameStore] Board pattern ${loaderId} loaded:`, pattern); // ★ログ追加4
+              return pattern;
+            });
+
+            // 4つのパターンを合成 (createCompositeBoardPattern は BoardPattern を期待する)
+            const compositePattern: BoardPattern = createCompositeBoardPattern(patterns[0], patterns[1], patterns[2], patterns[3]);
+            console.log('[GameStore] Composite board pattern created:', compositePattern); // ★ログ追加5
+
+            // 合成パターンから Board オブジェクトを生成
+            // generateBoardFromPattern はロボットも初期配置する
+            generatedBoard = generateBoardFromPattern(compositePattern);
+            console.log('[GameStore] Board generated from composite pattern:', generatedBoard); // ★ログ追加6
+
+            // サーバーからのロボット初期位置を Board オブジェクトに反映させる (重要)
+            if (generatedBoard && initialGameState.robotPositions) {
+               console.log('[GameStore] Applying initial robot positions from server:', initialGameState.robotPositions); // ★ログ追加7
+               generatedBoard.robots = generatedBoard.robots.map(robot => ({
+                 ...robot,
+                 position: initialGameState.robotPositions[robot.color] ?? robot.position // サーバーの位置情報があれば上書き
+               }));
+               console.log('[GameStore] Robot positions updated in generatedBoard:', generatedBoard.robots); // ★ログ追加8
+            }
+
+            console.log('[GameStore] Board generated successfully.');
+          } catch (error) {
+            console.error('[GameStore] Failed to generate board during process:', error); // ★ログ変更
+            // エラーが発生した場合、generatedBoard は null のまま
+          }
+        } else {
+          console.error('[GameStore] Invalid or missing boardPatternIds in initialGameState. Received:', initialGameState.boardPatternIds); // ★ログ変更
+        }
+        // --- ここまで ---
+
+        console.log('[GameStore] Setting game state and generated board:', generatedBoard); // ★ログ追加9
+        set({ game: initialGameState, generatedBoard: generatedBoard }); // 生成したボードもセット
       });
 
       socketService.onGameStateUpdated((gameStateUpdate) => {
@@ -221,6 +279,7 @@ const useGameStore = create<GameStore>((set, get) => ({
       currentRoom: null,
       availableRooms: [],
       game: null, // ゲーム状態もリセット
+      generatedBoard: null, // 生成ボードもリセット
       socketId: null, // Reset socketId on disconnect
     });
   },

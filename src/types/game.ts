@@ -124,6 +124,7 @@ export interface MultiplayerGameState {
   timerStartedAt: number;
   declarationOrder?: string[];
   robotPositions: Record<RobotColor, Position>; // Use Record
+  boardPatternIds: string[]; // Add board pattern IDs received from server
   moveHistory: {
     robotColor: RobotColor;
     positions: Position[];
