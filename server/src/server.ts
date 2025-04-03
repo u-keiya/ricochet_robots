@@ -3,7 +3,8 @@ import { createServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import dotenv from 'dotenv';
 import { RoomManager } from './services/roomManager';
-import { Player } from './types/player'; // PlayerSession のインポートを削除
+import { Player } from './types/player';
+import { GamePhase } from './types/game'; // GamePhase をインポート
 import winston from 'winston';
 
 // 環境変数の読み込み
@@ -102,6 +103,12 @@ io.on('connection', (socket: Socket) => {
       socket.emit('roomCreated', room); // Room オブジェクト全体を送信
       io.emit('roomListUpdated', roomManager.getRoomSummaries());
       logger.info(`Room created: ${room.id} by ${player.name}`);
+
+      // GameManager の gameStateUpdated イベントをリッスン
+      room.gameManager.on('gameStateUpdated', (updatedGameState) => {
+        io.to(room.id).emit('gameStateUpdated', updatedGameState);
+        logger.info(`Broadcasting gameStateUpdated for room ${room.id}`);
+      });
     } catch (error) {
       logger.error('Error in createRoom:', error);
       socket.emit('error', { message: error instanceof Error ? error.message : 'Failed to create room' });
@@ -131,7 +138,7 @@ io.on('connection', (socket: Socket) => {
 
           // ゲームが進行中の場合、参加したプレイヤーに現在のゲーム状態を送信
           const gameState = room.gameManager.getGameState();
-          if (gameState.phase !== 'WAITING') {
+          if (gameState.phase !== GamePhase.WAITING) { // Compare with enum member
             socket.emit('gameStateUpdated', gameState); // gameStateUpdated イベントで送信
             logger.info(`Sent current game state to player ${player.name} joining room ${roomId}`);
           }

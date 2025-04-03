@@ -38,3 +38,20 @@ File: server/src/server.ts
 Function: (Socket.IO 'joinRoom' event handler)
 Short description: Modified to send the room object directly in the 'roomJoined' event payload, instead of nesting it within another object. This fixes an issue where the client received invalid data. Also added logic to send the current game state via 'gameStateUpdated' if the player joins an ongoing game.
 Input / Output: Input: { roomId: string, password?: string } from client / Output: Emits 'roomJoined', 'gameStateUpdated' (if applicable), or 'error' to client
+
+File: server/src/services/gameManager.ts
+Class: GameManager
+Function: startGame
+Short description: Added logic to set the initial robot positions in the game state when the game starts.
+Input / Output: Input: players: Player[] / Output: void
+
+File: server/src/services/gameManager.ts
+Class: GameManager
+Function: (Multiple methods)
+Short description: Modified GameManager to extend EventEmitter and emit 'gameStateUpdated' events whenever the game state changes (e.g., phase change, timer update, move, declaration, score update, game end).
+Input / Output: N/A (Internal event emission)
+
+File: server/src/server.ts
+Function: (Socket.IO 'createRoom' event handler)
+Short description: Added an event listener for the 'gameStateUpdated' event emitted by the GameManager instance. When the event is received, the updated game state is broadcasted to all clients in the corresponding room using the 'gameStateUpdated' socket event.
+Input / Output: N/A (Listens for internal events and emits socket events)
