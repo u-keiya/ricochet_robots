@@ -36,5 +36,5 @@ Input / Output: Input: e: React.FormEvent / Output: void (Calls joinRoom action)
 
 File: server/src/server.ts
 Function: (Socket.IO 'joinRoom' event handler)
-Short description: Modified to send the room object directly in the 'roomJoined' event payload, instead of nesting it within another object. This fixes an issue where the client received invalid data.
-Input / Output: Input: { roomId: string, password?: string } from client / Output: Emits 'roomJoined' or 'error' to client
+Short description: Modified to send the room object directly in the 'roomJoined' event payload, instead of nesting it within another object. This fixes an issue where the client received invalid data. Also added logic to send the current game state via 'gameStateUpdated' if the player joins an ongoing game.
+Input / Output: Input: { roomId: string, password?: string } from client / Output: Emits 'roomJoined', 'gameStateUpdated' (if applicable), or 'error' to client
