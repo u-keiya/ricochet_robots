@@ -72,3 +72,28 @@ Class: RoomManager
 Function: createRoom
 Short description: Modified to pass a fixed array of board pattern IDs (placeholder: ['A1', 'B2', 'C3', 'D4']) to the GameManager constructor. Added a TODO comment to implement a server-side BoardLoader in the future.
 Input / Output: Input: hostPlayer: Player, options: RoomOptions / Output: Room
+
+File: src/types/game.ts
+Interface: MultiplayerGameState
+Short description: Added 'boardPatternIds: string[]' property to align with server changes.
+Input / Output: N/A (Type definition)
+
+File: src/stores/gameStore.ts
+Interface: GameStore
+Short description: Added 'generatedBoard: Board | null' state to hold the client-generated board object.
+Input / Output: N/A (Type definition)
+
+File: src/stores/gameStore.ts
+Function: (onGameStarted event handler)
+Short description: Modified to use 'boardPatternIds' from the received 'initialGameState' to generate the full 'Board' object using BoardLoader and board generation utilities. Stores the result in 'generatedBoard' state. Fixed board ID format passed to BoardLoader.
+Input / Output: Input: initialGameState: MultiplayerGameState / Output: Updates store state ('game', 'generatedBoard')
+
+File: src/pages/GamePage.tsx
+Function: GamePage (React Component)
+Short description: Modified to retrieve 'generatedBoard' from useGameStore. Renders the GameBoard component using 'generatedBoard'.
+Input / Output: N/A (Component rendering logic)
+
+File: src/pages/GamePage.tsx
+Function: handleRobotMove
+Short description: Modified to use 'generatedBoard' (instead of game.board) to calculate the robot's movement path using 'calculatePath'.
+Input / Output: Input: robotColor: RobotColor, direction: Direction / Output: Calls storeMoveRobot action
