@@ -123,9 +123,20 @@ io.on('connection', (socket: Socket) => {
         socket.join(roomId);
         const room = roomManager.getRoom(roomId);
         if (room) {
-          // 他のプレイヤーに通知する際は、完全な Player オブジェクトを渡す方が良いかもしれない
-          socket.to(roomId).emit('playerJoined', player); // playerJoined イベントに Player オブジェクトを渡す
-          socket.emit('roomJoined', room); // room オブジェクトを直接送信
+          // 他のプレイヤーに通知
+          socket.to(roomId).emit('playerJoined', player);
+
+          // 参加したプレイヤーにルーム情報を送信
+          socket.emit('roomJoined', room);
+
+          // ゲームが進行中の場合、参加したプレイヤーに現在のゲーム状態を送信
+          const gameState = room.gameManager.getGameState();
+          if (gameState.phase !== 'WAITING') {
+            socket.emit('gameStateUpdated', gameState); // gameStateUpdated イベントで送信
+            logger.info(`Sent current game state to player ${player.name} joining room ${roomId}`);
+          }
+
+          // ルームリストを更新
           io.emit('roomListUpdated', roomManager.getRoomSummaries());
           logger.info(`Player ${player.name} joined room ${roomId}`);
         }
