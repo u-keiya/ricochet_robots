@@ -862,6 +862,108 @@ Okay, here is the source code description for each file from the repository, for
 * useGameState (Custom Hook) [cite: 474, 743, 1718]
     * (See previous entry for detailed descriptions)
 
+### added files
+File: server/src/services/gameManager.ts
+Class: GameManager
+Function: startGame
+Short description: Modified to accept the current list of players in the room to correctly check the minimum player count before starting the game.
+Input / Output: Input: players: Player[] / Output: void
+
+File: server/src/server.ts
+Function: (Socket.IO 'startGame' event handler)
+Short description: Modified to retrieve the current list of players from the room and pass it to gameManager.startGame.
+Input / Output: Input: { roomId: string } from client / Output: Emits 'gameStarted' or 'error' to client
+
+File: src/services/socketService.ts
+Function: joinRoom
+Short description: Reverted to a void function that only emits the 'joinRoom' event. Promise logic and timeout removed to simplify and rely on gameStore's event listener.
+Input / Output: Input: roomId: string, password?: string / Output: void
+
+File: src/stores/gameStore.ts
+Function: joinRoom (Action)
+Short description: Reverted to a void action that calls socketService.joinRoom. Async/await and try/catch removed.
+Input / Output: Input: roomId: string, password?: string / Output: void
+
+File: src/stores/gameStore.ts
+Function: (onRoomJoined event handler)
+Short description: Added checks to validate the received 'room' object and its 'players' property before updating the state. Added more detailed error logging for invalid data.
+Input / Output: Input: room: Room (from server event) / Output: Updates store state
+
+File: src/pages/JoinRoomPage.tsx
+Function: (React Component)
+Short description: Modified to display a loading message until the player is registered (currentPlayer exists in gameStore) before showing the RoomList. Removed handleJoinSuccess and onJoinSuccess prop.
+Input / Output: N/A (Component rendering logic)
+
+File: src/components/room/RoomList.tsx
+Function: handleJoinRoom
+Short description: Modified to be a synchronous function. Removed async/await and try/catch. Calls the void joinRoom action. Added isLoading state for UI feedback.
+Input / Output: Input: e: React.FormEvent / Output: void (Calls joinRoom action)
+
+File: server/src/server.ts
+Function: (Socket.IO 'joinRoom' event handler)
+Short description: Modified to send the room object directly in the 'roomJoined' event payload, instead of nesting it within another object. This fixes an issue where the client received invalid data. Also added logic to send the current game state via 'gameStateUpdated' if the player joins an ongoing game.
+Input / Output: Input: { roomId: string, password?: string } from client / Output: Emits 'roomJoined', 'gameStateUpdated' (if applicable), or 'error' to client
+
+File: server/src/services/gameManager.ts
+Class: GameManager
+Function: startGame
+Short description: Added logic to set the initial robot positions in the game state when the game starts.
+Input / Output: Input: players: Player[] / Output: void
+
+File: server/src/services/gameManager.ts
+Class: GameManager
+Function: (Multiple methods)
+Short description: Modified GameManager to extend EventEmitter and emit 'gameStateUpdated' events whenever the game state changes (e.g., phase change, timer update, move, declaration, score update, game end).
+Input / Output: N/A (Internal event emission)
+
+File: server/src/server.ts
+Function: (Socket.IO 'createRoom' event handler)
+Short description: Added an event listener for the 'gameStateUpdated' event emitted by the GameManager instance. When the event is received, the updated game state is broadcasted to all clients in the corresponding room using the 'gameStateUpdated' socket event.
+Input / Output: N/A (Listens for internal events and emits socket events)
+
+File: server/src/types/game.ts
+Interface: MultiplayerGameState
+Short description: Added the 'boardPatternIds: string[]' property to include the IDs of the board patterns used in the game.
+Input / Output: N/A (Type definition)
+
+File: server/src/services/gameManager.ts
+Class: GameManager
+Function: constructor
+Short description: Modified to accept 'boardPatternIds: string[]' as an argument and store it. Included 'boardPatternIds' in the initialized game state.
+Input / Output: Input: players: Player[], boardPatternIds: string[], rules: GameRules / Output: void
+
+File: server/src/services/roomManager.ts
+Class: RoomManager
+Function: createRoom
+Short description: Modified to pass a fixed array of board pattern IDs (placeholder: ['A1', 'B2', 'C3', 'D4']) to the GameManager constructor. Added a TODO comment to implement a server-side BoardLoader in the future.
+Input / Output: Input: hostPlayer: Player, options: RoomOptions / Output: Room
+
+File: src/types/game.ts
+Interface: MultiplayerGameState
+Short description: Added 'boardPatternIds: string[]' property to align with server changes.
+Input / Output: N/A (Type definition)
+
+File: src/stores/gameStore.ts
+Interface: GameStore
+Short description: Added 'generatedBoard: Board | null' state to hold the client-generated board object.
+Input / Output: N/A (Type definition)
+
+File: src/stores/gameStore.ts
+Function: (onGameStarted event handler)
+Short description: Modified to use 'boardPatternIds' from the received 'initialGameState' to generate the full 'Board' object using BoardLoader and board generation utilities. Stores the result in 'generatedBoard' state. Fixed board ID format passed to BoardLoader.
+Input / Output: Input: initialGameState: MultiplayerGameState / Output: Updates store state ('game', 'generatedBoard')
+
+File: src/pages/GamePage.tsx
+Function: GamePage (React Component)
+Short description: Modified to retrieve 'generatedBoard' from useGameStore. Renders the GameBoard component using 'generatedBoard'.
+Input / Output: N/A (Component rendering logic)
+
+File: src/pages/GamePage.tsx
+Function: handleRobotMove
+Short description: Modified to use 'generatedBoard' (instead of game.board) to calculate the robot's movement path using 'calculatePath'.
+Input / Output: Input: robotColor: RobotColor, direction: Direction / Output: Calls storeMoveRobot action
+
+
 ================================================================
 End of Codebase
 ================================================================
