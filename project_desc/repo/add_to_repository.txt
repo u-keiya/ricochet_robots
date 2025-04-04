@@ -110,3 +110,18 @@ File: src/pages/GamePage.tsx
 Function: GamePage (React Component)
 Short description: Added "カードをめくる" button and its handler (handleDrawCard) which calls the gameStore's drawCard action. Also fixed the display condition for the "ゲームスタート" button.
 Input / Output: N/A (Component rendering logic)
+
+File: src/components/DeclarationCard.tsx
+Function: DeclarationCardList (React Component)
+Short description: Modified the isDisabled logic for individual DeclarationCard components. It now disables cards if the parent component passes isDisabled=true OR if a number is selected and the card's number is greater than the selected number.
+Input / Output: Input props: selectedNumber, maxNumber, onSelect, isDisabled?, className? / Output: JSX
+
+File: src/pages/GamePage.tsx
+Function: GamePage (React Component)
+Short description: Modified to pass the isDisabled prop to DeclarationCardList based on whether the current player has already declared moves (!isConnected || game.declarations?.[currentPlayer?.id ?? '']?.moves != null). Also added checks for connection status (isConnecting, !isConnected) to show loading/error messages and disable game interactions (GameBoard, DeclarationCardList, buttons) until connected.
+Input / Output: N/A (Component rendering logic)
+
+File: src/stores/gameStore.ts
+Function: declareMoves (Action)
+Short description: Added a check for isConnected before emitting the 'declareMoves' event via socketService. Logs an error and returns if not connected.
+Input / Output: Input: moves: number / Output: void
