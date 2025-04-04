@@ -43,8 +43,8 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
     });
 
     return {
-      phase: GamePhase.WAITING,
-      currentCard: undefined, // Initialize currentCard
+      phase: GamePhase.WAITING, // Start in WAITING phase
+      currentCard: undefined, // No card initially
       remainingCards: this.cardDeck.getRemaining(), // Get from cardDeck
       totalCards: this.cardDeck.getTotalCards(), // Get from cardDeck
       declarations: {}, // Initialize as empty object
@@ -71,20 +71,16 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
       throw new Error('Not enough players');
     }
 
-    // Draw the first card
-    const firstCard = this.cardDeck.drawNext();
-    if (!firstCard) {
-        console.error("Failed to draw the first card. Cannot start game.");
-        this.endGame(); // End game if no cards
-        return;
-    }
-    this.gameState.currentCard = firstCard;
-    this.gameState.remainingCards = this.cardDeck.getRemaining();
-    this.gameState.robotPositions = { ...INITIAL_ROBOT_POSITIONS }; // Set initial robot positions
+    // Set initial robot positions
+    this.gameState.robotPositions = { ...INITIAL_ROBOT_POSITIONS };
 
-    // Set phase to DECLARATION and start timer
-    this.startDeclarationPhase();
-    this.emit('gameStateUpdated', this.getGameState()); // startGame 完了後の状態を通知
+    // Set phase to READY_TO_DRAW, don't draw card yet
+    this.gameState.phase = GamePhase.READY_TO_DRAW;
+    this.gameState.currentCard = undefined; // Ensure no card is set initially
+    this.gameState.remainingCards = this.cardDeck.getRemaining(); // Update remaining cards count
+
+    console.log("Game started. Phase set to READY_TO_DRAW.");
+    this.emit('gameStateUpdated', this.getGameState()); // Emit the initial state for READY_TO_DRAW
   }
 
   private startDeclarationPhase(): void {
@@ -130,6 +126,32 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
         callback(); // Execute the callback (e.g., end phase) - callback内でemitされる
       }
     }, 1000); // Check every second
+  }
+
+  // New method to handle the explicit card draw request
+  public handleDrawCard(playerId: string): void {
+    // Only allow drawing if in the correct phase and maybe only by the host? (Decide on rule)
+    // For now, allow any player to trigger the first draw if in READY_TO_DRAW phase.
+    if (this.gameState.phase !== GamePhase.READY_TO_DRAW) {
+      console.warn(`Player ${playerId} attempted to draw card in incorrect phase: ${this.gameState.phase}`);
+      // Optionally throw an error or just ignore
+      return;
+    }
+
+    const card = this.cardDeck.drawNext();
+    if (!card) {
+      console.error("Failed to draw the first card even when requested.");
+      this.endGame(); // End game if no cards
+      return;
+    }
+
+    this.gameState.currentCard = card;
+    this.gameState.remainingCards = this.cardDeck.getRemaining();
+
+    console.log(`Card drawn by ${playerId}. Starting declaration phase.`);
+    // Now start the declaration phase
+    this.startDeclarationPhase();
+    // gameStateUpdated is emitted within startDeclarationPhase
   }
 
   public declareMoves(playerId: string, moves: number): void {
@@ -180,7 +202,7 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
       this.startSolutionPhase();
     } else {
       // If no one made a valid declaration, draw the next card
-      this.drawNextCard(); // この中で emit される
+      this.proceedToNextRound(); // Use renamed method
     }
     this.emit('gameStateUpdated', this.getGameState()); // フェーズ終了/開始を通知
   }
@@ -252,7 +274,7 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
     }
 
     // Move to the next card/round
-    this.drawNextCard(); // この中で emit される
+    this.proceedToNextRound();
     this.emit('gameStateUpdated', this.getGameState()); // 成功状態を通知
   }
 
@@ -262,7 +284,7 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
     const currentPlayerId = this.gameState.currentPlayer;
     if (!currentPlayerId) {
       // Should not happen in this phase, but handle defensively
-      this.drawNextCard();
+      this.proceedToNextRound(); // Use renamed method
       return;
     }
 
@@ -278,15 +300,16 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
       this.gameState.currentPlayer = this.gameState.declarationOrder[0];
       this.startSolutionPhase(); // この中で emit される
     } else {
-      // No more players left to attempt, draw the next card
-      this.drawNextCard(); // この中で emit される
+      // No more players left to attempt, proceed to the next round/card
+      this.proceedToNextRound();
     }
     this.emit('gameStateUpdated', this.getGameState()); // 失敗状態/次のターン開始を通知
   }
 
   // moveToNextPlayer method removed as its logic is now handled within failCurrentSolution
 
-  private drawNextCard(): void {
+  // Renamed from drawNextCard to avoid confusion with handleDrawCard
+  private proceedToNextRound(): void {
     const nextCard = this.cardDeck.drawNext();
 
     if (nextCard) {
@@ -295,15 +318,14 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
       this.gameState.declarations = {};
       this.gameState.currentPlayer = undefined;
       this.gameState.declarationOrder = undefined;
-      this.gameState.moveHistory = []; // Clear move history for the new card
-      this.startDeclarationPhase(); // Start next declaration phase
-      console.log(`Drew next card. Remaining: ${this.gameState.remainingCards}. Starting declaration phase.`);
+      this.gameState.moveHistory = [];
+      this.startDeclarationPhase(); // Start declaration for the new card
+      console.log(`Proceeding to next round. Remaining cards: ${this.gameState.remainingCards}.`);
     } else {
-      // No more cards left
       console.log("No more cards left in the deck. Ending game.");
       this.endGame();
     }
-    // State update is emitted within startDeclarationPhase or endGame
+    // State update emitted within startDeclarationPhase or endGame
   }
 
   private endGame(): void {

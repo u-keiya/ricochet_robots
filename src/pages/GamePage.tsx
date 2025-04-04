@@ -244,8 +244,8 @@ const GamePage: FC = () => {
             <div className="bg-white rounded-lg shadow p-4">
               <h2 className="text-lg font-bold mb-2">操作</h2>
               <div className="space-y-2">
-                {/* ゲームスタートボタン (ホスト用, waitingフェーズ) */}
-                {currentRoom.hostId === currentPlayer?.id && game?.phase === 'waiting' && (
+                {/* ゲームスタートボタン (ホスト用, waitingフェーズ or gameがnull) */}
+                {currentRoom.hostId === currentPlayer?.id && (!game || game.phase === 'waiting') && (
                   <button
                     className="btn btn-primary w-full"
                     onClick={handleStartGame}

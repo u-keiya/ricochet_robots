@@ -254,6 +254,40 @@ io.on('connection', (socket: Socket) => {
     }
   });
 
+  // drawCard イベントハンドラを追加
+  socket.on('drawCard', ({ roomId }: { roomId: string }) => {
+    try {
+      const playerId = socket.id;
+      const player = sessions.get(playerId);
+
+      if (!player) {
+        throw new Error('Player session not found.');
+      }
+
+      const room = roomManager.getRoom(roomId);
+      if (!room) {
+        throw new Error('Room not found');
+      }
+
+      // Optional: Add check if only specific player (e.g., host) can draw the first card
+      // if (room.hostId !== playerId) {
+      //   throw new Error('Only the host can draw the first card');
+      // }
+
+      logger.info(`drawCard event received for room ${roomId} from player ${player.name}`);
+
+      const gameManager = room.gameManager;
+      gameManager.handleDrawCard(playerId); // Call the new method in GameManager
+
+      // gameStateUpdated is emitted by GameManager internally now
+
+    } catch (error) {
+      logger.error(`Error in drawCard for room ${roomId}:`, error);
+      const message = error instanceof Error ? error.message : 'Failed to draw card';
+      socket.emit('error', { message });
+    }
+  });
+
 });
 
 const PORT = process.env.PORT || 3001;

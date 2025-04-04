@@ -24,7 +24,8 @@ export enum TargetSymbol {
 }
 
 export enum GamePhase {
-  WAITING = 'waiting',
+  WAITING = 'waiting', // Waiting for players to join/ready
+  READY_TO_DRAW = 'ready_to_draw', // Game started, waiting for first card draw
   DECLARATION = 'declaration',
   SOLUTION = 'solution',
   FINISHED = 'finished'
