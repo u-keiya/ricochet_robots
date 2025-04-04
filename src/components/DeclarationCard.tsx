@@ -99,10 +99,9 @@ export const DeclarationCardList: FC<DeclarationCardListProps> = ({
               number={number}
               isSelected={selectedNumber === number}
               isDisabled={
-                // 親から isDisabled が渡されたらそれを最優先
-                isDisabled === true ? true :
-                // 親から渡されず、selectedNumber が存在するなら、それより大きい数字を無効化
-                selectedNumber !== null && number > selectedNumber
+                // 親から渡された isDisabled が true の場合、または
+                // selectedNumber があり、現在の number がそれより大きい場合
+                (selectedNumber !== null && number > selectedNumber)
               }
               onClick={onSelect}
             />
