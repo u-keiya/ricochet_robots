@@ -1,8 +1,11 @@
 import { Room, RoomOptions, RoomSummary } from '../types/room'; // GameStatus を削除
 import { Player } from '../types/player';
 import { v4 as uuidv4 } from 'uuid';
-import { GameManager } from './gameManager'; // GameManager をインポート
-import { DEFAULT_GAME_RULES, GamePhase } from '../types/game'; // DEFAULT_GAME_RULES と GamePhase をインポート
+import { GameManager } from './gameManager';
+import { DEFAULT_GAME_RULES, GamePhase, Position, TargetSymbol, RobotColor } from '../types/game'; // Import necessary types
+
+// Define TargetPositions type locally or import if defined elsewhere
+type TargetPositions = Map<string, Position>;
 
 export class RoomManager {
   private rooms: Map<string, Room>;
@@ -19,7 +22,33 @@ export class RoomManager {
     // GameManager を先にインスタンス化
     // TODO: Implement server-side BoardLoader to get dynamic patterns
     const boardPatternIds = ['A1', 'B2', 'C3', 'D3']; // Placeholder: Use fixed patterns for now
-    const gameManager = new GameManager([hostPlayer], boardPatternIds, DEFAULT_GAME_RULES);
+    // TODO: Replace this placeholder with actual target positions derived from board generation
+    const targetPositions: TargetPositions = new Map<string, Position>([
+        // Vortex (color null)
+        [`${TargetSymbol.VORTEX}-null`, { x: 7, y: 7 }], // Center
+        // Red Targets
+        [`${TargetSymbol.GEAR}-${RobotColor.RED}`, { x: 0, y: 5 }],
+        [`${TargetSymbol.MOON}-${RobotColor.RED}`, { x: 5, y: 0 }],
+        [`${TargetSymbol.PLANET}-${RobotColor.RED}`, { x: 10, y: 15 }],
+        [`${TargetSymbol.STAR}-${RobotColor.RED}`, { x: 15, y: 10 }],
+        // Blue Targets
+        [`${TargetSymbol.GEAR}-${RobotColor.BLUE}`, { x: 1, y: 10 }],
+        [`${TargetSymbol.MOON}-${RobotColor.BLUE}`, { x: 6, y: 5 }],
+        [`${TargetSymbol.PLANET}-${RobotColor.BLUE}`, { x: 11, y: 1 }],
+        [`${TargetSymbol.STAR}-${RobotColor.BLUE}`, { x: 14, y: 6 }],
+        // Green Targets
+        [`${TargetSymbol.GEAR}-${RobotColor.GREEN}`, { x: 2, y: 15 }],
+        [`${TargetSymbol.MOON}-${RobotColor.GREEN}`, { x: 7, y: 11 }],
+        [`${TargetSymbol.PLANET}-${RobotColor.GREEN}`, { x: 12, y: 7 }],
+        [`${TargetSymbol.STAR}-${RobotColor.GREEN}`, { x: 13, y: 12 }],
+        // Yellow Targets
+        [`${TargetSymbol.GEAR}-${RobotColor.YELLOW}`, { x: 3, y: 3 }],
+        [`${TargetSymbol.MOON}-${RobotColor.YELLOW}`, { x: 8, y: 8 }],
+        [`${TargetSymbol.PLANET}-${RobotColor.YELLOW}`, { x: 13, y: 13 }],
+        [`${TargetSymbol.STAR}-${RobotColor.YELLOW}`, { x: 15, y: 2 }],
+    ]);
+
+    const gameManager = new GameManager([hostPlayer], boardPatternIds, targetPositions, DEFAULT_GAME_RULES);
     const room: Room = {
       id: roomId,
       name: options.name,

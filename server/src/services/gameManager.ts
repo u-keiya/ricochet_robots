@@ -1,7 +1,11 @@
-import { EventEmitter } from 'events'; // EventEmitter をインポート
-import { Card, Declaration, GamePhase, GameRules, MultiplayerGameState, PlayerGameState, Position, RobotColor, DEFAULT_GAME_RULES } from '../types/game';
+import { EventEmitter } from 'events';
+import { Card, Declaration, GamePhase, GameRules, MultiplayerGameState, PlayerGameState, Position, RobotColor, DEFAULT_GAME_RULES, TargetSymbol } from '../types/game';
 import { Player } from '../types/player';
+import { CardDeck } from './cardDeck'; // Import CardDeck
+import { ROBOT_COLORS } from '../utils/constants'; // Import ROBOT_COLORS
 
+// Define TargetPositions type locally or import if defined elsewhere
+type TargetPositions = Map<string, Position>;
 // 仮のロボット初期位置 (本来はボード生成時に決定)
 const INITIAL_ROBOT_POSITIONS: Record<RobotColor, Position> = {
   [RobotColor.RED]: { x: 1, y: 1 },
@@ -12,19 +16,20 @@ const INITIAL_ROBOT_POSITIONS: Record<RobotColor, Position> = {
 
 export class GameManager extends EventEmitter { // EventEmitter を継承
   private gameState: MultiplayerGameState;
+  private cardDeck: CardDeck; // Add cardDeck property
   private rules: GameRules;
   private players: Player[];
   private timerInterval?: NodeJS.Timeout;
-  private boardPatternIds: string[]; // Added: Store the board pattern IDs
+  private boardPatternIds: string[];
   // private penaltyApplied: Set<string>; // No longer needed with the new rule
 
-  constructor(players: Player[], boardPatternIds: string[], rules: GameRules = DEFAULT_GAME_RULES) {
-    super(); // EventEmitter のコンストラクタを呼び出す
+  constructor(players: Player[], boardPatternIds: string[], targetPositions: TargetPositions, rules: GameRules = DEFAULT_GAME_RULES) {
+    super();
     this.rules = rules;
     this.players = players;
-    this.boardPatternIds = boardPatternIds; // Store the board pattern IDs
+    this.boardPatternIds = boardPatternIds;
+    this.cardDeck = new CardDeck(targetPositions); // Create CardDeck instance
     this.gameState = this.initializeGameState();
-    // this.penaltyApplied = new Set(); // No longer needed
   }
 
   private initializeGameState(): MultiplayerGameState {
@@ -39,16 +44,18 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
 
     return {
       phase: GamePhase.WAITING,
-      remainingCards: 17,
-      totalCards: 17,
+      currentCard: undefined, // Initialize currentCard
+      remainingCards: this.cardDeck.getRemaining(), // Get from cardDeck
+      totalCards: this.cardDeck.getTotalCards(), // Get from cardDeck
       declarations: {}, // Initialize as empty object
       playerStates,
       timer: 0,
       timerStartedAt: Date.now(), // Initialize with a value
-      robotPositions: {} as Record<RobotColor, Position>, // Cast to satisfy type checker initially
+      robotPositions: { ...INITIAL_ROBOT_POSITIONS }, // Use initial positions defined above
       moveHistory: [],
-      boardPatternIds: this.boardPatternIds // Add board pattern IDs to the initial state
+      boardPatternIds: this.boardPatternIds
     };
+    console.log(`Card deck initialized with ${this.gameState.totalCards} cards.`);
   }
 
   // Add players parameter to startGame
@@ -64,11 +71,19 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
       throw new Error('Not enough players');
     }
 
-    // ロボットの初期位置を設定
-    this.gameState.robotPositions = { ...INITIAL_ROBOT_POSITIONS };
+    // Draw the first card
+    const firstCard = this.cardDeck.drawNext();
+    if (!firstCard) {
+        console.error("Failed to draw the first card. Cannot start game.");
+        this.endGame(); // End game if no cards
+        return;
+    }
+    this.gameState.currentCard = firstCard;
+    this.gameState.remainingCards = this.cardDeck.getRemaining();
+    this.gameState.robotPositions = { ...INITIAL_ROBOT_POSITIONS }; // Set initial robot positions
 
-    this.gameState.currentPlayer = this.players[Math.floor(Math.random() * this.players.length)].id;
-    this.startDeclarationPhase(); // この中で emit される
+    // Set phase to DECLARATION and start timer
+    this.startDeclarationPhase();
     this.emit('gameStateUpdated', this.getGameState()); // startGame 完了後の状態を通知
   }
 
@@ -272,20 +287,23 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
   // moveToNextPlayer method removed as its logic is now handled within failCurrentSolution
 
   private drawNextCard(): void {
-    if (this.gameState.remainingCards > 0) {
-      this.gameState.remainingCards--;
-      if (this.gameState.remainingCards === 0) {
-        // If that was the last card, end the game
-        this.endGame(); // この中で emit される
-      } else {
-        // Otherwise, start the declaration phase for the next card
-        this.startDeclarationPhase(); // この中で emit される
-      }
+    const nextCard = this.cardDeck.drawNext();
+
+    if (nextCard) {
+      this.gameState.currentCard = nextCard;
+      this.gameState.remainingCards = this.cardDeck.getRemaining();
+      this.gameState.declarations = {};
+      this.gameState.currentPlayer = undefined;
+      this.gameState.declarationOrder = undefined;
+      this.gameState.moveHistory = []; // Clear move history for the new card
+      this.startDeclarationPhase(); // Start next declaration phase
+      console.log(`Drew next card. Remaining: ${this.gameState.remainingCards}. Starting declaration phase.`);
     } else {
-      // Should not happen if logic is correct, but ensures game ends
-      this.endGame(); // この中で emit される
+      // No more cards left
+      console.log("No more cards left in the deck. Ending game.");
+      this.endGame();
     }
-    // drawNextCard 自体は状態変化の中間なので、呼び出し元で emit する
+    // State update is emitted within startDeclarationPhase or endGame
   }
 
   private endGame(): void {
@@ -312,8 +330,9 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
 
   public getGameState(): MultiplayerGameState {
     // Return a copy to prevent direct modification
-    // Internal state uses Records, so just copy.
-    return { ...this.gameState };
+    // Deep copy might be needed if nested objects are mutable, but Records help here.
+    // Consider using structuredClone for a true deep copy if necessary.
+    return JSON.parse(JSON.stringify(this.gameState)); // Simple deep copy for now
   }
 
   // Centralized cleanup for timers
