@@ -88,3 +88,25 @@ Class: RoomManager
 Function: createRoom
 Short description: Modified to create a placeholder TargetPositions map and pass it to the GameManager constructor. Added TODO for server-side board loading.
 Input / Output: Input: hostPlayer: Player, options: RoomOptions / Output: Room
+
+File: src/types/socket.ts
+Interface: ClientToServerEvents
+Short description: Added 'drawCard' event definition for requesting a card draw.
+Input / Output: N/A (Type definition change)
+
+File: src/services/socketService.ts
+Class: SocketService
+Function: drawCard
+Short description: Added method to emit the 'drawCard' event to the server.
+Input / Output: Input: roomId: string / Output: void
+
+File: src/stores/gameStore.ts
+Interface: GameStore
+Function: drawCard (Action)
+Short description: Added action to call socketService.drawCard.
+Input / Output: Input: None / Output: void
+
+File: src/pages/GamePage.tsx
+Function: GamePage (React Component)
+Short description: Added "カードをめくる" button and its handler (handleDrawCard) which calls the gameStore's drawCard action. Also fixed the display condition for the "ゲームスタート" button.
+Input / Output: N/A (Component rendering logic)

@@ -74,13 +74,13 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
     // Set initial robot positions
     this.gameState.robotPositions = { ...INITIAL_ROBOT_POSITIONS };
 
-    // Set phase to READY_TO_DRAW, don't draw card yet
-    this.gameState.phase = GamePhase.READY_TO_DRAW;
+    // Set phase to WAITING, don't draw card yet
+    this.gameState.phase = GamePhase.WAITING;
     this.gameState.currentCard = undefined; // Ensure no card is set initially
     this.gameState.remainingCards = this.cardDeck.getRemaining(); // Update remaining cards count
 
-    console.log("Game started. Phase set to READY_TO_DRAW.");
-    this.emit('gameStateUpdated', this.getGameState()); // Emit the initial state for READY_TO_DRAW
+    console.log("Game started. Phase set to WAITING.");
+    this.emit('gameStateUpdated', this.getGameState()); // Emit the initial state for WAITING
   }
 
   private startDeclarationPhase(): void {
@@ -131,8 +131,8 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
   // New method to handle the explicit card draw request
   public handleDrawCard(playerId: string): void {
     // Only allow drawing if in the correct phase and maybe only by the host? (Decide on rule)
-    // For now, allow any player to trigger the first draw if in READY_TO_DRAW phase.
-    if (this.gameState.phase !== GamePhase.READY_TO_DRAW) {
+    // For now, allow any player to trigger the first draw if in WAITING phase.
+    if (this.gameState.phase !== GamePhase.WAITING) {
       console.warn(`Player ${playerId} attempted to draw card in incorrect phase: ${this.gameState.phase}`);
       // Optionally throw an error or just ignore
       return;

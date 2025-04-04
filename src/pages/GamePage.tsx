@@ -245,7 +245,7 @@ const GamePage: FC = () => {
               <h2 className="text-lg font-bold mb-2">操作</h2>
               <div className="space-y-2">
                 {/* ゲームスタートボタン (ホスト用, waitingフェーズ or gameがnull) */}
-                {currentRoom.hostId === currentPlayer?.id && (!game || game.phase === 'waiting') && (
+                {currentRoom.hostId === currentPlayer?.id && !game && (
                   <button
                     className="btn btn-primary w-full"
                     onClick={handleStartGame}
@@ -254,8 +254,8 @@ const GamePage: FC = () => {
                     ゲームスタート
                   </button>
                 )}
-                {/* カードをめくるボタン (仮: waiting or finished フェーズ) */}
-                {game && (game.phase === 'waiting' || game.phase === 'finished') && (
+                {/* カードをめくるボタン (宣言フェーズで、まだカードがめくられていない場合) */}
+                {currentRoom.hostId === currentPlayer?.id && game && game.phase === 'waiting' && !game.currentCard && (
                   <button
                     className="btn btn-secondary w-full"
                     onClick={handleDrawCard}
