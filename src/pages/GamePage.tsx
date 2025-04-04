@@ -45,6 +45,7 @@ const GamePage: FC = () => {
     startGame,
     declareMoves: storeDeclareMoves, // 名前衝突を避ける
     moveRobot: storeMoveRobot,       // 名前衝突を避ける
+    drawCard, // drawCard アクションを取得
     leaveRoom,
     isConnected,
     connectionError,
@@ -88,6 +89,10 @@ const GamePage: FC = () => {
     if (path.length > 1) { // 移動があった場合のみ送信
        storeMoveRobot(robotColor, path); // 計算したパスを渡す
     }
+  };
+
+  const handleDrawCard = () => { // drawCard ハンドラーを追加
+    drawCard();
   };
 
 
@@ -235,11 +240,12 @@ const GamePage: FC = () => {
               </div>
             )}
 
-            {/* ゲームコントロール (ホスト用, game が null でも表示) */}
-            {currentRoom.hostId === currentPlayer?.id && (!game || game.phase === 'waiting') && (
-              <div className="bg-white rounded-lg shadow p-4">
-                <h2 className="text-lg font-bold mb-2">操作</h2>
-                <div className="space-y-2">
+            {/* ゲームコントロール */}
+            <div className="bg-white rounded-lg shadow p-4">
+              <h2 className="text-lg font-bold mb-2">操作</h2>
+              <div className="space-y-2">
+                {/* ゲームスタートボタン (ホスト用, waitingフェーズ or gameがnull) */}
+                {currentRoom.hostId === currentPlayer?.id && !game && (
                   <button
                     className="btn btn-primary w-full"
                     onClick={handleStartGame}
@@ -247,10 +253,19 @@ const GamePage: FC = () => {
                   >
                     ゲームスタート
                   </button>
-                  {/* カードめくりボタンは削除 */}
-                </div>
+                )}
+                {/* カードをめくるボタン (宣言フェーズで、まだカードがめくられていない場合) */}
+                {currentRoom.hostId === currentPlayer?.id && game && game.phase === 'waiting' && !game.currentCard && (
+                  <button
+                    className="btn btn-secondary w-full"
+                    onClick={handleDrawCard}
+                  >
+                    カードをめくる ({game.remainingCards} 枚)
+                  </button>
+                )}
               </div>
-            )}
+            </div>
+
              {/* ゲーム結果表示 (game が存在する場合) */}
              {game && game.phase === 'finished' && (
                <GameResultDisplay

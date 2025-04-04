@@ -9,19 +9,31 @@ export enum RobotColor {
   RED = 'red',
   BLUE = 'blue',
   GREEN = 'green',
-  YELLOW = 'yellow'
+  YELLOW = 'yellow',
+  // Add a generic color for the vortex target, if applicable server-side
+  // COLORS = 'colors' // Example, adjust if needed
+}
+
+// Define TargetSymbol enum based on client-side src/types/board.ts
+export enum TargetSymbol {
+  GEAR = 'gear',
+  MOON = 'moon',
+  PLANET = 'planet',
+  STAR = 'star',
+  VORTEX = 'vortex',
 }
 
 export enum GamePhase {
-  WAITING = 'waiting',
+  WAITING = 'waiting', // Waiting for players to join/ready
   DECLARATION = 'declaration',
   SOLUTION = 'solution',
   FINISHED = 'finished'
 }
 
 export interface Card {
-  color: RobotColor;
-  symbol: string;
+  // Allow null for color to represent vortex or multi-color targets
+  color: RobotColor | null;
+  symbol: TargetSymbol; // Use the TargetSymbol enum
   position: Position;
 }
 

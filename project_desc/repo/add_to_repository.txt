@@ -1,0 +1,112 @@
+File: server/src/utils/constants.ts
+Function: SYMBOL_MAP
+Short description: Map TargetSymbol enum members to their display characters.
+Input / Output: N/A (Constant definition)
+
+File: server/src/utils/constants.ts
+Function: SYMBOLS
+Short description: Array containing all TargetSymbol enum members.
+Input / Output: N/A (Constant definition)
+
+File: server/src/utils/constants.ts
+Function: ROBOT_COLORS
+Short description: Array containing all RobotColor enum members.
+Input / Output: N/A (Constant definition)
+
+File: server/src/services/cardDeck.ts
+Class: CardDeck
+Function: constructor
+Short description: Initializes the card deck using a map of target positions. Generates and shuffles cards.
+Input / Output: Input: targetPositions: Map<string, Position> / Output: void
+
+File: server/src/services/cardDeck.ts
+Class: CardDeck
+Function: generateCards (private)
+Short description: Generates the initial set of server-side cards (normal + vortex), ensuring target positions exist.
+Input / Output: Input: None / Output: ServerCard[]
+
+File: server/src/services/cardDeck.ts
+Class: CardDeck
+Function: getTargetPosition (private)
+Short description: Retrieves the board position for a given card's symbol and color (or null for vortex).
+Input / Output: Input: color: RobotColor | null, symbol: TargetSymbol / Output: Position | null
+
+File: server/src/services/cardDeck.ts
+Class: CardDeck
+Function: shuffle (private)
+Short description: Randomizes the order of cards in the deck using Fisher-Yates algorithm.
+Input / Output: Input: None / Output: void
+
+File: server/src/services/cardDeck.ts
+Class: CardDeck
+Function: drawNext
+Short description: Draws the next card from the deck, finds its position, and returns it. Skips cards if target position is not found.
+Input / Output: Input: None / Output: Card | null
+
+File: server/src/services/cardDeck.ts
+Class: CardDeck
+Function: getRemaining
+Short description: Returns the number of cards remaining in the deck.
+Input / Output: Input: None / Output: number
+
+File: server/src/services/cardDeck.ts
+Class: CardDeck
+Function: getTotalCards
+Short description: Returns the total number of cards initially generated for the deck.
+Input / Output: Input: None / Output: number
+
+File: server/src/types/game.ts
+Interface: Card
+Short description: Modified the 'color' property to be 'RobotColor | null' to accommodate vortex cards which have no specific color.
+Input / Output: N/A (Type definition change)
+
+File: server/src/types/game.ts
+Enum: TargetSymbol
+Short description: Added TargetSymbol enum ('gear', 'moon', 'planet', 'star', 'vortex') based on client-side definition.
+Input / Output: N/A (Type definition addition)
+
+File: server/src/services/gameManager.ts
+Class: GameManager
+Function: constructor
+Short description: Modified to accept TargetPositions map and initialize CardDeck. Sets initial card counts from the deck.
+Input / Output: Input: players: Player[], boardPatternIds: string[], targetPositions: TargetPositions, rules: GameRules / Output: void
+
+File: server/src/services/gameManager.ts
+Class: GameManager
+Function: startGame
+Short description: Modified to draw the first card using CardDeck when the game starts.
+Input / Output: Input: players: Player[] / Output: void
+
+File: server/src/services/gameManager.ts
+Class: GameManager
+Function: drawNextCard (private)
+Short description: Modified to use cardDeck.drawNext() to get the next card and update game state accordingly.
+Input / Output: Input: None / Output: void
+
+File: server/src/services/roomManager.ts
+Class: RoomManager
+Function: createRoom
+Short description: Modified to create a placeholder TargetPositions map and pass it to the GameManager constructor. Added TODO for server-side board loading.
+Input / Output: Input: hostPlayer: Player, options: RoomOptions / Output: Room
+
+File: src/types/socket.ts
+Interface: ClientToServerEvents
+Short description: Added 'drawCard' event definition for requesting a card draw.
+Input / Output: N/A (Type definition change)
+
+File: src/services/socketService.ts
+Class: SocketService
+Function: drawCard
+Short description: Added method to emit the 'drawCard' event to the server.
+Input / Output: Input: roomId: string / Output: void
+
+File: src/stores/gameStore.ts
+Interface: GameStore
+Function: drawCard (Action)
+Short description: Added action to call socketService.drawCard.
+Input / Output: Input: None / Output: void
+
+File: src/pages/GamePage.tsx
+Function: GamePage (React Component)
+Short description: Added "カードをめくる" button and its handler (handleDrawCard) which calls the gameStore's drawCard action. Also fixed the display condition for the "ゲームスタート" button.
+Input / Output: N/A (Component rendering logic)

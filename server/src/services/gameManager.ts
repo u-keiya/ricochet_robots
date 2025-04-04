@@ -1,7 +1,11 @@
-import { EventEmitter } from 'events'; // EventEmitter をインポート
-import { Card, Declaration, GamePhase, GameRules, MultiplayerGameState, PlayerGameState, Position, RobotColor, DEFAULT_GAME_RULES } from '../types/game';
+import { EventEmitter } from 'events';
+import { Card, Declaration, GamePhase, GameRules, MultiplayerGameState, PlayerGameState, Position, RobotColor, DEFAULT_GAME_RULES, TargetSymbol } from '../types/game';
 import { Player } from '../types/player';
+import { CardDeck } from './cardDeck'; // Import CardDeck
+import { ROBOT_COLORS } from '../utils/constants'; // Import ROBOT_COLORS
 
+// Define TargetPositions type locally or import if defined elsewhere
+type TargetPositions = Map<string, Position>;
 // 仮のロボット初期位置 (本来はボード生成時に決定)
 const INITIAL_ROBOT_POSITIONS: Record<RobotColor, Position> = {
   [RobotColor.RED]: { x: 1, y: 1 },
@@ -12,19 +16,20 @@ const INITIAL_ROBOT_POSITIONS: Record<RobotColor, Position> = {
 
 export class GameManager extends EventEmitter { // EventEmitter を継承
   private gameState: MultiplayerGameState;
+  private cardDeck: CardDeck; // Add cardDeck property
   private rules: GameRules;
   private players: Player[];
   private timerInterval?: NodeJS.Timeout;
-  private boardPatternIds: string[]; // Added: Store the board pattern IDs
+  private boardPatternIds: string[];
   // private penaltyApplied: Set<string>; // No longer needed with the new rule
 
-  constructor(players: Player[], boardPatternIds: string[], rules: GameRules = DEFAULT_GAME_RULES) {
-    super(); // EventEmitter のコンストラクタを呼び出す
+  constructor(players: Player[], boardPatternIds: string[], targetPositions: TargetPositions, rules: GameRules = DEFAULT_GAME_RULES) {
+    super();
     this.rules = rules;
     this.players = players;
-    this.boardPatternIds = boardPatternIds; // Store the board pattern IDs
+    this.boardPatternIds = boardPatternIds;
+    this.cardDeck = new CardDeck(targetPositions); // Create CardDeck instance
     this.gameState = this.initializeGameState();
-    // this.penaltyApplied = new Set(); // No longer needed
   }
 
   private initializeGameState(): MultiplayerGameState {
@@ -38,17 +43,19 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
     });
 
     return {
-      phase: GamePhase.WAITING,
-      remainingCards: 17,
-      totalCards: 17,
+      phase: GamePhase.WAITING, // Start in WAITING phase
+      currentCard: undefined, // No card initially
+      remainingCards: this.cardDeck.getRemaining(), // Get from cardDeck
+      totalCards: this.cardDeck.getTotalCards(), // Get from cardDeck
       declarations: {}, // Initialize as empty object
       playerStates,
       timer: 0,
       timerStartedAt: Date.now(), // Initialize with a value
-      robotPositions: {} as Record<RobotColor, Position>, // Cast to satisfy type checker initially
+      robotPositions: { ...INITIAL_ROBOT_POSITIONS }, // Use initial positions defined above
       moveHistory: [],
-      boardPatternIds: this.boardPatternIds // Add board pattern IDs to the initial state
+      boardPatternIds: this.boardPatternIds
     };
+    console.log(`Card deck initialized with ${this.gameState.totalCards} cards.`);
   }
 
   // Add players parameter to startGame
@@ -64,12 +71,16 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
       throw new Error('Not enough players');
     }
 
-    // ロボットの初期位置を設定
+    // Set initial robot positions
     this.gameState.robotPositions = { ...INITIAL_ROBOT_POSITIONS };
 
-    this.gameState.currentPlayer = this.players[Math.floor(Math.random() * this.players.length)].id;
-    this.startDeclarationPhase(); // この中で emit される
-    this.emit('gameStateUpdated', this.getGameState()); // startGame 完了後の状態を通知
+    // Set phase to WAITING, don't draw card yet
+    this.gameState.phase = GamePhase.WAITING;
+    this.gameState.currentCard = undefined; // Ensure no card is set initially
+    this.gameState.remainingCards = this.cardDeck.getRemaining(); // Update remaining cards count
+
+    console.log("Game started. Phase set to WAITING.");
+    this.emit('gameStateUpdated', this.getGameState()); // Emit the initial state for WAITING
   }
 
   private startDeclarationPhase(): void {
@@ -115,6 +126,32 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
         callback(); // Execute the callback (e.g., end phase) - callback内でemitされる
       }
     }, 1000); // Check every second
+  }
+
+  // New method to handle the explicit card draw request
+  public handleDrawCard(playerId: string): void {
+    // Only allow drawing if in the correct phase and maybe only by the host? (Decide on rule)
+    // For now, allow any player to trigger the first draw if in WAITING phase.
+    if (this.gameState.phase !== GamePhase.WAITING) {
+      console.warn(`Player ${playerId} attempted to draw card in incorrect phase: ${this.gameState.phase}`);
+      // Optionally throw an error or just ignore
+      return;
+    }
+
+    const card = this.cardDeck.drawNext();
+    if (!card) {
+      console.error("Failed to draw the first card even when requested.");
+      this.endGame(); // End game if no cards
+      return;
+    }
+
+    this.gameState.currentCard = card;
+    this.gameState.remainingCards = this.cardDeck.getRemaining();
+
+    console.log(`Card drawn by ${playerId}. Starting declaration phase.`);
+    // Now start the declaration phase
+    this.startDeclarationPhase();
+    // gameStateUpdated is emitted within startDeclarationPhase
   }
 
   public declareMoves(playerId: string, moves: number): void {
@@ -165,7 +202,7 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
       this.startSolutionPhase();
     } else {
       // If no one made a valid declaration, draw the next card
-      this.drawNextCard(); // この中で emit される
+      this.proceedToNextRound(); // Use renamed method
     }
     this.emit('gameStateUpdated', this.getGameState()); // フェーズ終了/開始を通知
   }
@@ -237,7 +274,7 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
     }
 
     // Move to the next card/round
-    this.drawNextCard(); // この中で emit される
+    this.proceedToNextRound();
     this.emit('gameStateUpdated', this.getGameState()); // 成功状態を通知
   }
 
@@ -247,7 +284,7 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
     const currentPlayerId = this.gameState.currentPlayer;
     if (!currentPlayerId) {
       // Should not happen in this phase, but handle defensively
-      this.drawNextCard();
+      this.proceedToNextRound(); // Use renamed method
       return;
     }
 
@@ -263,29 +300,32 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
       this.gameState.currentPlayer = this.gameState.declarationOrder[0];
       this.startSolutionPhase(); // この中で emit される
     } else {
-      // No more players left to attempt, draw the next card
-      this.drawNextCard(); // この中で emit される
+      // No more players left to attempt, proceed to the next round/card
+      this.proceedToNextRound();
     }
     this.emit('gameStateUpdated', this.getGameState()); // 失敗状態/次のターン開始を通知
   }
 
   // moveToNextPlayer method removed as its logic is now handled within failCurrentSolution
 
-  private drawNextCard(): void {
-    if (this.gameState.remainingCards > 0) {
-      this.gameState.remainingCards--;
-      if (this.gameState.remainingCards === 0) {
-        // If that was the last card, end the game
-        this.endGame(); // この中で emit される
-      } else {
-        // Otherwise, start the declaration phase for the next card
-        this.startDeclarationPhase(); // この中で emit される
-      }
+  // Renamed from drawNextCard to avoid confusion with handleDrawCard
+  private proceedToNextRound(): void {
+    const nextCard = this.cardDeck.drawNext();
+
+    if (nextCard) {
+      this.gameState.currentCard = nextCard;
+      this.gameState.remainingCards = this.cardDeck.getRemaining();
+      this.gameState.declarations = {};
+      this.gameState.currentPlayer = undefined;
+      this.gameState.declarationOrder = undefined;
+      this.gameState.moveHistory = [];
+      this.startDeclarationPhase(); // Start declaration for the new card
+      console.log(`Proceeding to next round. Remaining cards: ${this.gameState.remainingCards}.`);
     } else {
-      // Should not happen if logic is correct, but ensures game ends
-      this.endGame(); // この中で emit される
+      console.log("No more cards left in the deck. Ending game.");
+      this.endGame();
     }
-    // drawNextCard 自体は状態変化の中間なので、呼び出し元で emit する
+    // State update emitted within startDeclarationPhase or endGame
   }
 
   private endGame(): void {
@@ -312,8 +352,9 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
 
   public getGameState(): MultiplayerGameState {
     // Return a copy to prevent direct modification
-    // Internal state uses Records, so just copy.
-    return { ...this.gameState };
+    // Deep copy might be needed if nested objects are mutable, but Records help here.
+    // Consider using structuredClone for a true deep copy if necessary.
+    return JSON.parse(JSON.stringify(this.gameState)); // Simple deep copy for now
   }
 
   // Centralized cleanup for timers

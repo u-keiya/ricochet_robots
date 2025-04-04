@@ -52,6 +52,7 @@ interface GameStore {
   startGame: () => void;
   declareMoves: (moves: number) => void;
   moveRobot: (robotColor: RobotColor, path: Position[]) => void; // pathを受け取るように変更
+  drawCard: () => void; // カードを引くアクションを追加
   // --- ここまで ---
 }
 
@@ -361,6 +362,17 @@ const useGameStore = create<GameStore>((set, get) => ({
       // socketService.moveRobot(currentRoom.id, robotColor, path); // Assuming SocketService has this method
     } else {
       console.error('[GameStore] Cannot move robot without being in a room or having player info.');
+    }
+  },
+
+  drawCard: () => { // drawCard アクションの実装
+    const { currentRoom } = get();
+    if (currentRoom) {
+      const socketService = SocketService.getInstance();
+      console.log(`[GameStore] Requesting draw card for room: ${currentRoom.id}`);
+      socketService.drawCard(currentRoom.id);
+    } else {
+      console.error('[GameStore] Cannot draw card without being in a room.');
     }
   },
   // --- ここまで ---
