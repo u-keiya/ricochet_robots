@@ -151,6 +151,10 @@ public leaveRoom(roomId: string): void {
     this.emit('moveRobot', { roomId, robotColor, path });
   }
 
+  public drawCard(roomId: string): void { // 追加
+    this.emit('drawCard', { roomId });
+  }
+
   // --- Event Listeners ---
   private registerEventListener<Event extends keyof ServerToClientEvents>(
     event: Event,
