@@ -96,6 +96,7 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
   }
 
   private startTimer(callback: () => void, duration: number): void {
+    console.log(`[GameManager] Entering startTimer. Duration: ${duration}`); // Add log
     this.cleanup(); // Ensure no duplicate timers
 
     if (this.gameState.phase === GamePhase.FINISHED) {
@@ -106,28 +107,39 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
     this.gameState.timerStartedAt = Date.now();
 
     this.timerInterval = setInterval(() => {
-      const currentTime = Date.now();
-      const startTime = this.gameState.timerStartedAt;
-      // Calculate elapsed time in seconds
-      const elapsed = Math.floor((currentTime - startTime) / 1000);
-      const remaining = Math.max(0, duration - elapsed);
+      try {
+        const currentTime = Date.now();
+        const startTime = this.gameState.timerStartedAt;
+        // Calculate elapsed time in seconds
+        const elapsed = Math.floor((currentTime - startTime) / 1000);
+        const remaining = Math.max(0, duration - elapsed);
 
-      // Update timer only if it changed to avoid unnecessary updates
-      const timerChanged = this.gameState.timer !== remaining;
-      if (timerChanged) {
-        this.gameState.timer = remaining;
-        this.emit('gameStateUpdated', this.getGameState()); // タイマー更新も通知
-      }
+        // Update timer only if it changed to avoid unnecessary updates
+        const timerChanged = this.gameState.timer !== remaining;
+        if (timerChanged) {
+          this.gameState.timer = remaining;
+          this.emit('gameStateUpdated', this.getGameState()); // タイマー更新も通知
+        }
 
-      if (remaining === 0) {
-        this.cleanup(); // Clear interval when timer reaches 0
-        callback(); // Execute the callback (e.g., end phase) - callback内でemitされる
+        // Add detailed logging inside the interval
+        // console.log(`[Timer Tick] Duration: ${duration}, Elapsed: ${elapsed}, Remaining: ${remaining}, StartTime: ${startTime}, CurrentTime: ${currentTime}`);
+        if (remaining === 0) {
+          console.log(`[Timer End] Timer reached 0. Duration: ${duration}, Elapsed: ${elapsed}. Calling callback.`); // Log before calling callback
+          this.cleanup(); // Clear interval when timer reaches 0
+          callback(); // Execute the callback (e.g., end phase) - callback内でemitされる
+        }
+      } catch (error) {
+        console.error("Error inside timer interval callback:", error);
+        this.cleanup(); // Stop the timer on error to prevent repeated errors
+        // Optionally, you might want to force the game into an error state or end it
+        // this.endGame(); // Example: End the game on timer error
       }
     }, 1000); // Check every second
   }
 
   // New method to handle the explicit card draw request
   public handleDrawCard(playerId: string): void {
+    console.log(`[GameManager] Entering handleDrawCard for player ${playerId}.`); // Add log
     // Only allow drawing if in the correct phase and maybe only by the host? (Decide on rule)
     // For now, allow any player to trigger the first draw if in WAITING phase.
     if (this.gameState.phase !== GamePhase.WAITING) {
@@ -153,6 +165,7 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
   }
 
   public declareMoves(playerId: string, moves: number): void {
+    console.log(`[GameManager] Entering declareMoves for player ${playerId} with ${moves} moves.`); // Add log
     if (this.gameState.phase !== GamePhase.DECLARATION) {
       throw new Error('Not in declaration phase');
     }
@@ -179,6 +192,7 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
     }
   }
   private endDeclarationPhase(): void {
+    console.log(`[GameManager] Entering endDeclarationPhase for room.`); // Add log
     this.cleanup(); // Clear declaration timer
 
     // 1. Collect valid declarations
@@ -209,6 +223,7 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
   }
 
   private startSolutionPhase(): void {
+    console.log(`[GameManager] Entering startSolutionPhase for room.`); // Add log
     this.cleanup(); // Clear any previous timers
     this.gameState.phase = GamePhase.SOLUTION;
     this.gameState.moveHistory = []; // Clear move history for the new attempt
@@ -313,6 +328,7 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
 
   // Renamed from drawNextCard to avoid confusion with handleDrawCard
   private proceedToNextRound(): void {
+    console.log(`[GameManager] Entering proceedToNextRound for room.`); // Add log
     const nextCard = this.cardDeck.drawNext();
 
     if (nextCard) {
@@ -362,6 +378,7 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
 
   // Centralized cleanup for timers
   public cleanup(): void {
+    console.log(`[GameManager] Entering cleanup.`); // Add log
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
       this.timerInterval = undefined;

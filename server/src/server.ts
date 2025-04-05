@@ -44,9 +44,13 @@ setInterval(() => {
     if (timeSinceLastConnection > 3600000) { // 1時間以上接続がない場合
       const socket = io.sockets.sockets.get(socketId);
       if (socket) {
-        socket.disconnect(true);
+        socket.disconnect(true); // Trigger disconnect event
+      } else {
+         // If socket doesn't exist in io.sockets, manually remove from sessions as disconnect handler won't fire
+         logger.warn(`Socket ${socketId} not found in io.sockets during inactivity check. Manually removing session.`);
+         sessions.delete(socketId);
       }
-      // disconnect イベントハンドラで sessions.delete が呼ばれる
+      // disconnect event handler should handle removal from room and sessions if socket.disconnect(true) was called
     }
   }
 }, 10000);
