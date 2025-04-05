@@ -1,0 +1,5 @@
+file name: server/src/services/gameManager.ts
+classname: GameManager
+function name: declareMoves
+short description: Modified to start the declaration timer only after the first player makes a declaration.
+input / output: (No change in signature)

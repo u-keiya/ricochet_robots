@@ -91,9 +91,7 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
     this.gameState.timerStartedAt = Date.now();
     // this.penaltyApplied.clear(); // No longer needed
 
-    this.startTimer(() => {
-      this.endDeclarationPhase();
-    }, this.rules.declarationTimeLimit);
+    // Timer is now started in declareMoves when the first declaration is made
     this.emit('gameStateUpdated', this.getGameState()); // 状態更新を通知
   }
 
@@ -172,11 +170,13 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
     this.gameState.declarations[playerId] = declaration; // Use object assignment
     this.emit('gameStateUpdated', this.getGameState()); // 宣言追加を通知
 
-    // Declaration phase now always waits for the timer to end
-    // The following check is removed:
-    // if (this.gameState.declarations.size === this.players.length) {
-    //   this.endDeclarationPhase();
-    // }
+    // Start the declaration timer only when the *first* player makes a declaration
+    if (Object.keys(this.gameState.declarations).length === 1) {
+      console.log("First declaration received. Starting declaration timer.");
+      this.startTimer(() => {
+        this.endDeclarationPhase();
+      }, this.rules.declarationTimeLimit);
+    }
   }
   private endDeclarationPhase(): void {
     this.cleanup(); // Clear declaration timer
@@ -195,16 +195,17 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
     // 3. Set the declaration order
     this.gameState.declarationOrder = validDeclarations.map(d => d.playerId);
 
-    // 4. Determine the next player and phase
+    // 4. Determine the next player and always transition to Solution Phase
     if (this.gameState.declarationOrder.length > 0) {
-      // If there are valid declarations, start the solution phase for the first player
+      // If there are valid declarations, set the first player as current
       this.gameState.currentPlayer = this.gameState.declarationOrder[0];
-      this.startSolutionPhase();
     } else {
-      // If no one made a valid declaration, draw the next card
-      this.proceedToNextRound(); // Use renamed method
+      // If no one made a valid declaration, currentPlayer remains undefined
+      this.gameState.currentPlayer = undefined;
     }
-    this.emit('gameStateUpdated', this.getGameState()); // フェーズ終了/開始を通知
+    this.startSolutionPhase(); // Always start solution phase
+
+    // gameStateUpdated is emitted within startSolutionPhase
   }
 
   private startSolutionPhase(): void {
@@ -281,10 +282,12 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
   private failCurrentSolution(): void {
     this.cleanup(); // Stop solution timer
 
-    const currentPlayerId = this.gameState.currentPlayer;
+    const currentPlayerId = this.gameState.currentPlayer; // This could be undefined if no one declared
+
     if (!currentPlayerId) {
-      // Should not happen in this phase, but handle defensively
-      this.proceedToNextRound(); // Use renamed method
+      // If no one was attempting (because no one declared), just proceed to next round
+      console.log("Solution timer ended, but no one declared. Proceeding to next round.");
+      this.proceedToNextRound(); // This will emit gameStateUpdated
       return;
     }
 
@@ -303,7 +306,7 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
       // No more players left to attempt, proceed to the next round/card
       this.proceedToNextRound();
     }
-    this.emit('gameStateUpdated', this.getGameState()); // 失敗状態/次のターン開始を通知
+    // State update is emitted within startSolutionPhase or proceedToNextRound
   }
 
   // moveToNextPlayer method removed as its logic is now handled within failCurrentSolution
