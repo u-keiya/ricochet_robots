@@ -143,16 +143,16 @@ public leaveRoom(roomId: string): void {
     this.emit('startGame', { roomId });
   }
 
-  public declareMoves(roomId: string, moves: number): void { // 追加
-    this.emit('declareMoves', { roomId, moves });
+  public declareMoves(roomId: string, playerId: string, moves: number): void { // playerId を引数に追加
+    this.emit('declareMoves', { roomId, playerId, moves }); // playerId をペイロードに追加
   }
 
   public moveRobot(roomId: string, robotColor: RobotColor, path: Position[]): void { // 追加
     this.emit('moveRobot', { roomId, robotColor, path });
   }
 
-  public drawCard(roomId: string): void { // 追加
-    this.emit('drawCard', { roomId });
+  public drawCard(roomId: string, playerId: string): void { // playerId を引数に追加
+    this.emit('drawCard', { roomId, playerId }); // playerId をペイロードに追加
   }
 
   // --- Event Listeners ---

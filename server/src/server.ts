@@ -41,9 +41,7 @@ setInterval(() => {
   const now = Date.now();
   for (const [socketId, player] of sessions.entries()) {
     const timeSinceLastConnection = now - player.lastConnected.getTime();
-    const disconnectThreshold = 3600000; // 1 hour (Increased threshold)
-    if (timeSinceLastConnection > disconnectThreshold) {
-      logger.warn(`Player ${player.name} (${socketId}) inactive for ${timeSinceLastConnection}ms (Threshold: ${disconnectThreshold}ms). Disconnecting.`); // Add log
+    if (timeSinceLastConnection > 3600000) { // 1時間以上接続がない場合
       const socket = io.sockets.sockets.get(socketId);
       if (socket) {
         socket.disconnect(true); // Trigger disconnect event

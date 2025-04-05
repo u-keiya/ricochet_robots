@@ -3,3 +3,57 @@ classname: GameManager
 function name: declareMoves
 short description: Modified to start the declaration timer only after the first player makes a declaration.
 input / output: (No change in signature)
+
+file name: src/types/game.ts
+classname: N/A
+function name: GamePhase (type)
+short description: Aligned GamePhase enum with server definition ('playing' -> 'solution', removed 'completed').
+input / output: N/A
+
+file name: src/pages/GamePage.tsx
+classname: N/A
+function name: GamePage (component)
+short description: Updated references from GamePhase 'playing' to 'solution'.
+input / output: N/A
+
+file name: src/types/socket.ts
+classname: N/A
+function name: ClientToServerEvents (interface)
+short description: Added playerId to declareMoves and drawCard event payloads.
+input / output: N/A
+
+file name: src/services/socketService.ts
+classname: SocketService
+function name: declareMoves
+short description: Added playerId parameter and included it in the emitted payload.
+input / output: Input: roomId: string, playerId: string, moves: number / Output: void
+
+file name: src/services/socketService.ts
+classname: SocketService
+function name: drawCard
+short description: Added playerId parameter and included it in the emitted payload.
+input / output: Input: roomId: string, playerId: string / Output: void
+
+file name: src/stores/gameStore.ts
+classname: N/A
+function name: declareMoves (action)
+short description: Passed currentPlayer.id to socketService.declareMoves.
+input / output: Input: moves: number / Output: void
+
+file name: src/stores/gameStore.ts
+classname: N/A
+function name: drawCard (action)
+short description: Passed currentPlayer.id to socketService.drawCard.
+input / output: Input: None / Output: void
+
+file name: src/stores/gameStore.ts
+classname: N/A
+function name: (connect - onRoomJoined/onRoomUpdated listeners)
+short description: Improved currentPlayer update logic to handle null state and prioritize server info.
+input / output: N/A
+
+file name: src/stores/gameStore.ts
+classname: N/A
+function name: moveRobot (action)
+short description: Enabled the emission of the 'moveRobot' event by uncommenting the socketService.moveRobot call.
+input / output: Input: robotColor: RobotColor, path: Position[] / Output: void

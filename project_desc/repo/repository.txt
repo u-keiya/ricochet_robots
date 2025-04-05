@@ -239,7 +239,7 @@ Files
         * short description: Handles player move declarations during the DECLARATION phase. Emits update[cite: 872, 1643, 1644, 1645, 1646, 1647, 1443, 1444, 1445, 1446].
         * input / output: `playerId: string`, `moves: number` / `void`[cite: 872, 1643]. Throws if invalid phase or moves[cite: 873, 1643, 1644, 1443, 1444].
     * moveRobot
-        * short description: Handles robot movement attempts during the SOLUTION phase. Records move, checks goal, emits update[cite: 873, 1659, 1660, 1661, 1662, 1663, 1664, 1665, 1456, 1457, 1458, 1459, 1460, 1461]. Checks for goal achievement[cite: 1461, 1462].
+        * short description: Handles robot movement attempts during the  PLAYING phase. Records move, checks goal, emits update[cite: 873, 1659, 1660, 1661, 1662, 1663, 1664, 1665, 1456, 1457, 1458, 1459, 1460, 1461]. Checks for goal achievement[cite: 1461, 1462].
         * input / output: `playerId: string`, `robotColor: RobotColor`, `positions: Position[]` / `void`[cite: 873, 874, 1659]. Throws if invalid phase/turn/moves[cite: 1456, 1457, 1459].
     * getGameState
         * short description: Returns a deep copy (via JSON stringify/parse) of the current game state[cite: 874, 968, 969, 1688, 1689, 1485].

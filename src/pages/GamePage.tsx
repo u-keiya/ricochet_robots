@@ -14,7 +14,7 @@ const getPhaseText = (phase: GamePhase): string => {
   switch (phase) {
     case 'waiting': return '待機中';
     case 'declaration': return '宣言フェーズ';
-    case 'playing': return '解法提示フェーズ';
+    case 'solution': return '解法提示フェーズ';
     case 'finished': return 'ゲーム終了';
     default: return phase;
   }
@@ -167,7 +167,7 @@ const GamePage: FC = () => {
                     {player.id === currentRoom.hostId && ' (Host)'} {/* ホスト表示 */}
                     {player.id === currentPlayer?.id && ' (You)'} {/* 自分を表示 */}
                     {/* 解答権順序の表示 (playingフェーズかつdeclarationOrderが存在する場合) */}
-                    {game && game.phase === 'playing' && game.declarationOrder && game.declarationOrder.includes(player.id) && (
+                    {game && game.phase === 'solution' && game.declarationOrder && game.declarationOrder.includes(player.id) && (
                       <span className="ml-2 text-xs text-gray-500">
                         (解答権: {game.declarationOrder.indexOf(player.id) + 1})
                       </span>
@@ -179,7 +179,7 @@ const GamePage: FC = () => {
               ))}
             </div>
              {/* 宣言表示 (game が存在する場合) */}
-             {game && (game.phase === 'declaration' || game.phase === 'playing') ? (
+             {game && (game.phase === 'declaration' || game.phase === 'solution') ? (
                 <div className="mt-4 pt-4 border-t">
                   <h3 className="text-md font-semibold mb-2">宣言</h3>
                   <div className="space-y-1 text-sm">
@@ -205,7 +205,7 @@ const GamePage: FC = () => {
                     board={generatedBoard} // generatedBoard を渡す
                     onRobotMove={handleRobotMove}
                     // isPlayerTurn は game state と接続状態から判断
-                    isPlayerTurn={isConnected && game?.phase === 'playing' && game?.currentPlayer === currentPlayer?.id}
+                    isPlayerTurn={isConnected && game?.phase === 'solution' && game?.currentPlayer === currentPlayer?.id}
                   />
               ) : (
                 <div className="text-gray-500">ボードを生成中です...</div>
