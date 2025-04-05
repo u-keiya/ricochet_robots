@@ -41,12 +41,18 @@ setInterval(() => {
   const now = Date.now();
   for (const [socketId, player] of sessions.entries()) {
     const timeSinceLastConnection = now - player.lastConnected.getTime();
-    if (timeSinceLastConnection > 30000) { // 30秒以上接続がない場合
+    const disconnectThreshold = 3600000; // 1 hour (Increased threshold)
+    if (timeSinceLastConnection > disconnectThreshold) {
+      logger.warn(`Player ${player.name} (${socketId}) inactive for ${timeSinceLastConnection}ms (Threshold: ${disconnectThreshold}ms). Disconnecting.`); // Add log
       const socket = io.sockets.sockets.get(socketId);
       if (socket) {
-        socket.disconnect(true);
+        socket.disconnect(true); // Trigger disconnect event
+      } else {
+         // If socket doesn't exist in io.sockets, manually remove from sessions as disconnect handler won't fire
+         logger.warn(`Socket ${socketId} not found in io.sockets during inactivity check. Manually removing session.`);
+         sessions.delete(socketId);
       }
-      // disconnect イベントハンドラで sessions.delete が呼ばれる
+      // disconnect event handler should handle removal from room and sessions if socket.disconnect(true) was called
     }
   }
 }, 10000);
