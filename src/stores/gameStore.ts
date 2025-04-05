@@ -212,10 +212,13 @@ const useGameStore = create<GameStore>((set, get) => ({
       });
 
       socketService.onGameStateUpdated((gameStateUpdate) => {
-        console.log('[GameStore] Game state updated:', gameStateUpdate);
-        set((state) => ({
-          game: state.game ? { ...state.game, ...gameStateUpdate } : null,
-        }));
+        // console.log('[GameStore] Received gameStateUpdated event:', gameStateUpdate); // デバッグログ削除
+        set((state) => {
+          // console.log('[GameStore] Updating game state. Current declarations:', state.game?.declarations, 'Update declarations:', gameStateUpdate.declarations); // デバッグログ削除
+          const updatedGame = state.game ? { ...state.game, ...gameStateUpdate } : null;
+          // console.log('[GameStore] New game state after update:', updatedGame); // デバッグログ削除
+          return { game: updatedGame };
+        });
       });
 
       socketService.onDeclarationMade(({ playerId, moves }) => {
@@ -342,12 +345,17 @@ const useGameStore = create<GameStore>((set, get) => ({
   },
 
   declareMoves: (moves: number) => {
-    const { currentRoom, currentPlayer } = get();
+    const { currentRoom, currentPlayer, isConnected } = get(); // isConnected を取得
+    // --- 接続チェックを追加 ---
+    if (!isConnected) {
+      console.error('[GameStore] Cannot declare moves: Socket is not connected.');
+      return; // 接続されていなければ処理を中断
+    }
+    // --- ここまで ---
     if (currentRoom && currentPlayer) {
       const socketService = SocketService.getInstance();
-      // TODO: Implement declareMoves event emission
       console.log(`[GameStore] Player ${currentPlayer.id} declaring ${moves} moves in room ${currentRoom.id}`);
-      // socketService.declareMoves(currentRoom.id, moves); // Assuming SocketService has this method
+      socketService.declareMoves(currentRoom.id, moves);
     } else {
       console.error('[GameStore] Cannot declare moves without being in a room or having player info.');
     }

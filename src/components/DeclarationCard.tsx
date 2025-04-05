@@ -50,6 +50,7 @@ interface DeclarationCardListProps {
   selectedNumber: number | null; // null を許容するように変更
   maxNumber: number;
   onSelect: (num: number) => void;
+  isDisabled?: boolean; // リスト全体を無効化するプロパティを追加
   className?: string;
 }
 
@@ -57,6 +58,7 @@ export const DeclarationCardList: FC<DeclarationCardListProps> = ({
   selectedNumber,
   maxNumber,
   onSelect,
+  isDisabled = false, // デフォルトは false
   className = '',
 }) => {
   const [startIndex, setStartIndex] = useState(0);
@@ -76,12 +78,12 @@ export const DeclarationCardList: FC<DeclarationCardListProps> = ({
       {/* 左矢印 */}
       <button
         className={`p-2 rounded-full ${
-          startIndex === 0 
-            ? 'text-gray-300 cursor-not-allowed' 
+          startIndex === 0 || isDisabled // isDisabled が true の場合も無効化
+            ? 'text-gray-300 cursor-not-allowed'
             : 'text-gray-600 hover:bg-gray-100'
         }`}
         onClick={handlePrevClick}
-        disabled={startIndex === 0}
+        disabled={startIndex === 0 || isDisabled} // isDisabled が true の場合も無効化
       >
         <ChevronLeft />
       </button>
@@ -96,11 +98,11 @@ export const DeclarationCardList: FC<DeclarationCardListProps> = ({
               key={number}
               number={number}
               isSelected={selectedNumber === number}
-              isDisabled={(
-                maxNumber > 0 &&
-                // selectedNumber が null の場合は 0 として扱う
-                number > Math.max(selectedNumber ?? 0, maxNumber)
-              )}
+              isDisabled={
+                // 親から渡された isDisabled が true の場合、または
+                // selectedNumber があり、現在の number がそれより大きい場合
+                (selectedNumber !== null && number > selectedNumber)
+              }
               onClick={onSelect}
             />
           );
@@ -110,12 +112,12 @@ export const DeclarationCardList: FC<DeclarationCardListProps> = ({
       {/* 右矢印 */}
       <button
         className={`p-2 rounded-full ${
-          startIndex >= totalNumbers - visibleCount 
-            ? 'text-gray-300 cursor-not-allowed' 
+          startIndex >= totalNumbers - visibleCount || isDisabled // isDisabled が true の場合も無効化
+            ? 'text-gray-300 cursor-not-allowed'
             : 'text-gray-600 hover:bg-gray-100'
         }`}
         onClick={handleNextClick}
-        disabled={startIndex >= totalNumbers - visibleCount}
+        disabled={startIndex >= totalNumbers - visibleCount || isDisabled} // isDisabled が true の場合も無効化
       >
         <ChevronRight />
       </button>

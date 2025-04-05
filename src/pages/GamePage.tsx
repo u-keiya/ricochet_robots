@@ -48,6 +48,7 @@ const GamePage: FC = () => {
     drawCard, // drawCard アクションを取得
     leaveRoom,
     isConnected,
+    isConnecting, // isConnecting を追加
     connectionError,
   } = useGameStore();
 
@@ -103,10 +104,17 @@ const GamePage: FC = () => {
   // --- ここまで ---
 
   // --- UI表示のための準備 ---
-  // currentRoom がない場合はローディング表示
+  // 接続状態のチェック
+  if (isConnecting) {
+    return <div className="p-4 text-center">サーバーに接続中...</div>;
+  }
+  if (!isConnected || connectionError) {
+    return <div className="p-4 text-center text-red-600">サーバーに接続できませんでした。({connectionError || '不明なエラー'})</div>;
+  }
+  // currentRoom がない場合はローディング表示 (接続後)
   if (!currentRoom) {
     // TODO: もっと良いローディング表示/エラー表示
-    return <div className="p-4">ルーム情報を読み込み中...</div>;
+    return <div className="p-4 text-center">ルーム情報を読み込み中...</div>;
   }
   // players をオブジェクトから配列に変換
   const playersArray = Object.values(currentRoom.players);
@@ -123,8 +131,9 @@ const GamePage: FC = () => {
               ルーム: {decodeURIComponent(roomId || '')}
             </h1>
             <button
-              className="btn bg-gray-300 text-gray-700 hover:bg-gray-400"
-              onClick={handleLeaveRoom} // 修正
+              className="btn bg-gray-300 text-gray-700 hover:bg-gray-400 disabled:opacity-50"
+              onClick={handleLeaveRoom}
+              disabled={!isConnected} // 未接続時は無効
             >
               退室
             </button>
@@ -195,8 +204,8 @@ const GamePage: FC = () => {
                 <GameBoard
                     board={generatedBoard} // generatedBoard を渡す
                     onRobotMove={handleRobotMove}
-                    // isPlayerTurn は game state から判断
-                    isPlayerTurn={game?.phase === 'playing' && game?.currentPlayer === currentPlayer?.id}
+                    // isPlayerTurn は game state と接続状態から判断
+                    isPlayerTurn={isConnected && game?.phase === 'playing' && game?.currentPlayer === currentPlayer?.id}
                   />
               ) : (
                 <div className="text-gray-500">ボードを生成中です...</div>
@@ -212,6 +221,8 @@ const GamePage: FC = () => {
                   })()}
                   maxNumber={30} // 仮の最大手数
                   onSelect={handleDeclareMoves}
+                  // 宣言済み、または未接続なら無効化
+                  isDisabled={!isConnected || game.declarations?.[currentPlayer?.id ?? '']?.moves != null}
                   className="mt-2"
                 />
               </div>
@@ -244,12 +255,12 @@ const GamePage: FC = () => {
             <div className="bg-white rounded-lg shadow p-4">
               <h2 className="text-lg font-bold mb-2">操作</h2>
               <div className="space-y-2">
-                {/* ゲームスタートボタン (ホスト用, waitingフェーズ or gameがnull) */}
+                {/* ゲームスタートボタン (ホスト用, gameがnull) */}
                 {currentRoom.hostId === currentPlayer?.id && !game && (
                   <button
-                    className="btn btn-primary w-full"
+                    className="btn btn-primary w-full disabled:opacity-50"
                     onClick={handleStartGame}
-                    // disabled={currentRoom.players.length < 2} // プレイヤー数チェックはサーバー側で行う想定
+                    disabled={!isConnected} // 未接続時は無効
                   >
                     ゲームスタート
                   </button>
@@ -257,8 +268,9 @@ const GamePage: FC = () => {
                 {/* カードをめくるボタン (宣言フェーズで、まだカードがめくられていない場合) */}
                 {currentRoom.hostId === currentPlayer?.id && game && game.phase === 'waiting' && !game.currentCard && (
                   <button
-                    className="btn btn-secondary w-full"
+                    className="btn btn-secondary w-full disabled:opacity-50"
                     onClick={handleDrawCard}
+                    disabled={!isConnected} // 未接続時は無効
                   >
                     カードをめくる ({game.remainingCards} 枚)
                   </button>

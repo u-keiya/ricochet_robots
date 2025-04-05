@@ -288,6 +288,35 @@ io.on('connection', (socket: Socket) => {
     }
   });
 
+  // declareMoves イベントハンドラを追加
+  socket.on('declareMoves', ({ roomId, moves }: { roomId: string, moves: number }) => {
+    try {
+      const playerId = socket.id;
+      const player = sessions.get(playerId);
+
+      if (!player) {
+        throw new Error('Player session not found.');
+      }
+
+      const room = roomManager.getRoom(roomId);
+      if (!room) {
+        throw new Error('Room not found');
+      }
+
+      logger.info(`declareMoves event received for room ${roomId} from player ${player.name} with ${moves} moves`);
+
+      const gameManager = room.gameManager;
+      gameManager.declareMoves(playerId, moves); // GameManager に処理を委譲
+
+      // gameStateUpdated は GameManager 内部で emit される
+
+    } catch (error) {
+      logger.error(`Error in declareMoves for room ${roomId}:`, error);
+      const message = error instanceof Error ? error.message : 'Failed to declare moves';
+      socket.emit('error', { message });
+    }
+  });
+
 });
 
 const PORT = process.env.PORT || 3001;
