@@ -30,9 +30,9 @@ export interface ClientToServerEvents {
   getAvailableRooms: () => void; // ルームリスト取得要求
   // --- ゲームイベントを追加 ---
   startGame: (payload: { roomId: string }) => void; // payloadオブジェクトに変更
-  declareMoves: (payload: { roomId: string; moves: number }) => void; // payloadオブジェクトに変更
+  declareMoves: (payload: { roomId: string; playerId: string; moves: number }) => void; // playerId を追加
   moveRobot: (payload: { roomId: string; robotColor: RobotColor; path: Position[] }) => void; // payloadオブジェクトに変更
-  drawCard: (payload: { roomId: string }) => void; // カードを引くイベント
+  drawCard: (payload: { roomId: string; playerId: string }) => void; // playerId を追加
   // --- ここまで ---
 }
 

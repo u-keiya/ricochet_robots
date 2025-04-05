@@ -106,9 +106,10 @@ const useGameStore = create<GameStore>((set, get) => ({
           const myPlayerInfo = playerId ? room.players[playerId] : undefined;
 
           // currentPlayer が存在し、かつ myPlayerInfo が見つかった場合のみ更新
-          const updatedPlayer = (state.currentPlayer && myPlayerInfo)
-            ? { ...state.currentPlayer, ...myPlayerInfo }
-            : state.currentPlayer; // それ以外は既存の currentPlayer を維持
+          // サーバーからの情報 (myPlayerInfo) があればそれを優先し、なければ既存の state.currentPlayer を維持
+          const updatedPlayer = myPlayerInfo
+            ? { ...(state.currentPlayer || {}), ...myPlayerInfo } // state.currentPlayerがnullでもマージ可能に
+            : state.currentPlayer;
 
           return {
             currentRoom: room,
@@ -138,7 +139,7 @@ const useGameStore = create<GameStore>((set, get) => ({
               currentRoom: room,
               game: nextGameState,
               // 自分の情報がルームにあれば currentPlayer を更新
-              currentPlayer: myPlayerInfo ? { ...state.currentPlayer, ...myPlayerInfo } : state.currentPlayer,
+              currentPlayer: myPlayerInfo ? { ...(state.currentPlayer || {}), ...myPlayerInfo } : state.currentPlayer, // state.currentPlayerがnullでもマージ可能に
             };
           });
         }
@@ -355,7 +356,7 @@ const useGameStore = create<GameStore>((set, get) => ({
     if (currentRoom && currentPlayer) {
       const socketService = SocketService.getInstance();
       console.log(`[GameStore] Player ${currentPlayer.id} declaring ${moves} moves in room ${currentRoom.id}`);
-      socketService.declareMoves(currentRoom.id, moves);
+      socketService.declareMoves(currentRoom.id, currentPlayer.id, moves); // currentPlayer.id を追加
     } else {
       console.error('[GameStore] Cannot declare moves without being in a room or having player info.');
     }
@@ -365,22 +366,26 @@ const useGameStore = create<GameStore>((set, get) => ({
     const { currentRoom, currentPlayer } = get();
     if (currentRoom && currentPlayer) {
       const socketService = SocketService.getInstance();
-      // TODO: Implement moveRobot event emission
       console.log(`[GameStore] Player ${currentPlayer.id} moving ${robotColor} robot in room ${currentRoom.id}`);
-      // socketService.moveRobot(currentRoom.id, robotColor, path); // Assuming SocketService has this method
+      socketService.moveRobot(currentRoom.id, robotColor, path); // コメントアウト解除
+
     } else {
       console.error('[GameStore] Cannot move robot without being in a room or having player info.');
     }
   },
 
   drawCard: () => { // drawCard アクションの実装
-    const { currentRoom } = get();
-    if (currentRoom) {
+    const { currentRoom, currentPlayer, isConnected } = get(); // currentPlayer, isConnected を取得
+    if (!isConnected) {
+      console.error('[GameStore] Cannot draw card: Socket is not connected.');
+      return;
+    }
+    if (currentRoom && currentPlayer) { // currentPlayer の存在もチェック
       const socketService = SocketService.getInstance();
-      console.log(`[GameStore] Requesting draw card for room: ${currentRoom.id}`);
-      socketService.drawCard(currentRoom.id);
+      console.log(`[GameStore] Player ${currentPlayer.id} requesting draw card for room: ${currentRoom.id}`);
+      socketService.drawCard(currentRoom.id, currentPlayer.id); // currentPlayer.id を追加
     } else {
-      console.error('[GameStore] Cannot draw card without being in a room.');
+      console.error('[GameStore] Cannot draw card without being in a room or having player info.');
     }
   },
   // --- ここまで ---

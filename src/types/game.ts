@@ -68,12 +68,12 @@ export type Card = {
   position: Position;
 };
 
-// ゲームの状態を表す型
+// ゲームの状態を表す型 (サーバー側の server/src/types/game.ts と一致させる)
 export type GamePhase =
-  | 'waiting'       // カードめくり待ち
-  | 'declaration'   // 宣言フェーズ（1分間）
-  | 'playing'       // プレイ中
-  | 'completed'     // ゴール達成
+  | 'waiting'       // 待機中
+  | 'declaration'   // 宣言フェーズ
+  | 'solution'      // 解法提示フェーズ
+  // | 'completed'     // サーバー側に存在しないため削除
   | 'finished';     // ゲーム終了
 
 // シングルプレイヤーの状態を表す型

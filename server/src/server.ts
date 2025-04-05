@@ -41,7 +41,7 @@ setInterval(() => {
   const now = Date.now();
   for (const [socketId, player] of sessions.entries()) {
     const timeSinceLastConnection = now - player.lastConnected.getTime();
-    if (timeSinceLastConnection > 30000) { // 30秒以上接続がない場合
+    if (timeSinceLastConnection > 3600000) { // 1時間以上接続がない場合
       const socket = io.sockets.sockets.get(socketId);
       if (socket) {
         socket.disconnect(true);
