@@ -91,9 +91,7 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
     this.gameState.timerStartedAt = Date.now();
     // this.penaltyApplied.clear(); // No longer needed
 
-    this.startTimer(() => {
-      this.endDeclarationPhase();
-    }, this.rules.declarationTimeLimit);
+    // Timer is now started in declareMoves when the first declaration is made
     this.emit('gameStateUpdated', this.getGameState()); // 状態更新を通知
   }
 
@@ -172,11 +170,13 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
     this.gameState.declarations[playerId] = declaration; // Use object assignment
     this.emit('gameStateUpdated', this.getGameState()); // 宣言追加を通知
 
-    // Declaration phase now always waits for the timer to end
-    // The following check is removed:
-    // if (this.gameState.declarations.size === this.players.length) {
-    //   this.endDeclarationPhase();
-    // }
+    // Start the declaration timer only when the *first* player makes a declaration
+    if (Object.keys(this.gameState.declarations).length === 1) {
+      console.log("First declaration received. Starting declaration timer.");
+      this.startTimer(() => {
+        this.endDeclarationPhase();
+      }, this.rules.declarationTimeLimit);
+    }
   }
   private endDeclarationPhase(): void {
     this.cleanup(); // Clear declaration timer
