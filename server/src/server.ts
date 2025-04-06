@@ -4,7 +4,7 @@ import { Server, Socket } from 'socket.io';
 import dotenv from 'dotenv';
 import { RoomManager } from './services/roomManager';
 import { Player } from './types/player';
-import { GamePhase } from './types/game'; // GamePhase をインポート
+import { GamePhase, RobotColor } from './types/game'; // GamePhase と RobotColor をインポート
 import winston from 'winston';
 
 // 環境変数の読み込み
@@ -317,6 +317,36 @@ io.on('connection', (socket: Socket) => {
     } catch (error) {
       logger.error(`Error in declareMoves for room ${roomId}:`, error);
       const message = error instanceof Error ? error.message : 'Failed to declare moves';
+      socket.emit('error', { message });
+    }
+  });
+
+  // moveRobot イベントハンドラを追加
+  socket.on('moveRobot', ({ roomId, robotColor, path }: { roomId: string, robotColor: string, path: { x: number, y: number }[] }) => {
+    try {
+      const playerId = socket.id;
+      const player = sessions.get(playerId);
+
+      if (!player) {
+        throw new Error('Player session not found.');
+      }
+
+      const room = roomManager.getRoom(roomId);
+      if (!room) {
+        throw new Error('Room not found');
+      }
+      // Add detailed log for event reception
+      logger.info(`[Server Event] moveRobot received. SocketID: ${socket.id}, PlayerID: ${playerId}, RoomID: ${roomId}, RobotColor: ${robotColor}, PathLength: ${path.length}`);
+
+      const gameManager = room.gameManager;
+      // Call GameManager method
+      gameManager.moveRobot(playerId, robotColor as RobotColor, path);
+
+      // gameStateUpdated は GameManager 内部で emit される想定
+
+    } catch (error) {
+      logger.error(`Error in moveRobot for room ${roomId}:`, error);
+      const message = error instanceof Error ? error.message : 'Failed to move robot';
       socket.emit('error', { message });
     }
   });
