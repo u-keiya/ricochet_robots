@@ -71,7 +71,7 @@ const Robot: FC<RobotProps> = ({
       width: `${cellSize}%`,
       height: `${cellSize}%`,
       transform: 'translate(0, 0)',
-      transition: 'all 100ms linear',
+      // transition: 'all 100ms linear', // アニメーションは GamePage で制御するため削除
       cursor: isActive ? 'pointer' : 'default',
       ...style
     };

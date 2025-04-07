@@ -1,4 +1,4 @@
-import { FC, useEffect } from 'react'; // useEffectを追加
+import { FC, useEffect, useState, useRef } from 'react'; // useState, useRefを追加
 import { useParams, useNavigate } from 'react-router-dom';
 import GameBoard from '../components/GameBoard/GameBoard';
 import useGameStore from '../stores/gameStore'; // useGameStoreをインポート
@@ -6,9 +6,16 @@ import { DeclarationCardList } from '../components/DeclarationCard'; // Declarat
 import GameResultDisplay from '../components/GameResultDisplay'; // GameResultDisplayをインポート
 import { Player } from '../types/player'; // Player型をインポート
 // Direction と Card['color'] (CardColorの代わり) をインポート
-import { RobotColor, Position, GamePhase, Direction, Card } from '../types/game';
+import { RobotColor, Position, GamePhase, Direction, Card, Board } from '../types/game'; // Board をインポート
 import { calculatePath } from '../utils/robotMovement'; // calculatePathをインポート
 
+// アニメーション中のロボット情報
+interface MovingRobotInfo {
+  startPos: Position;
+  endPos: Position;
+  startTime: number;
+  duration: number; // アニメーション時間 (ms)
+}
 // --- ヘルパー関数 ---
 const getPhaseText = (phase: GamePhase): string => {
   switch (phase) {
@@ -52,6 +59,12 @@ const GamePage: FC = () => {
     connectionError,
   } = useGameStore();
 
+  // 表示用ボード状態とアニメーション状態
+  const [displayedBoard, setDisplayedBoard] = useState<Board | null>(null);
+  const [movingRobots, setMovingRobots] = useState<Record<RobotColor, MovingRobotInfo>>({} as Record<RobotColor, MovingRobotInfo>); // 型アサーションで初期化
+  const prevGameRef = useRef(game); // 前回の game state を保持
+  const animationFrameRef = useRef<number | null>(null); // 型を number | null に変更し、初期値を null に
+
   // roomIdがない、または接続エラーがあればオンラインページに戻る
   useEffect(() => {
     if (!isConnected || connectionError) {
@@ -60,6 +73,163 @@ const GamePage: FC = () => {
     }
     // TODO: ルームが存在しない場合の処理 (currentRoomがnullになったら?)
   }, [isConnected, connectionError, navigate]);
+
+  // generatedBoard が変更されたら displayedBoard を初期化
+  useEffect(() => {
+    if (generatedBoard) {
+      setDisplayedBoard(generatedBoard);
+    }
+  }, [generatedBoard]);
+
+  // game state (特に robotPositions) が変更されたらアニメーションを開始
+  useEffect(() => {
+    const prevGame = prevGameRef.current;
+    // game または prevGame が null、または robotPositions がなければ何もしない
+    if (!game || !prevGame || !game.robotPositions || !prevGame.robotPositions) {
+      prevGameRef.current = game; // 現在の game state を保存
+      // game が null でなく、displayedBoard がまだ設定されていない場合は初期設定
+      if (game && !displayedBoard && generatedBoard) {
+         setDisplayedBoard({
+           ...generatedBoard,
+           robots: generatedBoard.robots.map(robot => ({
+             ...robot,
+             position: game.robotPositions?.[robot.color] ?? robot.position,
+           })),
+         });
+      }
+      return;
+    }
+
+    const newMovingRobots: Record<RobotColor, MovingRobotInfo> = {} as Record<RobotColor, MovingRobotInfo>; // 型アサーションで初期化
+    const animationDuration = 150; // アニメーション時間 (ms)
+    let boardNeedsUpdate = false;
+
+    // 各ロボットの位置変更をチェック
+    for (const color in game.robotPositions) {
+      const robotColor = color as RobotColor;
+      const currentPos = game.robotPositions[robotColor];
+      const prevPos = prevGame.robotPositions?.[robotColor];
+
+      // 位置が変更されているか、または displayedBoard の位置と異なる場合
+      if (prevPos && (currentPos.x !== prevPos.x || currentPos.y !== prevPos.y)) {
+         // displayedBoard の現在の表示位置を取得
+         const displayedRobot = displayedBoard?.robots.find(r => r.color === robotColor);
+         const startPos = displayedRobot?.position ?? prevPos; // 表示中の位置を開始点に
+
+        // すでにアニメーション中なら、それをキャンセルして新しいアニメーションを開始
+        // (サーバーからの更新が連続した場合に対応)
+        newMovingRobots[robotColor] = {
+          startPos: startPos,
+          endPos: currentPos,
+          startTime: performance.now(),
+          duration: animationDuration,
+        };
+        boardNeedsUpdate = true;
+      }
+    }
+
+    if (boardNeedsUpdate) {
+      setMovingRobots(prev => ({ ...prev, ...newMovingRobots }));
+    }
+
+    // 現在の game state を次回の比較用に保存
+    prevGameRef.current = game;
+
+  }, [game, generatedBoard, displayedBoard]); // displayedBoard も依存配列に追加
+
+
+  // アニメーションループ
+  useEffect(() => {
+    const animate = (now: number) => {
+      let activeAnimations = false;
+      let boardChanged = false;
+
+      setDisplayedBoard(prevBoard => {
+        if (!prevBoard) return null;
+
+        const nextRobots = prevBoard.robots.map(robot => {
+          const moveInfo = movingRobots[robot.color];
+          if (!moveInfo) return robot; // アニメーション対象外
+
+          activeAnimations = true; // まだアニメーション中のロボットがある
+          const elapsedTime = now - moveInfo.startTime;
+          const progress = Math.min(elapsedTime / moveInfo.duration, 1);
+
+          // 線形補間 (Lerp) で中間位置を計算
+          const currentX = moveInfo.startPos.x + (moveInfo.endPos.x - moveInfo.startPos.x) * progress;
+          const currentY = moveInfo.startPos.y + (moveInfo.endPos.y - moveInfo.startPos.y) * progress;
+
+          // わずかな変化でも更新するようにする
+          if (robot.position.x !== currentX || robot.position.y !== currentY) {
+             boardChanged = true;
+             return {
+               ...robot,
+               position: { x: currentX, y: currentY },
+             };
+          }
+          return robot; // 位置が変わらなければ元のロボットオブジェクトを返す
+        });
+
+        // ボードの状態が実際に変更された場合のみ新しいオブジェクトを返す
+        return boardChanged ? { ...prevBoard, robots: nextRobots } : prevBoard;
+      });
+
+      // アニメーションが完了したロボットを movingRobots から削除
+      setMovingRobots(currentMoving => {
+        const nextMoving: Record<RobotColor, MovingRobotInfo> = {} as Record<RobotColor, MovingRobotInfo>; // 型アサーションで初期化
+        let changed = false;
+        for (const color in currentMoving) {
+          const robotColor = color as RobotColor;
+          const info = currentMoving[robotColor];
+          const elapsedTime = now - info.startTime;
+          if (elapsedTime < info.duration) {
+            nextMoving[robotColor] = info; // まだアニメーション中
+          } else {
+            changed = true; // このロボットのアニメーションが完了
+            // 完了時は最終位置に確定させる (補間誤差対策)
+             setDisplayedBoard(prevBoard => {
+               if (!prevBoard) return null;
+               const finalRobots = prevBoard.robots.map(r => {
+                 if (r.color === robotColor) {
+                   // 最終位置が異なる場合のみ更新
+                   if (r.position.x !== info.endPos.x || r.position.y !== info.endPos.y) {
+                     return { ...r, position: info.endPos };
+                   }
+                 }
+                 return r;
+               });
+               // displayedBoard の robots 配列が実際に変更されたかチェック
+               const boardActuallyChanged = prevBoard.robots.some((r, i) => r !== finalRobots[i]);
+               return boardActuallyChanged ? { ...prevBoard, robots: finalRobots } : prevBoard;
+             });
+          }
+        }
+        // movingRobots state が実際に変更された場合のみ更新
+        return changed ? nextMoving : currentMoving;
+      });
+
+
+      // まだアクティブなアニメーションがあれば次のフレームを要求
+      if (activeAnimations) {
+        animationFrameRef.current = requestAnimationFrame(animate);
+      } else {
+        animationFrameRef.current = null; // null を代入
+      }
+    };
+
+    // movingRobots にアニメーション対象があればループを開始
+    if (Object.keys(movingRobots).length > 0) {
+      animationFrameRef.current = requestAnimationFrame(animate);
+    }
+
+    // クリーンアップ関数
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null; // null を代入
+      }
+    };
+  }, [movingRobots]); // movingRobots が変更されたら再実行
 
   // --- アクションハンドラーを gameStore に接続 ---
   const handleStartGame = () => {
@@ -199,16 +369,16 @@ const GamePage: FC = () => {
           {/* メインエリア - ゲームボードと宣言 */}
           <div className="col-span-2 bg-white rounded-lg shadow p-4 flex flex-col">
             <div className="aspect-square flex items-center justify-center flex-grow">
-              {/* generatedBoard が存在するなら GameBoard を表示 */}
-              {generatedBoard ? (
+              {/* displayedBoard が存在するなら GameBoard を表示 */}
+              {displayedBoard ? (
                 <GameBoard
-                    board={generatedBoard} // generatedBoard を渡す
-                    onRobotMove={handleRobotMove}
-                    // isPlayerTurn は game state と接続状態から判断
-                    isPlayerTurn={isConnected && game?.phase === 'solution' && game?.currentPlayer === currentPlayer?.id}
-                  />
+                  board={displayedBoard} // アニメーション状態を含むボードを渡す
+                  onRobotMove={handleRobotMove}
+                  // isPlayerTurn は game state と接続状態から判断
+                  isPlayerTurn={isConnected && game?.phase === 'solution' && game?.currentPlayer === currentPlayer?.id}
+                />
               ) : (
-                <div className="text-gray-500">ボードを生成中です...</div>
+                <div className="text-gray-500">ボード情報を読み込み中...</div>
               )}
             </div>
              {/* 宣言カードリスト (game が存在する場合) */}
