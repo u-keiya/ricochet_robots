@@ -105,3 +105,21 @@ classname: N/A
 function name: GamePage (component)
 short description: Implemented multiplayer robot movement animation using useState, useRef, useEffect, and requestAnimationFrame, referencing single-player logic. Manages displayedBoard and movingRobots states for smooth animation based on server updates.
 input / output: N/A
+
+file name: src/components/GameInfo.tsx
+classname: N/A
+function name: GameInfoProps (interface)
+short description: Modified props to accept 'scores: Record<string, number>' and 'players: Record<string, Player>' instead of a single 'score'. Added 'solution' to GamePhase type.
+input / output: N/A
+
+file name: src/components/GameInfo.tsx
+classname: N/A
+function name: GameInfo (component)
+short description: Updated component to receive 'scores' and 'players' props and display scores for all players.
+input / output: N/A
+
+file name: src/pages/GamePage.tsx
+classname: N/A
+function name: GamePage (component)
+short description: Updated to import and use the modified GameInfo component in the right sidebar, passing 'game.playerStates' (mapped to scores) and 'currentRoom.players'.
+input / output: N/A
