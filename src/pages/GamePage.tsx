@@ -2,6 +2,7 @@ import { FC, useEffect, useState, useRef } from 'react'; // useState, useRefを�
 import { useParams, useNavigate } from 'react-router-dom';
 import GameBoard from '../components/GameBoard/GameBoard';
 import useGameStore from '../stores/gameStore'; // useGameStoreをインポート
+import GameInfo from '../components/GameInfo'; // GameInfo をインポート
 import { DeclarationCardList } from '../components/DeclarationCard'; // DeclarationCardListをインポート
 import GameResultDisplay from '../components/GameResultDisplay'; // GameResultDisplayをインポート
 import { Player } from '../types/player'; // Player型をインポート
@@ -401,23 +402,21 @@ const GamePage: FC = () => {
 
           {/* 右サイドバー - ゲーム情報と操作 */}
           <div className="col-span-1 space-y-4">
-            {/* ラウンド情報 (game が存在する場合) */}
-            {game && (
+            {/* GameInfo コンポーネントを使用 (game と currentRoom が存在する場合) */}
+            {game && currentRoom && (
               <div className="bg-white rounded-lg shadow p-4">
-                <h2 className="text-lg font-bold mb-2">ゲーム情報</h2>
-                <div className="text-sm space-y-1">
-                  <p>フェーズ: {getPhaseText(game.phase)}</p>
-                  <p>残り時間: {game.timer}秒</p>
-                  <p>残りカード: {game.remainingCards} / {game.totalCards}</p>
-                  {game.currentCard && (
-                    <div className="mt-2 p-2 border rounded flex items-center justify-center space-x-2">
-                      <span className={`font-bold text-xl ${getTargetColorClass(game.currentCard.color)}`}>
-                        {game.currentCard.symbol}
-                      </span>
-                      <span>({game.currentCard.color})</span>
-                    </div>
-                  )}
-                </div>
+                 <GameInfo
+                   scores={game.playerStates ? Object.fromEntries(Object.entries(game.playerStates).map(([id, state]) => [id, state.score])) : {}} // playerStates から scores を抽出
+                   players={currentRoom.players}
+                   moveCount={game.moveHistory?.length ?? 0} // moveHistory から手数を計算 (存在しない場合は0)
+                   declaredMoves={currentPlayer?.id ? game.declarations?.[currentPlayer.id]?.moves ?? 0 : 0} // 自分の宣言手数を取得
+                   timer={game.timer}
+                   isDeclarationPhase={game.phase === 'declaration'}
+                   currentCard={game.currentCard ?? undefined} // currentCard が null の場合は undefined を渡す
+                   remainingCards={game.remainingCards}
+                   onDrawCard={handleDrawCard} // handleDrawCard を渡す
+                   phase={game.phase}
+                 />
               </div>
             )}
 

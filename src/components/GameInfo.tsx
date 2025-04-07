@@ -2,8 +2,11 @@ import { FC } from 'react';
 import { Card } from '../types/game';
 import { SYMBOL_MAP } from '../utils/constants';
 
+import { Player } from '../types/player'; // Player 型をインポート
+
 interface GameInfoProps {
-  score: number;
+  scores: Record<string, number>; // score を scores に変更し、型を Record<string, number> に
+  players: Record<string, Player>; // players プロパティを追加
   moveCount: number;
   declaredMoves: number;
   timer: number;
@@ -11,11 +14,12 @@ interface GameInfoProps {
   currentCard?: Card;
   remainingCards: number;
   onDrawCard: () => void;
-  phase: 'waiting' | 'declaration' | 'playing' | 'completed' | 'finished';
+  phase: 'waiting' | 'declaration' | 'playing' | 'completed' | 'finished' | 'solution'; // 'solution' を追加
 }
 
 const GameInfo: FC<GameInfoProps> = ({
-  score,
+  scores, // score を scores に変更
+  players, // players を追加
   moveCount,
   declaredMoves,
   timer,
@@ -29,10 +33,17 @@ const GameInfo: FC<GameInfoProps> = ({
     <div className="flex flex-col h-full">
       {/* スコアと手数の表示 */}
       <div className="mb-8">
-        {/* スコア */}
+        {/* スコア (マルチプレイヤー対応) */}
         <div className="relative mb-6">
-          <div className="text-sm text-gray-500 mb-1">スコア</div>
-          <div className="text-3xl font-bold text-blue-600">{score}</div>
+          <div className="text-sm text-gray-500 mb-2">スコア</div>
+          <ul className="space-y-1">
+            {Object.entries(players).map(([playerId, player]) => (
+              <li key={playerId} className="flex justify-between items-center text-lg">
+                <span className="font-medium">{player.name}</span>
+                <span className="font-bold text-blue-600">{scores[playerId] ?? 0}</span>
+              </li>
+            ))}
+          </ul>
         </div>
 
         {/* 手数 */}
