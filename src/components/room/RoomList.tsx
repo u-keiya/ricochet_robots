@@ -42,7 +42,7 @@ const RoomList: React.FC<RoomListProps> = ({ rooms }) => {
         return '待機中';
       case 'declaration':
         return '宣言フェーズ';
-      case 'solution':
+      case 'playing':
         return '解答フェーズ';
       case 'completed':
         return '終了';

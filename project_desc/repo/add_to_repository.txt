@@ -57,3 +57,39 @@ classname: N/A
 function name: moveRobot (action)
 short description: Enabled the emission of the 'moveRobot' event by uncommenting the socketService.moveRobot call.
 input / output: Input: robotColor: RobotColor, path: Position[] / Output: void
+
+file name: server/src/server.ts
+classname: N/A
+function name: (socket event listener)
+short description: Added 'moveRobot' event handler to receive robot movement data from clients and call GameManager.moveRobot. Imported RobotColor enum for type casting.
+input / output: Event payload: { roomId: string, robotColor: string, path: Position[] }
+
+file name: server/src/services/gameManager.ts
+classname: GameManager
+function name: moveRobot
+short description: Modified to accept 'path' instead of 'positions'. Implemented robot position update based on the end of the path, path length validation against declared moves, move history recording, goal checking, and game state emission. Changed move count validation to fail the solution attempt instead of throwing an error. Implemented correct move counting based on number of moveRobot calls per attempt.
+input / output: Input: playerId: string, robotColor: RobotColor, path: Position[] / Output: void
+
+file name: server/src/services/gameManager.ts
+classname: GameManager
+function name: checkGoal
+short description: Implemented actual goal checking logic based on currentCard and robotPositions. Fixed Vortex card key generation to match targetPositions definition in roomManager. Added targetPositions property to GameManager.
+input / output: Input: None / Output: boolean
+
+file name: server/src/types/game.ts
+classname: N/A
+function name: MultiplayerGameState (interface)
+short description: Added 'currentAttemptMoves' property to track moves within a single solution attempt.
+input / output: N/A
+
+file name: server/src/services/gameManager.ts
+classname: GameManager
+function name: initializeGameState
+short description: Initialized the new 'currentAttemptMoves' property to 0.
+input / output: N/A
+
+file name: server/src/services/gameManager.ts
+classname: GameManager
+function name: startSolutionPhase
+short description: Reset the 'currentAttemptMoves' property to 0 when a new solution phase starts.
+input / output: N/A

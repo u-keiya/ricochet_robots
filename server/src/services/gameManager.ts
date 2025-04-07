@@ -21,6 +21,7 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
   private players: Player[];
   private timerInterval?: NodeJS.Timeout;
   private boardPatternIds: string[];
+  private targetPositions: TargetPositions; // Add targetPositions property
   // private penaltyApplied: Set<string>; // No longer needed with the new rule
 
   constructor(players: Player[], boardPatternIds: string[], targetPositions: TargetPositions, rules: GameRules = DEFAULT_GAME_RULES) {
@@ -28,7 +29,8 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
     this.rules = rules;
     this.players = players;
     this.boardPatternIds = boardPatternIds;
-    this.cardDeck = new CardDeck(targetPositions); // Create CardDeck instance
+    this.targetPositions = targetPositions; // Store targetPositions
+    this.cardDeck = new CardDeck(this.targetPositions); // Use stored targetPositions
     this.gameState = this.initializeGameState();
   }
 
@@ -53,7 +55,8 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
       timerStartedAt: Date.now(), // Initialize with a value
       robotPositions: { ...INITIAL_ROBOT_POSITIONS }, // Use initial positions defined above
       moveHistory: [],
-      boardPatternIds: this.boardPatternIds
+      boardPatternIds: this.boardPatternIds,
+      currentAttemptMoves: 0 // Initialize currentAttemptMoves
     };
     console.log(`Card deck initialized with ${this.gameState.totalCards} cards.`);
   }
@@ -227,6 +230,7 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
     this.cleanup(); // Clear any previous timers
     this.gameState.phase = GamePhase.SOLUTION;
     this.gameState.moveHistory = []; // Clear move history for the new attempt
+    this.gameState.currentAttemptMoves = 0; // Reset attempt moves for the new solution phase
     this.gameState.timer = this.rules.solutionTimeLimit;
     this.gameState.timerStartedAt = Date.now();
 
@@ -237,45 +241,115 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
     this.emit('gameStateUpdated', this.getGameState()); // フェーズ開始を通知
   }
 
-  public moveRobot(playerId: string, robotColor: RobotColor, positions: Position[]): void {
+  public moveRobot(playerId: string, robotColor: RobotColor, path: Position[]): void {
+    // Log entry point
+    console.log(`[GameManager moveRobot START] Player: ${playerId}, Robot: ${robotColor}, PathLength: ${path.length}, CurrentAttempt: ${this.gameState.currentAttemptMoves}`);
+
     if (this.gameState.phase !== GamePhase.SOLUTION) {
+      console.warn(`[GameManager moveRobot REJECT] Player: ${playerId} attempted move outside SOLUTION phase (${this.gameState.phase})`);
       throw new Error('Not in solution phase');
     }
 
     if (playerId !== this.gameState.currentPlayer) {
+      console.warn(`[GameManager moveRobot REJECT] Player: ${playerId} attempted move, but it's ${this.gameState.currentPlayer}'s turn.`);
       throw new Error('Not your turn');
     }
 
     const declaration = this.gameState.declarations[playerId]; // Use object access
     if (!declaration) {
-      // This should ideally not happen if logic is correct
+      console.error(`[GameManager moveRobot ERROR] No declaration found for player ${playerId}.`);
       throw new Error('No declaration found for player');
     }
 
-    if (positions.length > declaration.moves) {
-      throw new Error('Too many moves');
+    // Increment the move count for this attempt *before* checking
+    const nextMoveCount = this.gameState.currentAttemptMoves + 1;
+    console.log(`[GameManager moveRobot] Player: ${playerId} attempting move ${nextMoveCount}/${declaration.moves}`);
+
+    // Check if the *next* move exceeds the declared moves
+    if (nextMoveCount > declaration.moves) {
+       console.warn(`[GameManager moveRobot FAIL] Player: ${playerId} exceeded declared moves (${declaration.moves}) with move ${nextMoveCount}. Failing solution attempt.`);
+       this.failCurrentSolution(); // Fail the attempt if moves are exceeded
+       return; // Stop further processing for this move event
+    }
+    // If not exceeding, update the state's move count
+    this.gameState.currentAttemptMoves = nextMoveCount;
+
+    // Validate the path itself (e.g., check if moves are valid on the board)
+    // TODO: Implement path validation logic if needed. For now, trust the client's path.
+
+    // Update robot position to the end of the path
+    if (path.length > 0) {
+      const finalPosition = path[path.length - 1];
+      this.gameState.robotPositions[robotColor] = finalPosition;
+      console.log(`[GameManager moveRobot] Updated robot ${robotColor} position to ${JSON.stringify(finalPosition)}`);
+    } else {
+       console.warn(`[GameManager moveRobot] Received empty path for robot ${robotColor} from player ${playerId}`);
+       // If path is empty, it shouldn't count as a move or change state significantly,
+       // but we already incremented currentAttemptMoves. Consider if this needs adjustment.
+       // For now, let it proceed, but the goal check will likely fail.
     }
 
-    // Record the move
+
+    // Record the move (using the provided path)
     this.gameState.moveHistory.push({
       robotColor,
-      positions,
+      positions: path, // Store the actual path received
       timestamp: Date.now()
     });
 
-    this.emit('gameStateUpdated', this.getGameState()); // 移動記録を通知
+    // Check if the move achieves the goal *after* updating the position and move count
+    const isGoal = this.checkGoal();
+    console.log(`[GameManager moveRobot] Goal check result for Player ${playerId}: ${isGoal}`);
 
-    // Check if the move achieves the goal
-    if (this.checkGoal()) {
-      this.successCurrentSolution(); // この中で emit される
+    if (isGoal) {
+      console.log(`[GameManager moveRobot SUCCESS] Player ${playerId} achieved the goal with robot ${robotColor} on move ${this.gameState.currentAttemptMoves}.`);
+      this.successCurrentSolution(); // This emits gameStateUpdated
+    } else {
+      // If not goal, player continues their turn. Emit the updated state.
+      console.log(`[GameManager moveRobot] Player ${playerId} moved robot ${robotColor}. Goal not achieved. Current moves: ${this.gameState.currentAttemptMoves}/${declaration.moves}. Emitting state update.`);
+      this.emit('gameStateUpdated', this.getGameState()); // Emit state update after move
     }
-    // If not goal, player continues their turn until timer runs out or they succeed
+    // Player continues their turn until timer runs out or they succeed/fail explicitly
   }
 
   private checkGoal(): boolean {
-    // TODO: Implement actual goal checking logic based on currentCard and robotPositions
-    // For now, assume it always fails to test other logic paths
-    return false;
+    const card = this.gameState.currentCard;
+    if (!card) {
+      console.warn("[checkGoal] No current card to check against.");
+      return false; // No card, no goal
+    }
+
+    // Construct the key for targetPositions map (e.g., "GEAR_RED", "VORTEX-null")
+    const targetKey = card.color ? `${card.symbol}-${card.color}` : `${card.symbol}-null`; // Use '-' separator for colored targets
+    const targetPosition = this.targetPositions.get(targetKey);
+
+    if (!targetPosition) {
+      // This might happen if the card deck has cards for targets not on the current board setup
+      console.warn(`[checkGoal] Target position not found for key: ${targetKey}`);
+      return false;
+    }
+
+    const robotPositions = this.gameState.robotPositions;
+
+    if (card.color === null) { // Vortex card - any robot can reach the target
+      for (const color of ROBOT_COLORS) {
+        const robotPos = robotPositions[color];
+        if (robotPos.x === targetPosition.x && robotPos.y === targetPosition.y) {
+          console.log(`[checkGoal] Goal achieved! Vortex target ${card.symbol} reached by ${color} robot at (${targetPosition.x}, ${targetPosition.y})`);
+          return true;
+        }
+      }
+    } else { // Specific color card
+      const targetRobotColor = card.color;
+      const robotPos = robotPositions[targetRobotColor];
+      if (robotPos.x === targetPosition.x && robotPos.y === targetPosition.y) {
+         console.log(`[checkGoal] Goal achieved! Target ${card.symbol} (${card.color}) reached by ${targetRobotColor} robot at (${targetPosition.x}, ${targetPosition.y})`);
+        return true;
+      }
+    }
+
+    // console.log(`[checkGoal] Goal not achieved for card ${targetKey} at (${targetPosition.x}, ${targetPosition.y}). Current positions: ${JSON.stringify(robotPositions)}`);
+    return false; // Goal not met
   }
 
   private successCurrentSolution(): void {
