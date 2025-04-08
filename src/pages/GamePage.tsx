@@ -10,6 +10,12 @@ import { Player } from '../types/player'; // Player型をインポート
 import { RobotColor, Position, GamePhase, Direction, Card, Board } from '../types/game'; // Board をインポート
 import { calculatePath } from '../utils/robotMovement'; // calculatePathをインポート
 
+// レイアウト定数 (SinglePlayerPageから移植・調整)
+const LEFT_SIDEBAR_WIDTH = 288; // 左サイドバーの幅 (仮、Tailwindのcol-span-1とgap-6から推測) - grid-cols-4 gap-6 -> 1/4幅 - gap分
+const RIGHT_SIDEBAR_WIDTH = 288; // 右サイドバーの幅 (仮)
+const DECLARATION_HEIGHT = 140; // 宣言エリアの高さ (仮) - GamePageでは未使用だが念のため
+const BOARD_SCALE_FACTOR = 0.9; // ボードのスケーリング係数 (調整)
+
 // アニメーション中のロボット情報
 interface MovingRobotInfo {
   startPos: Position;
@@ -65,6 +71,7 @@ const GamePage: FC = () => {
   const [movingRobots, setMovingRobots] = useState<Record<RobotColor, MovingRobotInfo>>({} as Record<RobotColor, MovingRobotInfo>); // 型アサーションで初期化
   const prevGameRef = useRef(game); // 前回の game state を保持
   const animationFrameRef = useRef<number | null>(null); // 型を number | null に変更し、初期値を null に
+  const containerRef = useRef<HTMLDivElement>(null); // ボードコンテナの参照
 
   // roomIdがない、または接続エラーがあればオンラインページに戻る
   useEffect(() => {
@@ -289,6 +296,28 @@ const GamePage: FC = () => {
   }
   // players をオブジェクトから配列に変換
   const playersArray = Object.values(currentRoom.players);
+
+  // ボードのスケーリング計算 (SinglePlayerPageから移植・調整)
+  const getBoardScale = () => {
+    // displayedBoard またはコンテナがない場合はデフォルトスケール
+    // game ではなく displayedBoard の有無で判断する
+    if (!displayedBoard || !containerRef.current) return 1;
+
+    const containerWidth = containerRef.current.offsetWidth;
+    const containerHeight = containerRef.current.offsetHeight;
+
+    // GameBoardの基本サイズ (40px * board.size)
+    const baseSize = displayedBoard.size * 40;
+
+    // padding (p-4) を考慮に入れる必要があるかもしれないが、一旦無視
+    const scaleX = containerWidth / baseSize;
+    const scaleY = containerHeight / baseSize;
+
+    // 最小のスケールを採用し、最大1倍、係数をかける
+    return Math.min(scaleX, scaleY, 1) * BOARD_SCALE_FACTOR;
+  };
+
+  const scale = getBoardScale();
   // --- ここまで ---
 
 
@@ -368,8 +397,20 @@ const GamePage: FC = () => {
           </div>
 
           {/* メインエリア - ゲームボードと宣言 */}
-          <div className="col-span-2 bg-white rounded-lg shadow p-4 flex flex-col">
-            <div className="aspect-square flex items-center justify-center flex-grow">
+          {/* ref を追加し、flex-grow を削除してコンテナがサイズを持つようにする */}
+          <div ref={containerRef} className="col-span-2 bg-white rounded-lg shadow p-4 flex flex-col items-center justify-center">
+            {/* GameBoard を含む div にスケールを適用 */}
+            {/* flex-grow を削除し、基本サイズとスケールを設定 */}
+            <div
+              className="relative" // スケーリングの基点用
+              style={{
+                width: displayedBoard ? `${displayedBoard.size * 40}px` : '640px', // 基本サイズ指定 (16*40)
+                height: displayedBoard ? `${displayedBoard.size * 40}px` : '640px',
+                transform: `scale(${scale})`,
+                transformOrigin: 'center center',
+                transition: 'transform 0.3s ease-out' // スムーズなスケーリング変化のため
+              }}
+            >
               {/* displayedBoard が存在するなら GameBoard を表示 */}
               {displayedBoard ? (
                 <GameBoard
@@ -379,12 +420,13 @@ const GamePage: FC = () => {
                   isPlayerTurn={isConnected && game?.phase === 'solution' && game?.currentPlayer === currentPlayer?.id}
                 />
               ) : (
-                <div className="text-gray-500">ボード情報を読み込み中...</div>
+                // ローディング表示も中央に配置
+                <div className="absolute inset-0 flex items-center justify-center text-gray-500">ボード情報を読み込み中...</div>
               )}
             </div>
              {/* 宣言カードリスト (game が存在する場合) */}
              {game && game.phase === 'declaration' && (
-              <div className="mt-4 pt-4 border-t">
+              <div className="mt-4 pt-4 border-t w-full"> {/* w-full を追加 */}
                 <DeclarationCardList
                   selectedNumber={(() => {
                     const currentMoves = currentPlayer?.id ? game.declarations?.[currentPlayer.id]?.moves : undefined;
