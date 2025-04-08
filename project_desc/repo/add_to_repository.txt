@@ -123,3 +123,9 @@ classname: N/A
 function name: GamePage (component)
 short description: Updated to import and use the modified GameInfo component in the right sidebar, passing 'game.playerStates' (mapped to scores) and 'currentRoom.players'.
 input / output: N/A
+
+file name: src/pages/GamePage.tsx
+classname: N/A
+function name: GamePage (component)
+short description: Implemented responsive scaling for the game board based on container size, similar to SinglePlayerPage. Added layout constants and scaling logic.
+input / output: N/A
