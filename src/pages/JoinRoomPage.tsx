@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import RoomList from '../components/room/RoomList';
+import PlayerNameInput from '../components/PlayerNameInput'; // Import PlayerNameInput
 import useGameStore from '../stores/gameStore';
 
 const JoinRoomPage: React.FC = () => {
@@ -12,7 +13,7 @@ const JoinRoomPage: React.FC = () => {
     connectionError,
     currentRoom,
     availableRooms,
-    registerPlayer, // registerPlayer を取得
+    // registerPlayer, // No longer needed directly here
     currentPlayer, // currentPlayer を取得
     socketId, // socketId を取得
   } = useGameStore();
@@ -23,19 +24,8 @@ const JoinRoomPage: React.FC = () => {
     }
   }, [isConnected, isConnecting, connect]);
 
-  // 接続成功後、プレイヤーが未登録なら登録する
-  useEffect(() => {
-    // socketId もチェック条件に追加
-    if (isConnected && socketId && !currentPlayer && !isConnecting) {
-      // 仮のプレイヤー名。本来はユーザー入力などから取得
-      const playerName = `Player_${Math.random().toString(36).substring(2, 7)}`;
-      console.log(`[JoinRoomPage] Registering player: ${playerName} for socket ${socketId}`); // ログ更新
-      registerPlayer(playerName);
-    }
-    // socketId を依存配列に追加
-  }, [isConnected, socketId, currentPlayer, registerPlayer, isConnecting]);
-
-
+  // Automatic player registration logic is removed.
+  // Player registration will be handled by PlayerNameInput component.
   useEffect(() => {
     if (currentRoom) {
       navigate(`/game/${currentRoom.id}`);
@@ -63,15 +53,21 @@ const JoinRoomPage: React.FC = () => {
           </div>
         )}
 
-        {isConnecting || !currentPlayer ? ( // currentPlayer が存在しない場合もローディング表示
+        {isConnecting && ( // Show connecting message
           <div className="text-center text-gray-600 py-8">
-            {isConnecting ? 'サーバーに接続中...' : 'プレイヤー情報を取得中...'}
+            サーバーに接続中...
           </div>
-        ) : (
+        )}
+        {/* Show PlayerNameInput if connected but not registered */}
+        {isConnected && !isConnecting && !currentPlayer && (
+           <div className="bg-white shadow sm:rounded-lg p-6">
+             <PlayerNameInput />
+           </div>
+        )}
+        {/* Show RoomList only if connected and registered */}
+        {isConnected && !isConnecting && currentPlayer && (
           <div className="bg-white shadow sm:rounded-lg p-6">
-            <RoomList
-              rooms={availableRooms}
-            />
+            <RoomList rooms={availableRooms} />
           </div>
         )}
 
