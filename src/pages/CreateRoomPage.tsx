@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CreateRoomForm from '../components/room/CreateRoomForm';
+import PlayerNameInput from '../components/PlayerNameInput'; // Import PlayerNameInput
 import useGameStore from '../stores/gameStore';
 import { Room } from '../types/room'; // Room型をインポート
 
@@ -12,7 +13,7 @@ const CreateRoomPage: React.FC = () => {
     isConnecting,
     connectionError,
     currentRoom,
-    registerPlayer, // registerPlayer を取得
+    // registerPlayer, // No longer needed directly here
     currentPlayer, // currentPlayer を取得
     socketId, // socketId を取得
   } = useGameStore();
@@ -23,19 +24,8 @@ const CreateRoomPage: React.FC = () => {
     }
   }, [isConnected, isConnecting, connect]);
 
-  // 接続成功後、プレイヤーが未登録なら登録する
-  useEffect(() => {
-    // socketId もチェック条件に追加
-    if (isConnected && socketId && !currentPlayer && !isConnecting) {
-      // 仮のプレイヤー名。本来はユーザー入力などから取得
-      const playerName = `Player_${Math.random().toString(36).substring(2, 7)}`;
-      console.log(`[CreateRoomPage] Registering player: ${playerName} for socket ${socketId}`); // ログ更新
-      registerPlayer(playerName);
-    }
-    // socketId を依存配列に追加
-  }, [isConnected, socketId, currentPlayer, registerPlayer, isConnecting]);
-
-  // useEffect フックは削除
+  // Automatic player registration logic is removed.
+  // Player registration will be handled by PlayerNameInput component.
 
   const handleCreateSuccess = (room: Room) => { // 引数に room: Room を追加
     console.log('[CreateRoomPage] handleCreateSuccess received room:', room); // ★ ログ追加
@@ -73,12 +63,12 @@ const CreateRoomPage: React.FC = () => {
             接続中...
           </div>
         )}
-        {!isConnecting && !currentPlayer && ( // プレイヤー登録待ち表示
-          <div className="text-center text-gray-600">
-            プレイヤー情報を登録中...
-          </div>
+        {/* Show PlayerNameInput if connected but not registered */}
+        {isConnected && !isConnecting && !currentPlayer && (
+          <PlayerNameInput />
         )}
-        {!isConnecting && currentPlayer && ( // 接続完了かつプレイヤー登録済みの場合のみフォーム表示
+        {/* Show CreateRoomForm only if connected and registered */}
+        {isConnected && !isConnecting && currentPlayer && (
           <CreateRoomForm onSuccess={handleCreateSuccess} />
         )}
 
