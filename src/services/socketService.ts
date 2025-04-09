@@ -58,6 +58,10 @@ class SocketService {
           }
         });
 
+        // Log all incoming events for debugging
+        this.socket.onAny((eventName, ...args) => {
+          console.log(`[SocketService] Received event: ${eventName}`, args);
+        });
       } catch (error) {
         console.error('Socket initialization error:', error);
         reject(error);
