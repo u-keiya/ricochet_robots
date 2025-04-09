@@ -126,6 +126,7 @@ const useGameStore = create<GameStore>((set, get) => ({
       });
 
       socketService.onRoomUpdated((room) => {
+        console.log('[GameStore] Received roomUpdated event:', room); // Add log to inspect received room data
         const { currentRoom } = get(); // get() は set の外で使う
         if (currentRoom && currentRoom.id === room.id) {
           set((state) => { // set の中で get() を使わないように state を使う
