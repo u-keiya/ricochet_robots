@@ -36,12 +36,14 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
 
   private initializeGameState(): MultiplayerGameState {
     const playerStates: Record<string, PlayerGameState> = {}; // Initialize as empty object
+    const playersInfo: Record<string, { name: string }> = {};
     this.players.forEach(player => {
       playerStates[player.id] = { // Use object assignment
         score: 0,
         declarations: [],
         isReady: false
       };
+      playersInfo[player.id] = { name: player.name }; // Populate playersInfo
     });
 
     return {
@@ -56,15 +58,29 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
       robotPositions: { ...INITIAL_ROBOT_POSITIONS }, // Use initial positions defined above
       moveHistory: [],
       boardPatternIds: this.boardPatternIds,
-      currentAttemptMoves: 0 // Initialize currentAttemptMoves
+      currentAttemptMoves: 0, // Initialize currentAttemptMoves
+      playersInfo // Add playersInfo to the initial state
     };
     console.log(`Card deck initialized with ${this.gameState.totalCards} cards.`);
   }
 
   // Add players parameter to startGame
   public startGame(players: Player[]): void {
-    // Update internal players list
+    // Update internal players list and playersInfo in gameState
     this.players = players;
+    const updatedPlayersInfo: Record<string, { name: string }> = {};
+    const updatedPlayerStates: Record<string, PlayerGameState> = {};
+    this.players.forEach(player => {
+        updatedPlayersInfo[player.id] = { name: player.name };
+        // Ensure playerStates are also updated or initialized if needed
+        updatedPlayerStates[player.id] = this.gameState.playerStates[player.id] || {
+            score: 0,
+            declarations: [],
+            isReady: false // Or determine readiness based on game logic
+        };
+    });
+    this.gameState.playersInfo = updatedPlayersInfo;
+    this.gameState.playerStates = updatedPlayerStates; // Update playerStates as well
 
     if (this.gameState.phase !== GamePhase.WAITING) {
       throw new Error('Game has already started');
