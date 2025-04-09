@@ -199,57 +199,35 @@ const useGameStore = create<GameStore>((set, get) => ({
         console.log('[GameStore] Received gameStateUpdated event:', updateData);
         set((state) => {
           // --- Game State Update ---
-          // Merge updateData into the existing game state, assuming updateData contains game fields
+          // Merge updateData into the existing game state
           const updatedGame = state.game ? { ...state.game, ...updateData } : null;
 
-          // --- Room State Update ---
+          // --- Room State Update (Simplified) ---
           let updatedRoom = state.currentRoom;
-          let playersData: Record<string, Player> | null = null;
-
-          // Check if updateData looks like a complete Room object
-          if (
-            updateData &&
-            typeof updateData === 'object' &&
-            'id' in updateData &&
-            'name' in updateData &&
-            'players' in updateData && typeof updateData.players === 'object' && updateData.players !== null &&
-            'hostId' in updateData
-            // Add other mandatory Room fields if necessary for the check
-          ) {
-            console.log('[GameStore] gameStateUpdated data resembles a Room object. Replacing currentRoom.');
-            // Type assertion might be needed if updateData has extra fields not in Room
-            updatedRoom = updateData as Room;
-            playersData = updatedRoom.players;
-          }
-          // Else, check if updateData *contains* only a 'players' property to update
-          else if (
-            updateData &&
-            typeof updateData === 'object' &&
-            'players' in updateData && typeof updateData.players === 'object' && updateData.players !== null &&
-            // Ensure it doesn't look like a full Room object to avoid double processing
-            !('id' in updateData && 'name' in updateData && 'hostId' in updateData)
-          ) {
-            console.log('[GameStore] gameStateUpdated contains only a \'players\' property. Merging players into currentRoom.');
-            playersData = updateData.players as Record<string, Player>;
+          // If updateData contains a 'players' object, assume it's the latest player list for the room.
+          if (updateData && typeof updateData === 'object' && 'players' in updateData && typeof updateData.players === 'object' && updateData.players !== null) {
+            console.log('[GameStore] gameStateUpdated contains players data. Updating currentRoom.players.');
             if (state.currentRoom) {
-              updatedRoom = { ...state.currentRoom, players: playersData };
+              // Directly update the players in the existing room state
+              updatedRoom = { ...state.currentRoom, players: updateData.players as Record<string, Player> };
+            } else {
+              // If currentRoom is null but we receive players, it's ambiguous. Log a warning.
+              console.warn('[GameStore] Received players data in gameStateUpdated, but currentRoom is null.');
+              // Potentially try to reconstruct a minimal Room object if needed, or leave it null.
             }
           } else {
-            console.log('[GameStore] gameStateUpdated does not seem to contain recognizable room/players data for update.');
+            console.log('[GameStore] gameStateUpdated does not seem to contain players data for room update.');
           }
 
           // --- Current Player Update ---
           let updatedPlayer = state.currentPlayer;
-          // Use the extracted playersData (if any) to update currentPlayer
-          if (playersData && state.currentPlayer) {
-            const myPlayerInfo = playersData[state.currentPlayer.id];
+          // Update currentPlayer based on the potentially updated room's players list
+          if (updatedRoom && updatedRoom.players && state.currentPlayer) {
+            const myPlayerInfo = updatedRoom.players[state.currentPlayer.id];
             if (myPlayerInfo) {
-              // Merge server info into existing player state
               updatedPlayer = { ...state.currentPlayer, ...myPlayerInfo };
             } else {
-              // Player not found in the update, might have left or an issue occurred.
               console.warn(`[GameStore] Current player ${state.currentPlayer.id} not found in updated players data.`);
-              // Decide if currentPlayer should be reset or kept. Keeping for now.
             }
           }
 
