@@ -1,0 +1,17 @@
+- file name: src/components/PlayerNameInput.tsx
+- classname: N/A (Function Component)
+- function name: PlayerNameInput
+- short description: Component for inputting and registering a player name. Handles input, loading state, and basic error display. Uses useGameStore for registration.
+- input / output: Props: `onRegistered?: () => void` / JSX
+
+- file name: src/pages/CreateRoomPage.tsx
+- classname: N/A (Function Component)
+- function name: CreateRoomPage
+- short description: Page for creating a game room. Modified to display PlayerNameInput component if the player is not yet registered, before showing the room creation form. Removed automatic player registration logic.
+- input / output: None / JSX
+
+- file name: src/pages/JoinRoomPage.tsx
+- classname: N/A (Function Component)
+- function name: JoinRoomPage
+- short description: Page for joining an existing game room. Modified to display PlayerNameInput component if the player is not yet registered, before showing the room list. Removed automatic player registration logic.
+- input / output: None / JSX
