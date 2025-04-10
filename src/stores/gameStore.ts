@@ -125,25 +125,8 @@ const useGameStore = create<GameStore>((set, get) => ({
         set({ currentRoom: null, game: null, generatedBoard: null }); // generatedBoard もリセット
       });
 
-      socketService.onRoomUpdated((room) => {
-        const { currentRoom } = get(); // get() は set の外で使う
-        if (currentRoom && currentRoom.id === room.id) {
-          set((state) => { // set の中で get() を使わないように state を使う
-            const myPlayerInfo = room.players[state.currentPlayer?.id ?? ''];
-            // サーバーから送られてきた gameState を使う
-            // 型ガード関数を使用して MultiplayerGameState かどうかをチェック
-            const nextGameState = isMultiplayerGameState(room.gameState)
-              ? room.gameState // 型ガードが成功すれば安全に割り当て可能
-              : state.game; // それ以外は既存の state.game を維持
-            return {
-              currentRoom: room,
-              game: nextGameState,
-              // 自分の情報がルームにあれば currentPlayer を更新
-              currentPlayer: myPlayerInfo ? { ...(state.currentPlayer || {}), ...myPlayerInfo } : state.currentPlayer, // state.currentPlayerがnullでもマージ可能に
-            };
-          });
-        }
-      });
+      // Remove the onRoomUpdated listener as updates seem to come via gameStateUpdated
+      // socketService.onRoomUpdated((room) => { ... });
       // ルームリスト更新リスナーを追加
       socketService.onRoomListUpdated((rooms) => { // メソッド名を修正
         set({ availableRooms: rooms });
@@ -212,13 +195,47 @@ const useGameStore = create<GameStore>((set, get) => ({
         set({ game: initialGameState, generatedBoard: generatedBoard }); // 生成したボードもセット
       });
 
-      socketService.onGameStateUpdated((gameStateUpdate) => {
-        // console.log('[GameStore] Received gameStateUpdated event:', gameStateUpdate); // デバッグログ削除
+      socketService.onGameStateUpdated((updateData) => {
+        console.log('[GameStore] Received gameStateUpdated event:', updateData);
         set((state) => {
-          // console.log('[GameStore] Updating game state. Current declarations:', state.game?.declarations, 'Update declarations:', gameStateUpdate.declarations); // デバッグログ削除
-          const updatedGame = state.game ? { ...state.game, ...gameStateUpdate } : null;
-          // console.log('[GameStore] New game state after update:', updatedGame); // デバッグログ削除
-          return { game: updatedGame };
+          // --- Game State Update ---
+          // Merge updateData into the existing game state
+          const updatedGame = state.game ? { ...state.game, ...updateData } : null;
+
+          // --- Room State Update (Simplified) ---
+          let updatedRoom = state.currentRoom;
+          // If updateData contains a 'players' object, assume it's the latest player list for the room.
+          if (updateData && typeof updateData === 'object' && 'players' in updateData && typeof updateData.players === 'object' && updateData.players !== null) {
+            console.log('[GameStore] gameStateUpdated contains players data. Updating currentRoom.players.');
+            if (state.currentRoom) {
+              // Directly update the players in the existing room state
+              updatedRoom = { ...state.currentRoom, players: updateData.players as Record<string, Player> };
+            } else {
+              // If currentRoom is null but we receive players, it's ambiguous. Log a warning.
+              console.warn('[GameStore] Received players data in gameStateUpdated, but currentRoom is null.');
+              // Potentially try to reconstruct a minimal Room object if needed, or leave it null.
+            }
+          } else {
+            console.log('[GameStore] gameStateUpdated does not seem to contain players data for room update.');
+          }
+
+          // --- Current Player Update ---
+          let updatedPlayer = state.currentPlayer;
+          // Update currentPlayer based on the potentially updated room's players list
+          if (updatedRoom && updatedRoom.players && state.currentPlayer) {
+            const myPlayerInfo = updatedRoom.players[state.currentPlayer.id];
+            if (myPlayerInfo) {
+              updatedPlayer = { ...state.currentPlayer, ...myPlayerInfo };
+            } else {
+              console.warn(`[GameStore] Current player ${state.currentPlayer.id} not found in updated players data.`);
+            }
+          }
+
+          return {
+            game: updatedGame,
+            currentRoom: updatedRoom,
+            currentPlayer: updatedPlayer,
+          };
         });
       });
 

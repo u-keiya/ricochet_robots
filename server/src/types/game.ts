@@ -69,6 +69,7 @@ export interface MultiplayerGameState {
   rankings?: { playerId: string; score: number; rank: number }[]; // Added for final rankings
   boardPatternIds: string[]; // Added: IDs of the board patterns used (e.g., ['A1', 'B2', 'C3', 'D4'])
   currentAttemptMoves: number; // Added: Number of moves made in the current solution attempt
+  playersInfo: Record<string, { name: string }>; // Added: Player ID to Name mapping
 }
 
 export interface GameRules {

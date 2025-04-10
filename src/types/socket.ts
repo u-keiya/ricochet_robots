@@ -23,7 +23,7 @@ export interface ServerToClientEvents {
 }
 
 export interface ClientToServerEvents {
-  register: (name: string) => void;
+  register: (payload: { name: string }) => void; // Expect an object with name property
   createRoom: (options: { name: string; password?: string }) => void;
   joinRoom: (payload: { roomId: string; password?: string }) => void; // payloadオブジェクトに変更
   leaveRoom: (payload: { roomId: string }) => void; // payloadオブジェクトに変更

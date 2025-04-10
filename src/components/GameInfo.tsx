@@ -6,7 +6,7 @@ import { Player } from '../types/player'; // Player 型をインポート
 
 interface GameInfoProps {
   scores: Record<string, number>; // score を scores に変更し、型を Record<string, number> に
-  players: Record<string, Player>; // players プロパティを追加
+  players: Record<string, { name: string }>; // players プロパティの型を playersInfo に合わせる
   moveCount: number;
   declaredMoves: number;
   timer: number;
@@ -37,9 +37,9 @@ const GameInfo: FC<GameInfoProps> = ({
         <div className="relative mb-6">
           <div className="text-sm text-gray-500 mb-2">スコア</div>
           <ul className="space-y-1">
-            {Object.entries(players).map(([playerId, player]) => (
+            {Object.entries(players).map(([playerId, playerInfo]) => ( // player を playerInfo に変更
               <li key={playerId} className="flex justify-between items-center text-lg">
-                <span className="font-medium">{player.name}</span>
+                <span className="font-medium">{playerInfo.name}</span> {/* playerInfo.name を使用 */}
                 <span className="font-bold text-blue-600">{scores[playerId] ?? 0}</span>
               </li>
             ))}

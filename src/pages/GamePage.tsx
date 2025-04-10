@@ -294,8 +294,20 @@ const GamePage: FC = () => {
     // TODO: もっと良いローディング表示/エラー表示
     return <div className="p-4 text-center">ルーム情報を読み込み中...</div>;
   }
-  // players をオブジェクトから配列に変換
-  const playersArray = Object.values(currentRoom.players);
+  // playersInfo をオブジェクトから配列に変換 (game と playersInfo が存在する場合)
+  // Player オブジェクトの他の情報 (connected など) も必要なので、currentRoom.players とマージする
+  const playersArray = game?.playersInfo
+    ? Object.entries(game.playersInfo).map(([id, info]) => ({
+        id,
+        name: info.name,
+        // currentRoom.players から他の情報を取得 (存在しない場合のデフォルト値も考慮)
+        connected: currentRoom.players[id]?.connected ?? false,
+        isHost: currentRoom.players[id]?.isHost ?? false,
+        roomId: currentRoom.players[id]?.roomId ?? null,
+        score: game.playerStates?.[id]?.score ?? 0, // スコアは game.playerStates から取得
+        // lastConnected は表示には不要なため省略
+      }))
+    : [];
 
   // ボードのスケーリング計算 (SinglePlayerPageから移植・調整)
   const getBoardScale = () => {
@@ -351,19 +363,20 @@ const GamePage: FC = () => {
             <h2 className="text-lg font-bold mb-4">プレイヤー</h2>
             <div className="space-y-2">
               {/* playersArray を使用 */}
-              {playersArray.map((player: Player) => (
+              {/* マージした playersArray を使用 */}
+              {playersArray.map((player) => ( // 型推論に任せるか、明示的な型 (Playerに近いもの) を定義
                 <div
                   key={player.id}
                   className={`flex justify-between items-center p-2 rounded ${
                     // game が存在する かつ 手番プレイヤーの場合に強調
                     game && player.id === game.currentPlayer ? 'bg-blue-100 ring-2 ring-blue-300' : 'bg-gray-50'
                   } ${
-                    !player.connected ? 'opacity-50' : '' // 非接続プレイヤーを薄く表示
+                    !player.connected ? 'opacity-50' : '' // マージされた connected を使用
                   }`}
                 >
                   <span className="flex items-center">
-                     <span className={`w-2 h-2 rounded-full mr-2 ${player.connected ? 'bg-green-500' : 'bg-gray-400'}`}></span> {/* 接続状態表示 */}
-                    {player.name}
+                     <span className={`w-2 h-2 rounded-full mr-2 ${player.connected ? 'bg-green-500' : 'bg-gray-400'}`}></span> {/* マージされた connected を使用 */}
+                    {player.name} {/* マージされた name を使用 */}
                     {player.id === currentRoom.hostId && ' (Host)'} {/* ホスト表示 */}
                     {player.id === currentPlayer?.id && ' (You)'} {/* 自分を表示 */}
                     {/* 解答権順序の表示 (playingフェーズかつdeclarationOrderが存在する場合) */}
@@ -374,7 +387,7 @@ const GamePage: FC = () => {
                     )}
                   </span>
                   {/* game が存在するならスコア表示 */}
-                  <span className="font-bold">{game && game.playerStates[player.id] !== undefined ? `${game.playerStates[player.id].score}pt` : '0pt'}</span>
+                  <span className="font-bold">{player.score}pt</span> {/* マージされた score を使用 */}
                 </div>
               ))}
             </div>
@@ -386,8 +399,8 @@ const GamePage: FC = () => {
                     {/* game.declarations が存在する場合 */}
                     {game.declarations && Object.values(game.declarations).map(decl => ( // Use Object.values() here
                       <div key={decl.playerId} className="flex justify-between">
-                        {/* playersArray を使用して find */}
-                        <span>{playersArray.find((p: Player) => p.id === decl.playerId)?.name ?? '不明'}</span>
+                        {/* game.playersInfo を直接参照する方がシンプル */}
+                        <span>{game?.playersInfo?.[decl.playerId]?.name ?? '不明'}</span>
                         <span>{decl.moves === null ? '考え中...' : `${decl.moves}手`}</span>
                       </div>
                     ))}
@@ -432,7 +445,7 @@ const GamePage: FC = () => {
                     const currentMoves = currentPlayer?.id ? game.declarations?.[currentPlayer.id]?.moves : undefined;
                     return typeof currentMoves === 'number' ? currentMoves : null;
                   })()}
-                  maxNumber={30} // 仮の最大手数
+                  maxNumber={99} // 仮の最大手数
                   onSelect={handleDeclareMoves}
                   // 宣言済み、または未接続なら無効化
                   isDisabled={!isConnected || game.declarations?.[currentPlayer?.id ?? '']?.moves != null}
@@ -449,7 +462,7 @@ const GamePage: FC = () => {
               <div className="bg-white rounded-lg shadow p-4">
                  <GameInfo
                    scores={game.playerStates ? Object.fromEntries(Object.entries(game.playerStates).map(([id, state]) => [id, state.score])) : {}} // playerStates から scores を抽出
-                   players={currentRoom.players}
+                   players={game.playersInfo ?? {}} // game.playersInfo を渡す (存在しない場合は空オブジェクト)
                    moveCount={game.moveHistory?.length ?? 0} // moveHistory から手数を計算 (存在しない場合は0)
                    declaredMoves={currentPlayer?.id ? game.declarations?.[currentPlayer.id]?.moves ?? 0 : 0} // 自分の宣言手数を取得
                    timer={game.timer}

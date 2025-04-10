@@ -89,7 +89,8 @@ private emit<Event extends keyof ClientToServerEvents>(
 
 // --- Player and Room Actions ---
   public registerPlayer(name: string): void {
-    this.emit('register', name);
+    console.log('[SocketService] Emitting register event with name:', name); // Add log
+    this.emit('register', { name }); // Send name within an object
   }
 
   // Promise を返すように変更

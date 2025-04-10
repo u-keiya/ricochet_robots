@@ -98,6 +98,9 @@ export class RoomManager {
 
     room.players.set(player.id, player);
     room.lastActivity = new Date();
+
+    // Notify GameManager about the updated player list
+    room.gameManager.updatePlayers(Array.from(room.players.values()));
     return true;
   }
 
@@ -130,9 +133,12 @@ export class RoomManager {
          newHost.isHost = true;
          // 新ホスト情報を他のプレイヤーに通知するイベントを発行しても良い
       }
-    }
+   }
 
-    return true;
+   // Notify GameManager about the updated player list (after potential host change)
+   room.gameManager.updatePlayers(Array.from(room.players.values()));
+
+   return true;
   }
 
   getRoomSummaries(): RoomSummary[] {
