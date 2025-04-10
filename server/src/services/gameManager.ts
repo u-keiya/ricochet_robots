@@ -466,6 +466,53 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
     return JSON.parse(JSON.stringify(this.gameState)); // Simple deep copy for now
   }
 
+  // Method to update the players list and playersInfo in gameState
+  public updatePlayers(updatedPlayers: Player[]): void {
+    console.log(`[GameManager] Updating players. New count: ${updatedPlayers.length}`);
+    this.players = updatedPlayers;
+    const updatedPlayersInfo: Record<string, { name: string }> = {};
+    const updatedPlayerStates: Record<string, PlayerGameState> = {};
+
+    this.players.forEach(player => {
+      updatedPlayersInfo[player.id] = { name: player.name };
+      // Preserve existing player state if available, otherwise initialize
+      updatedPlayerStates[player.id] = this.gameState.playerStates[player.id] || {
+        score: 0,
+        declarations: [],
+        isReady: false // Or determine readiness based on game logic
+      };
+    });
+
+    // Remove states for players who left
+    const currentPlayerIds = new Set(this.players.map(p => p.id));
+    Object.keys(this.gameState.playerStates).forEach(playerId => {
+        if (!currentPlayerIds.has(playerId)) {
+            // Optionally handle state cleanup for leaving players if needed
+            console.log(`[GameManager] Removing state for player ${playerId} who left.`);
+            // Note: We are not deleting the state here, just logging.
+            // If player state should be completely removed, use: delete updatedPlayerStates[playerId];
+        }
+    });
+
+
+    this.gameState.playersInfo = updatedPlayersInfo;
+    // Only keep states for current players
+    const finalPlayerStates: Record<string, PlayerGameState> = {};
+     currentPlayerIds.forEach(id => {
+        if (updatedPlayerStates[id]) {
+            finalPlayerStates[id] = updatedPlayerStates[id];
+        }
+     });
+    this.gameState.playerStates = finalPlayerStates; // Update playerStates with only current players
+
+
+    // Emit state update after player list changes
+    this.emit('gameStateUpdated', this.getGameState());
+    console.log(`[GameManager] playersInfo updated:`, this.gameState.playersInfo);
+  }
+
+  // Method to update the players list and playersInfo in gameState
+
   // Centralized cleanup for timers
   public cleanup(): void {
     console.log(`[GameManager] Entering cleanup.`); // Add log

@@ -130,6 +130,7 @@ export interface MultiplayerGameState {
     positions: Position[];
     timestamp: number;
   }[];
+  playersInfo: Record<string, { name: string }>; // Add playersInfo to match server state
   rankings?: { playerId: string; score: number; rank: number }[];
   // Add winner property if needed based on server type
   winner?: Player | null; // Assuming Player type exists or needs to be imported/defined
