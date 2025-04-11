@@ -428,6 +428,7 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
       this.gameState.currentPlayer = undefined;
       this.gameState.declarationOrder = undefined;
       this.gameState.moveHistory = [];
+      this.gameState.robotPositions = { ...INITIAL_ROBOT_POSITIONS }; // Reset robot positions
       this.startDeclarationPhase(); // Start declaration for the new card
       console.log(`Proceeding to next round. Remaining cards: ${this.gameState.remainingCards}.`);
     } else {
@@ -440,6 +441,7 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
   private endGame(): void {
     this.cleanup(); // Clear any running timers
     this.gameState.phase = GamePhase.FINISHED;
+    this.gameState.robotPositions = { ...INITIAL_ROBOT_POSITIONS }; // Reset robot positions
 
     // Calculate final rankings
     const playerScores = Object.entries(this.gameState.playerStates) // Use Object.entries
