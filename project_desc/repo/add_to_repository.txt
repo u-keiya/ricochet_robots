@@ -1,41 +1,47 @@
 - file name: src/components/PlayerNameInput.tsx
-- classname: N/A (Function Component)
-- function name: PlayerNameInput
-- short description: Component for inputting and registering a player name. Handles input, loading state, and basic error display. Uses useGameStore for registration.
-- input / output: Props: `onRegistered?: () => void` / JSX
+ - classname: N/A (Function Component)
+ - function name: PlayerNameInput
+ - short description: Component for inputting and registering a player name. Handles input, loading state, and basic error display. Uses useGameStore for registration.
+ - input / output: Props: `onRegistered?: () => void` / JSX
+ 
+ - file name: src/pages/CreateRoomPage.tsx
+ - classname: N/A (Function Component)
+ - function name: CreateRoomPage
+ - short description: Page for creating a game room. Modified to display PlayerNameInput component if the player is not yet registered, before showing the room creation form. Removed automatic player registration logic.
+ - input / output: None / JSX
+ 
+ - file name: src/pages/JoinRoomPage.tsx
+ - classname: N/A (Function Component)
+ - function name: JoinRoomPage
+ - short description: Page for joining an existing game room. Modified to display PlayerNameInput component if the player is not yet registered, before showing the room list. Removed automatic player registration logic.
+ - input / output: None / JSX
+ 
+ - file name: server/src/types/game.ts
+ - classname: N/A (Interface)
+ - function name: MultiplayerGameState
+ - short description: Added `playersInfo: Record<string, { name: string }>` property to include player names in the game state sent to clients.
+ - input / output: N/A
+ 
+ - file name: server/src/services/gameManager.ts
+ - classname: GameManager
+ - function name: initializeGameState, startGame
+ - short description: Modified to populate the new `playersInfo` property in the `MultiplayerGameState`.
+ - input / output: N/A
+ 
+ - file name: src/services/socketService.ts
+ - classname: SocketService
+ - function name: registerPlayer
+ - short description: Changed the payload sent for the 'register' event from a string `name` to an object `{ name }` to match server expectations.
+ - input / output: `name: string` / `void`
+ 
+ - file name: src/types/socket.ts
+ - classname: N/A (Interface)
+ - function name: ClientToServerEvents
+ - short description: Updated the type definition for the 'register' event to expect a payload of type `{ name: string }` instead of just `string`.
+ - input / output: N/A
 
-- file name: src/pages/CreateRoomPage.tsx
-- classname: N/A (Function Component)
-- function name: CreateRoomPage
-- short description: Page for creating a game room. Modified to display PlayerNameInput component if the player is not yet registered, before showing the room creation form. Removed automatic player registration logic.
-- input / output: None / JSX
-
-- file name: src/pages/JoinRoomPage.tsx
-- classname: N/A (Function Component)
-- function name: JoinRoomPage
-- short description: Page for joining an existing game room. Modified to display PlayerNameInput component if the player is not yet registered, before showing the room list. Removed automatic player registration logic.
-- input / output: None / JSX
-
-- file name: server/src/types/game.ts
-- classname: N/A (Interface)
-- function name: MultiplayerGameState
-- short description: Added `playersInfo: Record<string, { name: string }>` property to include player names in the game state sent to clients.
-- input / output: N/A
-
-- file name: server/src/services/gameManager.ts
-- classname: GameManager
-- function name: initializeGameState, startGame
-- short description: Modified to populate the new `playersInfo` property in the `MultiplayerGameState`.
-- input / output: N/A
-
-- file name: src/services/socketService.ts
-- classname: SocketService
-- function name: registerPlayer
-- short description: Changed the payload sent for the 'register' event from a string `name` to an object `{ name }` to match server expectations.
-- input / output: `name: string` / `void`
-
-- file name: src/types/socket.ts
-- classname: N/A (Interface)
-- function name: ClientToServerEvents
-- short description: Updated the type definition for the 'register' event to expect a payload of type `{ name: string }` instead of just `string`.
-- input / output: N/A
+ - file name: src/pages/GamePage.tsx
+ - classname: N/A (Function Component)
+ - function name: GamePage, MovingRobotInfo (interface)
+ - short description: Modified robot animation logic to follow the calculated path smoothly segment by segment using requestAnimationFrame and linear interpolation. Stored the calculated path in the component's state (`movingRobots`) when a move is initiated. Adjusted animation timing based on segment duration. Refactored useEffect hooks related to game state changes and animation triggering.
+ - input / output: N/A
