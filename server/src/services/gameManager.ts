@@ -160,27 +160,16 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
   public handleDrawCard(playerId: string): void {
     console.log(`[GameManager] Entering handleDrawCard for player ${playerId}.`); // Add log
     // Only allow drawing if in the correct phase and maybe only by the host? (Decide on rule)
-    // For now, allow any player to trigger the first draw if in WAITING phase.
+    // Allow drawing only in WAITING phase
     if (this.gameState.phase !== GamePhase.WAITING) {
       console.warn(`Player ${playerId} attempted to draw card in incorrect phase: ${this.gameState.phase}`);
-      // Optionally throw an error or just ignore
-      return;
+      return; // Ignore the request
     }
 
-    const card = this.cardDeck.drawNext();
-    if (!card) {
-      console.error("Failed to draw the first card even when requested.");
-      this.endGame(); // End game if no cards
-      return;
-    }
-
-    this.gameState.currentCard = card;
-    this.gameState.remainingCards = this.cardDeck.getRemaining();
-
-    console.log(`Card drawn by ${playerId}. Starting declaration phase.`);
-    // Now start the declaration phase
-    this.startDeclarationPhase();
-    // gameStateUpdated is emitted within startDeclarationPhase
+    // Proceed to the next round logic (which draws the card and starts declaration)
+    console.log(`Card draw requested by ${playerId} in WAITING phase. Proceeding to next round.`);
+    this.proceedToNextRound();
+    // gameStateUpdated is emitted within proceedToNextRound (via startDeclarationPhase or endGame)
   }
 
   public declareMoves(playerId: string, moves: number): void {
@@ -379,9 +368,17 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
       }
     }
 
-    // Move to the next card/round
-    this.proceedToNextRound();
-    this.emit('gameStateUpdated', this.getGameState()); // 成功状態を通知
+    // Reset round state and move to WAITING phase
+    this.gameState.phase = GamePhase.WAITING;
+    this.gameState.declarations = {};
+    this.gameState.currentPlayer = undefined;
+    this.gameState.declarationOrder = undefined;
+    this.gameState.moveHistory = [];
+    this.gameState.robotPositions = { ...INITIAL_ROBOT_POSITIONS }; // Reset robot positions
+    this.gameState.currentAttemptMoves = 0; // Reset attempt moves for the next round
+
+    console.log(`Player ${currentPlayer} succeeded. Phase changed to WAITING. Waiting for next card draw.`);
+    this.emit('gameStateUpdated', this.getGameState()); // Notify state change to WAITING
   }
 
   private failCurrentSolution(): void {
@@ -391,8 +388,16 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
 
     if (!currentPlayerId) {
       // If no one was attempting (because no one declared), just proceed to next round
-      console.log("Solution timer ended, but no one declared. Proceeding to next round.");
-      this.proceedToNextRound(); // This will emit gameStateUpdated
+      console.log("Solution timer ended, but no one declared. Phase changed to WAITING.");
+      // Reset round state and move to WAITING phase
+      this.gameState.phase = GamePhase.WAITING;
+      this.gameState.declarations = {};
+      this.gameState.currentPlayer = undefined;
+      this.gameState.declarationOrder = undefined;
+      this.gameState.moveHistory = [];
+      this.gameState.robotPositions = { ...INITIAL_ROBOT_POSITIONS }; // Reset robot positions
+      this.gameState.currentAttemptMoves = 0; // Reset attempt moves for the next round
+      this.emit('gameStateUpdated', this.getGameState()); // Notify state change to WAITING
       return;
     }
 
@@ -408,8 +413,16 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
       this.gameState.currentPlayer = this.gameState.declarationOrder[0];
       this.startSolutionPhase(); // この中で emit される
     } else {
-      // No more players left to attempt, proceed to the next round/card
-      this.proceedToNextRound();
+      // No more players left to attempt, reset round state and move to WAITING phase
+      this.gameState.phase = GamePhase.WAITING;
+      this.gameState.declarations = {};
+      this.gameState.currentPlayer = undefined;
+      this.gameState.declarationOrder = undefined;
+      this.gameState.moveHistory = [];
+      this.gameState.robotPositions = { ...INITIAL_ROBOT_POSITIONS }; // Reset robot positions
+      this.gameState.currentAttemptMoves = 0; // Reset attempt moves for the next round
+      console.log(`All players failed or timer ran out. Phase changed to WAITING. Waiting for next card draw.`);
+      this.emit('gameStateUpdated', this.getGameState()); // Notify state change to WAITING
     }
     // State update is emitted within startSolutionPhase or proceedToNextRound
   }
