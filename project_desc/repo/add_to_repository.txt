@@ -51,3 +51,9 @@
   - function name: proceedToNextRound, endGame
   - short description: Modified to reset robot positions to their initial state when proceeding to the next round or ending the game.
   - input / output: N/A
+
+- file name: server/src/services/gameManager.ts
+  - classname: GameManager
+  - function name: successCurrentSolution, failCurrentSolution, handleDrawCard, proceedToNextRound
+  - short description: Modified game flow to transition to WAITING phase after a solution attempt (success or failure) instead of automatically proceeding to the next round. The next round now starts explicitly when a player requests to draw a card in the WAITING phase.
+  - input / output: N/A
