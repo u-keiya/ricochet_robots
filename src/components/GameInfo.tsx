@@ -93,26 +93,7 @@ const GameInfo: FC<GameInfoProps> = ({
         </div>
       )}
 
-      {/* カードをめくるボタン */}
-      <div className="mt-auto">
-        <button
-          className={`
-            w-full py-3 px-6 rounded-lg font-bold text-white
-            transition-all duration-200
-            ${(phase === 'waiting' || phase === 'completed')
-              ? 'bg-blue-500 hover:bg-blue-600'
-              : 'bg-gray-400 cursor-not-allowed'
-            }
-          `}
-          onClick={onDrawCard}
-          disabled={phase !== 'waiting' && phase !== 'completed'}
-        >
-          カードをめくる
-          <span className="text-sm ml-2">
-            ({remainingCards} 枚)
-          </span>
-        </button>
-      </div>
+      {/* カードをめくるボタンは GamePage の操作エリアに移動したため削除 */}
     </div>
   );
 };
