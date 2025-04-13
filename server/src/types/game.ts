@@ -79,15 +79,13 @@ export interface GameRules {
   minMoves: number;
   maxMoves: number;
   successPoints: number;
-  penaltyPoints: number;
 }
 
 export const DEFAULT_GAME_RULES: GameRules = {
   maxPlayers: 6,
-  declarationTimeLimit: 30,  // seconds
-  solutionTimeLimit: 60,     // seconds
+  declarationTimeLimit: 60,  // seconds
+  solutionTimeLimit: 120,     // seconds
   minMoves: 1,
-  maxMoves: 30,
-  successPoints: 1,
-  penaltyPoints: -1
+  maxMoves: 99,
+  successPoints: 1
 };
