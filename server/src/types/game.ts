@@ -25,6 +25,7 @@ export enum TargetSymbol {
 
 export enum GamePhase {
   WAITING = 'waiting', // Waiting for players to join/ready
+  PLAYING = 'playing',
   DECLARATION = 'declaration',
   SOLUTION = 'solution',
   FINISHED = 'finished'
