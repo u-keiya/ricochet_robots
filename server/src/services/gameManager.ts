@@ -6,13 +6,8 @@ import { ROBOT_COLORS } from '../utils/constants'; // Import ROBOT_COLORS
 
 // Define TargetPositions type locally or import if defined elsewhere
 type TargetPositions = Map<string, Position>;
-// 仮のロボット初期位置 (本来はボード生成時に決定)
-const INITIAL_ROBOT_POSITIONS: Record<RobotColor, Position> = {
-  [RobotColor.RED]: { x: 1, y: 1 },
-  [RobotColor.BLUE]: { x: 14, y: 1 },
-  [RobotColor.GREEN]: { x: 1, y: 14 },
-  [RobotColor.YELLOW]: { x: 14, y: 14 },
-};
+// ボードサイズ (仮定、必要に応じて GameRules などから取得)
+const BOARD_SIZE = 16;
 
 export class GameManager extends EventEmitter { // EventEmitter を継承
   private gameState: MultiplayerGameState;
@@ -22,6 +17,7 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
   private timerInterval?: NodeJS.Timeout;
   private boardPatternIds: string[];
   private targetPositions: TargetPositions; // Add targetPositions property
+  private initialRobotPositions: Record<RobotColor, Position>; // Store the initial positions for the game
   // private penaltyApplied: Set<string>; // No longer needed with the new rule
 
   constructor(players: Player[], boardPatternIds: string[], targetPositions: TargetPositions, rules: GameRules = DEFAULT_GAME_RULES) {
@@ -31,6 +27,7 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
     this.boardPatternIds = boardPatternIds;
     this.targetPositions = targetPositions; // Store targetPositions
     this.cardDeck = new CardDeck(this.targetPositions); // Use stored targetPositions
+    this.initialRobotPositions = this.generateRandomRobotPositions(); // Generate and store initial positions ONCE in constructor
     this.gameState = this.initializeGameState();
   }
 
@@ -55,13 +52,74 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
       playerStates,
       timer: 0,
       timerStartedAt: Date.now(), // Initialize with a value
-      robotPositions: { ...INITIAL_ROBOT_POSITIONS }, // Use initial positions defined above
+      robotPositions: { ...this.initialRobotPositions }, // Use the stored initial positions
       moveHistory: [],
       boardPatternIds: this.boardPatternIds,
       currentAttemptMoves: 0, // Initialize currentAttemptMoves
       playersInfo // Add playersInfo to the initial state
     };
-    console.log(`Card deck initialized with ${this.gameState.totalCards} cards.`);
+    console.log(`Card deck initialized with ${this.gameState.totalCards} cards. Initial positions set.`);
+    // gameState.robotPositions is already initialized using this.initialRobotPositions in the return statement above
+  }
+
+  // Helper function to check if a position is in the center 2x2 area
+  private isCenterArea(x: number, y: number): boolean {
+    const centerStart = Math.floor(BOARD_SIZE / 2) - 1; // e.g., 16/2 - 1 = 7
+    const centerEnd = centerStart + 1; // e.g., 7 + 1 = 8
+    return x >= centerStart && x <= centerEnd && y >= centerStart && y <= centerEnd;
+  }
+   // Helper function to check if a position is a target position
+   private isTargetPosition(pos: Position): boolean {
+     for (const targetPos of this.targetPositions.values()) {
+       if (targetPos.x === pos.x && targetPos.y === pos.y) {
+         return true;
+       }
+     }
+     return false;
+   }
+ 
+
+  // Generate random initial positions for robots, avoiding center and collisions
+  private generateRandomRobotPositions(): Record<RobotColor, Position> {
+    const positions: Record<RobotColor, Position> = {} as Record<RobotColor, Position>;
+    const occupiedPositions = new Set<string>(); // Store occupied positions as "x,y" strings
+
+    ROBOT_COLORS.forEach(color => {
+      let pos: Position;
+      let posKey: string;
+      let attempts = 0;
+      const maxAttempts = BOARD_SIZE * BOARD_SIZE; // Prevent infinite loops
+
+      do {
+        pos = {
+          x: Math.floor(Math.random() * BOARD_SIZE),
+          y: Math.floor(Math.random() * BOARD_SIZE)
+        };
+        posKey = `${pos.x},${pos.y}`;
+        attempts++;
+      } while (
+        (this.isCenterArea(pos.x, pos.y) || occupiedPositions.has(posKey) || this.isTargetPosition(pos)) && attempts < maxAttempts
+      );
+
+      if (attempts >= maxAttempts) {
+        console.error(`[GameManager] Could not find a valid random position for robot ${color} after ${maxAttempts} attempts. Placing at default.`);
+        // Fallback to a default or throw an error
+        // For now, let's use a simple fallback (might still collide if others failed too)
+        pos = { x: 0, y: ROBOT_COLORS.indexOf(color) }; // Simple offset fallback
+        posKey = `${pos.x},${pos.y}`;
+        // Ensure even fallback doesn't collide with previous fallbacks/successes
+        while(occupiedPositions.has(posKey)) {
+           pos.x = (pos.x + 1) % BOARD_SIZE;
+           posKey = `${pos.x},${pos.y}`;
+        }
+      }
+
+      positions[color] = pos;
+      occupiedPositions.add(posKey);
+    });
+
+    console.log("Generated random robot positions:", positions);
+    return positions;
   }
 
   // Add players parameter to startGame
@@ -91,7 +149,7 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
     }
 
     // Set initial robot positions
-    this.gameState.robotPositions = { ...INITIAL_ROBOT_POSITIONS };
+    this.gameState.robotPositions = { ...this.initialRobotPositions }; // Reset to stored initial positions
 
     // Set phase to WAITING, don't draw card yet
     this.gameState.phase = GamePhase.WAITING;
@@ -374,7 +432,7 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
     this.gameState.currentPlayer = undefined;
     this.gameState.declarationOrder = undefined;
     this.gameState.moveHistory = [];
-    this.gameState.robotPositions = { ...INITIAL_ROBOT_POSITIONS }; // Reset robot positions
+    this.gameState.robotPositions = { ...this.initialRobotPositions }; // Reset to stored initial positions
     this.gameState.currentAttemptMoves = 0; // Reset attempt moves for the next round
 
     console.log(`Player ${currentPlayer} succeeded. Phase changed to WAITING. Waiting for next card draw.`);
@@ -395,7 +453,7 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
       this.gameState.currentPlayer = undefined;
       this.gameState.declarationOrder = undefined;
       this.gameState.moveHistory = [];
-      this.gameState.robotPositions = { ...INITIAL_ROBOT_POSITIONS }; // Reset robot positions
+      this.gameState.robotPositions = { ...this.initialRobotPositions }; // Reset to stored initial positions
       this.gameState.currentAttemptMoves = 0; // Reset attempt moves for the next round
       this.emit('gameStateUpdated', this.getGameState()); // Notify state change to WAITING
       return;
@@ -411,6 +469,8 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
     if (this.gameState.declarationOrder && this.gameState.declarationOrder.length > 0) {
       // Move to the next player in the order
       this.gameState.currentPlayer = this.gameState.declarationOrder[0];
+      // Reset robot positions for the next player's attempt
+      this.gameState.robotPositions = { ...this.initialRobotPositions };
       this.startSolutionPhase(); // この中で emit される
     } else {
       // No more players left to attempt, reset round state and move to WAITING phase
@@ -419,7 +479,7 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
       this.gameState.currentPlayer = undefined;
       this.gameState.declarationOrder = undefined;
       this.gameState.moveHistory = [];
-      this.gameState.robotPositions = { ...INITIAL_ROBOT_POSITIONS }; // Reset robot positions
+      this.gameState.robotPositions = { ...this.initialRobotPositions }; // Reset to stored initial positions
       this.gameState.currentAttemptMoves = 0; // Reset attempt moves for the next round
       console.log(`All players failed or timer ran out. Phase changed to WAITING. Waiting for next card draw.`);
       this.emit('gameStateUpdated', this.getGameState()); // Notify state change to WAITING
@@ -441,7 +501,7 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
       this.gameState.currentPlayer = undefined;
       this.gameState.declarationOrder = undefined;
       this.gameState.moveHistory = [];
-      this.gameState.robotPositions = { ...INITIAL_ROBOT_POSITIONS }; // Reset robot positions
+      this.gameState.robotPositions = { ...this.initialRobotPositions }; // Reset to stored initial positions
       this.startDeclarationPhase(); // Start declaration for the new card
       console.log(`Proceeding to next round. Remaining cards: ${this.gameState.remainingCards}.`);
     } else {
@@ -454,7 +514,7 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
   private endGame(): void {
     this.cleanup(); // Clear any running timers
     this.gameState.phase = GamePhase.FINISHED;
-    this.gameState.robotPositions = { ...INITIAL_ROBOT_POSITIONS }; // Reset robot positions
+    this.gameState.robotPositions = { ...this.initialRobotPositions }; // Reset to stored initial positions
 
     // Calculate final rankings
     const playerScores = Object.entries(this.gameState.playerStates) // Use Object.entries
