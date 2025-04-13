@@ -78,12 +78,12 @@ export const DeclarationCardList: FC<DeclarationCardListProps> = ({
       {/* 左矢印 */}
       <button
         className={`p-2 rounded-full ${
-          startIndex === 0 || isDisabled // isDisabled が true の場合も無効化
+          startIndex === 0
             ? 'text-gray-300 cursor-not-allowed'
             : 'text-gray-600 hover:bg-gray-100'
         }`}
         onClick={handlePrevClick}
-        disabled={startIndex === 0 || isDisabled} // isDisabled が true の場合も無効化
+        disabled={startIndex === 0}
       >
         <ChevronLeft />
       </button>
@@ -112,12 +112,12 @@ export const DeclarationCardList: FC<DeclarationCardListProps> = ({
       {/* 右矢印 */}
       <button
         className={`p-2 rounded-full ${
-          startIndex >= totalNumbers - visibleCount || isDisabled // isDisabled が true の場合も無効化
+          startIndex >= totalNumbers - visibleCount
             ? 'text-gray-300 cursor-not-allowed'
             : 'text-gray-600 hover:bg-gray-100'
         }`}
         onClick={handleNextClick}
-        disabled={startIndex >= totalNumbers - visibleCount || isDisabled} // isDisabled が true の場合も無効化
+        disabled={startIndex >= totalNumbers - visibleCount}
       >
         <ChevronRight />
       </button>
