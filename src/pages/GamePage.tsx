@@ -516,7 +516,7 @@ const GamePage: FC = () => {
                 {/* カードをめくるボタン (宣言フェーズで、まだカードがめくられていない場合) */}
                 {currentRoom.hostId === currentPlayer?.id && game && game.phase === 'waiting' && !game.currentCard && (
                   <button
-                    className="btn btn-secondary w-full disabled:opacity-50"
+                    className="btn btn-primary w-full disabled:opacity-50"
                     onClick={handleDrawCard}
                     disabled={!isConnected} // 未接続時は無効
                   >
