@@ -57,3 +57,15 @@
   - function name: successCurrentSolution, failCurrentSolution, handleDrawCard, proceedToNextRound
   - short description: Modified game flow to transition to WAITING phase after a solution attempt (success or failure) instead of automatically proceeding to the next round. The next round now starts explicitly when a player requests to draw a card in the WAITING phase.
   - input / output: N/A
+
+- file name: src/components/GameInfo.tsx
+  - classname: N/A (Function Component)
+  - function name: GameInfo
+  - short description: Removed the duplicate "draw card" button. This button is now handled solely within the GamePage's control area.
+  - input / output: N/A
+
+- file name: src/pages/GamePage.tsx
+  - classname: N/A (Function Component)
+  - function name: GamePage
+  - short description: Changed the style of the "draw card" button in the control area to use the primary color (blue) when it is clickable (active).
+  - input / output: N/A
