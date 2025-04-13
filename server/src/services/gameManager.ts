@@ -469,6 +469,8 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
     if (this.gameState.declarationOrder && this.gameState.declarationOrder.length > 0) {
       // Move to the next player in the order
       this.gameState.currentPlayer = this.gameState.declarationOrder[0];
+      // Reset robot positions for the next player's attempt
+      this.gameState.robotPositions = { ...this.initialRobotPositions };
       this.startSolutionPhase(); // この中で emit される
     } else {
       // No more players left to attempt, reset round state and move to WAITING phase
