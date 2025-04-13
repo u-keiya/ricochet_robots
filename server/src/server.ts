@@ -135,7 +135,8 @@ io.on('connection', (socket: Socket) => {
         const room = roomManager.getRoom(roomId);
         if (room) {
           // 他のプレイヤーに通知
-          socket.to(roomId).emit('playerJoined', player);
+          // Send updated player list to everyone in the room
+          io.to(roomId).emit('playerListUpdated', { players: Array.from(room.players.values()) });
 
           // 参加したプレイヤーにルーム情報を送信
           socket.emit('roomJoined', room);
@@ -170,7 +171,11 @@ io.on('connection', (socket: Socket) => {
       if (roomManager.leaveRoom(playerId, roomId)) {
         player.roomId = null; // Player オブジェクトの roomId をリセット
         socket.leave(roomId);
-        socket.to(roomId).emit('playerLeft', { playerId });
+        // Send updated player list to everyone remaining in the room
+        const updatedRoom = roomManager.getRoom(roomId);
+        if (updatedRoom) {
+           io.to(roomId).emit('playerListUpdated', { players: Array.from(updatedRoom.players.values()) });
+        }
         io.emit('roomListUpdated', roomManager.getRoomSummaries());
         logger.info(`Player ${player.name} left room ${roomId}`);
       }
@@ -188,7 +193,11 @@ io.on('connection', (socket: Socket) => {
         if (player.roomId) {
           try {
             roomManager.updatePlayerConnection(player.id, player.roomId, false);
-            socket.to(player.roomId).emit('playerDisconnected', { playerId: player.id });
+            // Send updated player list to everyone remaining in the room
+            const updatedRoom = roomManager.getRoom(player.roomId);
+            if (updatedRoom) {
+               io.to(player.roomId).emit('playerListUpdated', { players: Array.from(updatedRoom.players.values()) });
+            }
             logger.info(`Notified room ${player.roomId} about player ${player.name} disconnection`);
             // ホスト交代ロジックは roomManager.leaveRoom にあるため、ここでは不要
           } catch (roomError) {
