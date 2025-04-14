@@ -88,6 +88,10 @@ const useGameStore = create<GameStore>((set, get) => ({
       });
 
       socketService.onRoomJoined((room) => {
+        // --- DEBUG ---
+        console.log('[DEBUG onRoomJoined] Received room object:', JSON.stringify(room, null, 2));
+        // --- END DEBUG ---
+
         // room オブジェクトと players プロパティが存在するかチェック
         // room オブジェクトと players プロパティが存在するか、より詳細にチェック
         if (!room || typeof room !== 'object') {
@@ -100,22 +104,38 @@ const useGameStore = create<GameStore>((set, get) => ({
         }
 
         set((state) => {
-          // currentPlayer が null でないことを確認してから id を使用
-          const playerId = state.currentPlayer?.id;
-          // room.players が存在することを前提にアクセス
-          const myPlayerInfo = playerId ? room.players[playerId] : undefined;
+          const playersMap = room.players; // room.players は { [key: string]: Player }
+          let updatedPlayer = state.currentPlayer;
 
-          // currentPlayer が存在し、かつ myPlayerInfo が見つかった場合のみ更新
-          // サーバーからの情報 (myPlayerInfo) があればそれを優先し、なければ既存の state.currentPlayer を維持
-          const updatedPlayer = myPlayerInfo
-            ? { ...(state.currentPlayer || {}), ...myPlayerInfo } // state.currentPlayerがnullでもマージ可能に
-            : state.currentPlayer;
+          if (state.currentPlayer) {
+            // currentPlayer が既に存在する場合、room.players の情報で更新
+            const currentId = state.currentPlayer.id;
+            if (playersMap.hasOwnProperty(currentId)) {
+              updatedPlayer = { ...state.currentPlayer, ...playersMap[currentId] };
+            } else {
+              console.warn(`[GameStore onRoomJoined] Existing currentPlayer ${currentId} not found in received room players.`);
+              // 既存のプレイヤー情報がルーム情報になければ null にする方が安全かもしれない
+              // updatedPlayer = null;
+            }
+          } else {
+            // currentPlayer が null の場合、socketId を使って room.players から自分の情報を探す
+            const socketId = get().socketId; // ストアから socketId を取得
+            // --- DEBUG ---
+            console.log(`[DEBUG onRoomJoined] Trying to find player for socketId: ${socketId}`);
+            console.log(`[DEBUG onRoomJoined] playersMap keys:`, Object.keys(playersMap));
+            // --- END DEBUG ---
+            if (socketId && playersMap.hasOwnProperty(socketId)) {
+              updatedPlayer = playersMap[socketId];
+              console.log(`[GameStore onRoomJoined] Set currentPlayer based on socketId:`, updatedPlayer);
+            } else {
+              console.warn(`[GameStore onRoomJoined] Cannot set initial currentPlayer. Socket ID (${socketId}) not found in room players or socketId is null.`);
+            }
+          }
 
           return {
-            currentRoom: room,
-            // ルーム参加時はゲーム状態をリセット
-            game: null,
-            currentPlayer: updatedPlayer,
+            currentRoom: room, // room 全体を設定 (players も含まれる)
+            game: null, // ルーム参加時はゲーム状態をリセット
+            currentPlayer: updatedPlayer, // 更新された currentPlayer を設定
           };
         });
       });
