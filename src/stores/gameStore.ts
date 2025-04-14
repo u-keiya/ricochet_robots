@@ -131,6 +131,50 @@ const useGameStore = create<GameStore>((set, get) => ({
       socketService.onRoomListUpdated((rooms) => { // メソッド名を修正
         set({ availableRooms: rooms });
       });
+
+      // Add listener for player list updates
+      socketService.onPlayerListUpdated((payload) => { // 引数を payload に変更
+        // --- DEBUG LOGGING ---
+        // console.log('[DEBUG] Received payload in onPlayerListUpdated:', JSON.stringify(payload, null, 2)); // 必要なら復活
+        // --- END DEBUG LOGGING ---
+        console.log('[GameStore] Received playerListUpdated event:', payload);
+        set((state) => {
+          if (!state.currentRoom) {
+            console.warn('[GameStore] Received playerListUpdated but currentRoom is null.');
+            return {}; // currentRoom がなければ何もしない
+          }
+
+          // payload.players (Player[]) を { [key: string]: Player } に変換
+          const playersMap = payload.players.reduce((acc, player) => { // reduce を復活させ、payload.players を対象にする
+            acc[player.id] = player;
+            return acc;
+          }, {} as { [key: string]: Player });
+
+          // currentRoom の players を更新
+          const updatedRoom = { ...state.currentRoom, players: playersMap };
+
+          // currentPlayer 情報も更新する必要があるか確認 (マージに戻す)
+          let updatedPlayer = state.currentPlayer;
+          if (state.currentPlayer) {
+            const currentId = state.currentPlayer.id;
+            if (playersMap.hasOwnProperty(currentId)) {
+              // Key exists, merge the data
+              updatedPlayer = { ...state.currentPlayer, ...playersMap[currentId] };
+            } else {
+              // Key does not exist in the new map (player left?)
+              // --- DEBUG ---
+              console.log(`[DEBUG onPlayerListUpdated] Warning Triggered!`);
+              console.log(`[DEBUG onPlayerListUpdated] state.currentPlayer.id:`, state.currentPlayer?.id);
+              console.log(`[DEBUG onPlayerListUpdated] playersMap keys:`, Object.keys(playersMap));
+              // --- END DEBUG ---
+              console.warn(`[GameStore] Current player ${currentId} not found in updated player list (playersMap keys: ${Object.keys(playersMap).join(', ')})`);
+              // updatedPlayer は state.currentPlayer のまま (変更しない)
+            }
+          }
+
+          return { currentRoom: updatedRoom, currentPlayer: updatedPlayer };
+        });
+      });
       // --- ここまで ---
 
       socketService.onError((error) => {
@@ -203,38 +247,20 @@ const useGameStore = create<GameStore>((set, get) => ({
           const updatedGame = state.game ? { ...state.game, ...updateData } : null;
 
           // --- Room State Update (Simplified) ---
-          let updatedRoom = state.currentRoom;
-          // If updateData contains a 'players' object, assume it's the latest player list for the room.
-          if (updateData && typeof updateData === 'object' && 'players' in updateData && typeof updateData.players === 'object' && updateData.players !== null) {
-            console.log('[GameStore] gameStateUpdated contains players data. Updating currentRoom.players.');
-            if (state.currentRoom) {
-              // Directly update the players in the existing room state
-              updatedRoom = { ...state.currentRoom, players: updateData.players as Record<string, Player> };
-            } else {
-              // If currentRoom is null but we receive players, it's ambiguous. Log a warning.
-              console.warn('[GameStore] Received players data in gameStateUpdated, but currentRoom is null.');
-              // Potentially try to reconstruct a minimal Room object if needed, or leave it null.
-            }
-          } else {
-            console.log('[GameStore] gameStateUpdated does not seem to contain players data for room update.');
-          }
+          // Player list updates are now handled solely by onPlayerListUpdated
+          // Remove the logic that updates currentRoom.players based on gameStateUpdated data
+          const updatedRoom = state.currentRoom; // Keep the existing room state
+          console.log('[GameStore] Skipping room players update within gameStateUpdated.');
 
           // --- Current Player Update ---
-          let updatedPlayer = state.currentPlayer;
-          // Update currentPlayer based on the potentially updated room's players list
-          if (updatedRoom && updatedRoom.players && state.currentPlayer) {
-            const myPlayerInfo = updatedRoom.players[state.currentPlayer.id];
-            if (myPlayerInfo) {
-              updatedPlayer = { ...state.currentPlayer, ...myPlayerInfo };
-            } else {
-              console.warn(`[GameStore] Current player ${state.currentPlayer.id} not found in updated players data.`);
-            }
-          }
+          // currentPlayer update is now handled solely by onPlayerListUpdated
+          console.log('[GameStore] Skipping currentPlayer update within gameStateUpdated.');
+          const updatedPlayer = state.currentPlayer; // Keep existing currentPlayer
 
           return {
             game: updatedGame,
-            currentRoom: updatedRoom,
-            currentPlayer: updatedPlayer,
+            currentRoom: updatedRoom, // updatedRoom is just state.currentRoom here
+            currentPlayer: updatedPlayer, // No change to currentPlayer here
           };
         });
       });

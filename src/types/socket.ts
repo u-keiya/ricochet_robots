@@ -20,6 +20,7 @@ export interface ServerToClientEvents {
   solutionAttemptResult: (payload: { success: boolean; scores: Record<string, number>; nextPlayerId?: string }) => void; // 解法試行の結果 (スコア全体を返す)
   gameOver: (payload: { winner: Player | null; scores: Record<string, number> }) => void; // ゲーム終了と勝者、最終スコア
   // --- ここまで ---
+  playerListUpdated: (payload: { players: Player[] }) => void; // プレイヤーリスト全体の更新 (サーバー形式に合わせる)
 }
 
 export interface ClientToServerEvents {

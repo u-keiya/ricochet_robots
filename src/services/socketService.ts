@@ -191,6 +191,11 @@ public leaveRoom(roomId: string): void {
     this.registerEventListener('roomListUpdated', callback);
   }
 
+  // Add listener for player list updates
+  public onPlayerListUpdated(callback: (payload: { players: Player[] }) => void): void { // Update callback type to match server payload
+    this.registerEventListener('playerListUpdated', callback as ServerToClientEvents['playerListUpdated']); // Cast for registerEventListener
+  }
+
   public onError(callback: ServerToClientEvents['error']): void {
     this.registerEventListener('error', callback);
   }
