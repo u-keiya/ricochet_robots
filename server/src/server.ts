@@ -139,7 +139,15 @@ io.on('connection', (socket: Socket) => {
           io.to(roomId).emit('playerListUpdated', { players: Array.from(room.players.values()) });
 
           // 参加したプレイヤーにルーム情報を送信
-          socket.emit('roomJoined', room);
+          // Map をプレーンオブジェクトに変換
+          const playersObject = Object.fromEntries(room.players.entries());
+          // 送信するルーム情報を作成 (元の room オブジェクトを変更しないようにコピー、gameManager は除外)
+          const roomToSend = {
+            ...room,
+            players: playersObject,
+            gameManager: undefined, // クライアントには不要なため除外
+          };
+          socket.emit('roomJoined', roomToSend); // 変換後のオブジェクトを送信
 
           // ゲームが進行中の場合、参加したプレイヤーに現在のゲーム状態を送信
           const gameState = room.gameManager.getGameState();
