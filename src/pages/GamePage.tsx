@@ -318,20 +318,19 @@ const GamePage: FC = () => {
     // TODO: もっと良いローディング表示/エラー表示
     return <div className="p-4 text-center">ルーム情報を読み込み中...</div>;
   }
-  // playersInfo をオブジェクトから配列に変換 (game と playersInfo が存在する場合)
-  // Player オブジェクトの他の情報 (connected など) も必要なので、currentRoom.players とマージする
-  const playersArray = game?.playersInfo
-    ? Object.entries(game.playersInfo).map(([id, info]) => ({
-        id,
-        name: info.name,
-        // currentRoom.players から他の情報を取得 (存在しない場合のデフォルト値も考慮)
-        connected: currentRoom.players[id]?.connected ?? false,
-        isHost: currentRoom.players[id]?.isHost ?? false,
-        roomId: currentRoom.players[id]?.roomId ?? null,
-        score: game.playerStates?.[id]?.score ?? 0, // スコアは game.playerStates から取得
-        // lastConnected は表示には不要なため省略
+  // playersInfo をオブジェクトから配列に変換
+  // game.playersInfo がなくても currentRoom.players からリストを生成するように修正
+  const playersArray = currentRoom?.players
+    ? Object.values(currentRoom.players).map((player) => ({
+        id: player.id,
+        name: player.name, // currentRoom.players に name がある前提 (Player 型に含まれるはず)
+        connected: player.connected,
+        isHost: player.isHost,
+        roomId: player.roomId,
+        // スコアは game state があればそこから、なければ 0
+        score: game?.playerStates?.[player.id]?.score ?? 0,
       }))
-    : [];
+    : []; // currentRoom.players がなければ空配列
 
   // ボードのスケーリング計算 (SinglePlayerPageから移植・調整)
   const getBoardScale = () => {
