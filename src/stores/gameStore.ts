@@ -88,12 +88,7 @@ const useGameStore = create<GameStore>((set, get) => ({
       });
 
       socketService.onRoomJoined((room) => {
-        // --- DEBUG ---
-        console.log('[DEBUG onRoomJoined] Received room object:', JSON.stringify(room, null, 2));
-        // --- END DEBUG ---
-
         // room オブジェクトと players プロパティが存在するかチェック
-        // room オブジェクトと players プロパティが存在するか、より詳細にチェック
         if (!room || typeof room !== 'object') {
           console.error('[GameStore] Received invalid room object in onRoomJoined:', room);
           return;
@@ -120,10 +115,6 @@ const useGameStore = create<GameStore>((set, get) => ({
           } else {
             // currentPlayer が null の場合、socketId を使って room.players から自分の情報を探す
             const socketId = get().socketId; // ストアから socketId を取得
-            // --- DEBUG ---
-            console.log(`[DEBUG onRoomJoined] Trying to find player for socketId: ${socketId}`);
-            console.log(`[DEBUG onRoomJoined] playersMap keys:`, Object.keys(playersMap));
-            // --- END DEBUG ---
             if (socketId && playersMap.hasOwnProperty(socketId)) {
               updatedPlayer = playersMap[socketId];
               console.log(`[GameStore onRoomJoined] Set currentPlayer based on socketId:`, updatedPlayer);
@@ -154,9 +145,6 @@ const useGameStore = create<GameStore>((set, get) => ({
 
       // Add listener for player list updates
       socketService.onPlayerListUpdated((payload) => { // 引数を payload に変更
-        // --- DEBUG LOGGING ---
-        // console.log('[DEBUG] Received payload in onPlayerListUpdated:', JSON.stringify(payload, null, 2)); // 必要なら復活
-        // --- END DEBUG LOGGING ---
         console.log('[GameStore] Received playerListUpdated event:', payload);
         set((state) => {
           if (!state.currentRoom) {
@@ -182,11 +170,6 @@ const useGameStore = create<GameStore>((set, get) => ({
               updatedPlayer = { ...state.currentPlayer, ...playersMap[currentId] };
             } else {
               // Key does not exist in the new map (player left?)
-              // --- DEBUG ---
-              console.log(`[DEBUG onPlayerListUpdated] Warning Triggered!`);
-              console.log(`[DEBUG onPlayerListUpdated] state.currentPlayer.id:`, state.currentPlayer?.id);
-              console.log(`[DEBUG onPlayerListUpdated] playersMap keys:`, Object.keys(playersMap));
-              // --- END DEBUG ---
               console.warn(`[GameStore] Current player ${currentId} not found in updated player list (playersMap keys: ${Object.keys(playersMap).join(', ')})`);
               // updatedPlayer は state.currentPlayer のまま (変更しない)
             }
