@@ -1,4 +1,5 @@
-import { Card, Position, RobotColor, TargetSymbol } from '../types/game';
+import { Card, Position, RobotColor } from '../types/game'; // Remove TargetSymbol from here
+import { TargetSymbol } from '../types/board'; // Import TargetSymbol from board types
 import { SYMBOLS, ROBOT_COLORS, SYMBOL_MAP } from '../utils/constants';
 
 // サーバーサイド用のカード定義。色は null (Vortex) の可能性がある
@@ -86,11 +87,10 @@ export class CardDeck {
     }
 
     // Card 型に合わせる (color が null の場合はどうするか？ -> Card 型の color を RobotColor | null にすべきか？)
-    // 一旦、Vortex の場合は color を特定の RobotColor (e.g., RED) にしてしまうか、Card 型を変更するか。
-    // ここでは Card 型を変更せず、便宜的に RED を使うことにする。（要検討）
+    // Card 型は color: RobotColor | null を許容するので、そのまま渡す
     const finalCard: Card = {
       ...cardBase,
-      color: cardBase.color ?? RobotColor.RED, // Vortex の場合は RED とする (要検討)
+      color: cardBase.color, // null の場合は null のまま
       position
     };
 

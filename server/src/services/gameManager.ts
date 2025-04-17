@@ -26,6 +26,11 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
     this.players = players;
     this.boardPatternIds = boardPatternIds;
     this.targetPositions = targetPositions; // Store targetPositions
+    // DEBUG LOG: Output all target positions
+    console.log("[GameManager DEBUG] Initial Target Positions:");
+    this.targetPositions.forEach((pos, key) => {
+      console.log(`  - ${key}: { x: ${pos.x}, y: ${pos.y} }`);
+    });
     this.cardDeck = new CardDeck(this.targetPositions); // Use stored targetPositions
     this.initialRobotPositions = this.generateRandomRobotPositions(); // Generate and store initial positions ONCE in constructor
     this.gameState = this.initializeGameState();
@@ -58,8 +63,6 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
       currentAttemptMoves: 0, // Initialize currentAttemptMoves
       playersInfo // Add playersInfo to the initial state
     };
-    console.log(`Card deck initialized with ${this.gameState.totalCards} cards. Initial positions set.`);
-    // gameState.robotPositions is already initialized using this.initialRobotPositions in the return statement above
   }
 
   // Helper function to check if a position is in the center 2x2 area
@@ -108,7 +111,7 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
         pos = { x: 0, y: ROBOT_COLORS.indexOf(color) }; // Simple offset fallback
         posKey = `${pos.x},${pos.y}`;
         // Ensure even fallback doesn't collide with previous fallbacks/successes
-        while(occupiedPositions.has(posKey)) {
+        while(occupiedPositions.has(posKey) || this.isCenterArea(pos.x, pos.y) || this.isTargetPosition(pos)) {
            pos.x = (pos.x + 1) % BOARD_SIZE;
            posKey = `${pos.x},${pos.y}`;
         }
@@ -324,19 +327,6 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
       throw new Error('No declaration found for player');
     }
 
-    // Increment the move count for this attempt *before* checking
-    const nextMoveCount = this.gameState.currentAttemptMoves + 1;
-    console.log(`[GameManager moveRobot] Player: ${playerId} attempting move ${nextMoveCount}/${declaration.moves}`);
-
-    // Check if the *next* move exceeds the declared moves
-    if (nextMoveCount > declaration.moves) {
-       console.warn(`[GameManager moveRobot FAIL] Player: ${playerId} exceeded declared moves (${declaration.moves}) with move ${nextMoveCount}. Failing solution attempt.`);
-       this.failCurrentSolution(); // Fail the attempt if moves are exceeded
-       return; // Stop further processing for this move event
-    }
-    // If not exceeding, update the state's move count
-    this.gameState.currentAttemptMoves = nextMoveCount;
-
     // Validate the path itself (e.g., check if moves are valid on the board)
     // TODO: Implement path validation logic if needed. For now, trust the client's path.
 
@@ -360,39 +350,55 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
       timestamp: Date.now()
     });
 
-    // Check if the move achieves the goal *after* updating the position and move count
+    // Increment move count *after* position update and history recording
+    this.gameState.currentAttemptMoves++;
+    const currentMoves = this.gameState.currentAttemptMoves; // Use a variable for clarity
+    const declaredMoves = declaration.moves;
+    console.log(`[GameManager moveRobot] Player: ${playerId} completed move ${currentMoves}/${declaredMoves}`);
+
+    // Check for goal *after* incrementing the move count
     const isGoal = this.checkGoal();
     console.log(`[GameManager moveRobot] Goal check result for Player ${playerId}: ${isGoal}`);
 
     if (isGoal) {
-      console.log(`[GameManager moveRobot SUCCESS] Player ${playerId} achieved the goal with robot ${robotColor} on move ${this.gameState.currentAttemptMoves}.`);
-      this.successCurrentSolution(); // This emits gameStateUpdated
+      // Check if the goal was achieved with the exact declared moves
+      if (currentMoves === declaredMoves) {
+        console.log(`[GameManager moveRobot SUCCESS] Player ${playerId} achieved the goal with robot ${robotColor} exactly on move ${currentMoves}.`);
+        this.successCurrentSolution(); // This emits gameStateUpdated
+      } else if (currentMoves < declaredMoves) {
+        // Goal achieved BUT with fewer moves than declared - this is a failure in Ricochet Robots rules
+        console.warn(`[GameManager moveRobot FAIL] Player ${playerId} achieved goal on move ${currentMoves}, which is less than declared moves (${declaredMoves}). Failing solution.`);
+        this.failCurrentSolution();
+      } else { // currentMoves > declaredMoves
+        // Goal achieved BUT exceeded declared moves (should ideally be caught earlier, but safety check)
+        console.warn(`[GameManager moveRobot FAIL] Player ${playerId} achieved goal on move ${currentMoves}, exceeding declared moves (${declaredMoves}). Failing solution.`);
+        this.failCurrentSolution();
+      }
     } else {
-      // If not goal, player continues their turn. Emit the updated state.
-      console.log(`[GameManager moveRobot] Player ${playerId} moved robot ${robotColor}. Goal not achieved. Current moves: ${this.gameState.currentAttemptMoves}/${declaration.moves}. Emitting state update.`);
-      this.emit('gameStateUpdated', this.getGameState()); // Emit state update after move
+      // Goal not achieved, check if moves exceeded (use > because the player might reach the goal on the exact declared move next)
+      if (currentMoves >= declaredMoves) {
+         console.warn(`[GameManager moveRobot FAIL] Player ${playerId} did not achieve goal within declared moves (${declaredMoves}). Failing solution attempt.`);
+         this.failCurrentSolution(); // Fail the attempt if moves are exceeded without reaching goal
+      } else {
+        // Goal not achieved, and moves not exceeded, continue turn
+        console.log(`[GameManager moveRobot] Player ${playerId} moved robot ${robotColor}. Goal not achieved. Current moves: ${currentMoves}/${declaredMoves}. Emitting state update.`);
+        this.emit('gameStateUpdated', this.getGameState()); // Emit state update after move
+      }
     }
-    // Player continues their turn until timer runs out or they succeed/fail explicitly
+    // Player continues their turn only if goal not met and moves not exceeded
   }
 
   private checkGoal(): boolean {
     const card = this.gameState.currentCard;
-    if (!card) {
-      console.warn("[checkGoal] No current card to check against.");
-      return false; // No card, no goal
+    if (!card || !card.position) { // Check if card and its position exist
+      console.warn("[checkGoal] No current card or card position to check against.");
+      return false; // No card or position, no goal
     }
 
-    // Construct the key for targetPositions map (e.g., "GEAR_RED", "VORTEX-null")
-    const targetKey = card.color ? `${card.symbol}-${card.color}` : `${card.symbol}-null`; // Use '-' separator for colored targets
-    const targetPosition = this.targetPositions.get(targetKey);
-
-    if (!targetPosition) {
-      // This might happen if the card deck has cards for targets not on the current board setup
-      console.warn(`[checkGoal] Target position not found for key: ${targetKey}`);
-      return false;
-    }
-
+    const targetPosition = card.position; // Use position directly from the card
     const robotPositions = this.gameState.robotPositions;
+
+    console.log(`[checkGoal] Checking goal for card: ${card.symbol}${card.color ? ` (${card.color})` : ' (Vortex)'} at (${targetPosition.x}, ${targetPosition.y})`);
 
     if (card.color === null) { // Vortex card - any robot can reach the target
       for (const color of ROBOT_COLORS) {
@@ -411,7 +417,7 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
       }
     }
 
-    // console.log(`[checkGoal] Goal not achieved for card ${targetKey} at (${targetPosition.x}, ${targetPosition.y}). Current positions: ${JSON.stringify(robotPositions)}`);
+    // console.log(`[checkGoal] Goal not achieved for card at (${targetPosition.x}, ${targetPosition.y}). Current positions: ${JSON.stringify(robotPositions)}`);
     return false; // Goal not met
   }
 

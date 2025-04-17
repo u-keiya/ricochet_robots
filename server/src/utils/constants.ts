@@ -1,30 +1,14 @@
-import { TargetSymbol, RobotColor } from '../types/game'; // Import both enums
+import { TargetSymbol } from '../types/board';
+import { RobotColor } from '../types/game';
 
-// TargetSymbol に対応する表示文字のマッピング
-// Use enum members as keys
-export const SYMBOL_MAP: { [key in TargetSymbol]: string } = {
-  [TargetSymbol.GEAR]: '⚙️',
-  [TargetSymbol.MOON]: '🌙',
-  [TargetSymbol.PLANET]: '🪐',
-  [TargetSymbol.STAR]: '⭐',
-  [TargetSymbol.VORTEX]: '🌀',
+// ターゲットシンボルのマッピング
+export const SYMBOL_MAP: Record<TargetSymbol, string> = {
+  moon: '☽',     // 三日月
+  gear: '⚙',     // 歯車
+  saturn: '🪐',    // 土星
+  cross: '✚',     // 十字
+  vortex: '✧',    // 星型の渦
 };
 
-// TargetSymbol の配列 (vortexを含む)
-// Use enum members directly
-export const SYMBOLS: TargetSymbol[] = [
-  TargetSymbol.GEAR,
-  TargetSymbol.MOON,
-  TargetSymbol.PLANET,
-  TargetSymbol.STAR,
-  TargetSymbol.VORTEX,
-];
-
-// ロボットの色の配列
-// Use enum members directly
-export const ROBOT_COLORS: RobotColor[] = [
-  RobotColor.RED,
-  RobotColor.BLUE,
-  RobotColor.GREEN,
-  RobotColor.YELLOW,
-];
+export const SYMBOLS: TargetSymbol[] = ['moon', 'gear', 'saturn', 'cross', 'vortex'];
+export const ROBOT_COLORS: RobotColor[] = ['red', 'blue', 'yellow', 'green'];
