@@ -2,7 +2,14 @@ import { Room, RoomOptions, RoomSummary } from '../types/room'; // GameStatus �
 import { Player } from '../types/player';
 import { v4 as uuidv4 } from 'uuid';
 import { GameManager } from './gameManager';
-import { DEFAULT_GAME_RULES, GamePhase, Position, TargetSymbol, RobotColor } from '../types/game'; // Import necessary types
+// Import necessary types from game.ts (RobotColor is now there)
+import { DEFAULT_GAME_RULES, GamePhase, Position, RobotColor } from '../types/game';
+// Import TargetSymbol from board.ts
+import { TargetSymbol } from '../types/board';
+// Import board generation utilities
+import BoardLoader from '../utils/boardLoader';
+import { createCompositeBoardPattern } from '../utils/boardRotation';
+import { generateBoardFromPattern, extractTargetPositions } from '../utils/boardGenerator'; // Assuming extractTargetPositions exists or will be created
 
 // Define TargetPositions type locally or import if defined elsewhere
 type TargetPositions = Map<string, Position>;
@@ -20,35 +27,35 @@ export class RoomManager {
     hostPlayer.isHost = true;
     hostPlayer.roomId = roomId; // roomIdも設定
     // GameManager を先にインスタンス化
-    // TODO: Implement server-side BoardLoader to get dynamic patterns
-    const boardPatternIds = ['A1', 'B2', 'C3', 'D3']; // Placeholder: Use fixed patterns for now
-    // TODO: Replace this placeholder with actual target positions derived from board generation
-    const targetPositions: TargetPositions = new Map<string, Position>([
-        // Vortex (color null)
-        [`${TargetSymbol.VORTEX}-null`, { x: 7, y: 7 }], // Center
-        // Red Targets
-        [`${TargetSymbol.GEAR}-${RobotColor.RED}`, { x: 0, y: 5 }],
-        [`${TargetSymbol.MOON}-${RobotColor.RED}`, { x: 5, y: 0 }],
-        [`${TargetSymbol.PLANET}-${RobotColor.RED}`, { x: 10, y: 15 }],
-        [`${TargetSymbol.STAR}-${RobotColor.RED}`, { x: 15, y: 10 }],
-        // Blue Targets
-        [`${TargetSymbol.GEAR}-${RobotColor.BLUE}`, { x: 1, y: 10 }],
-        [`${TargetSymbol.MOON}-${RobotColor.BLUE}`, { x: 6, y: 5 }],
-        [`${TargetSymbol.PLANET}-${RobotColor.BLUE}`, { x: 11, y: 1 }],
-        [`${TargetSymbol.STAR}-${RobotColor.BLUE}`, { x: 14, y: 6 }],
-        // Green Targets
-        [`${TargetSymbol.GEAR}-${RobotColor.GREEN}`, { x: 2, y: 15 }],
-        [`${TargetSymbol.MOON}-${RobotColor.GREEN}`, { x: 7, y: 11 }],
-        [`${TargetSymbol.PLANET}-${RobotColor.GREEN}`, { x: 12, y: 7 }],
-        [`${TargetSymbol.STAR}-${RobotColor.GREEN}`, { x: 13, y: 12 }],
-        // Yellow Targets
-        [`${TargetSymbol.GEAR}-${RobotColor.YELLOW}`, { x: 3, y: 3 }],
-        [`${TargetSymbol.MOON}-${RobotColor.YELLOW}`, { x: 8, y: 8 }],
-        [`${TargetSymbol.PLANET}-${RobotColor.YELLOW}`, { x: 13, y: 13 }],
-        [`${TargetSymbol.STAR}-${RobotColor.YELLOW}`, { x: 15, y: 2 }],
-    ]);
+    // --- Dynamic Board and Target Position Generation ---
+    const loader = BoardLoader.getInstance(); // Assuming BoardLoader is a Singleton or similar
+    // TODO: Implement dynamic selection logic if needed
+    // Use the correct ID format expected by getBoardById (e.g., "board_A1")
+    const targetBoardIds = ['board_A1', 'board_B2', 'board_C3', 'board_D3']; // Placeholder IDs, adjust if needed
+    const selectedBoardPatterns = loader.getBoardPatternsByIds(targetBoardIds);
 
-    const gameManager = new GameManager([hostPlayer], boardPatternIds, targetPositions, DEFAULT_GAME_RULES);
+    if (selectedBoardPatterns.length !== targetBoardIds.length) { // Check against the requested IDs count
+      throw new Error('Could not load all required board patterns.');
+    }
+
+    const compositePattern = createCompositeBoardPattern(
+      selectedBoardPatterns[0],
+      selectedBoardPatterns[1],
+      selectedBoardPatterns[2],
+      selectedBoardPatterns[3]
+    );
+
+    // Generate the full board object (including cells with target info)
+    const generatedBoard = generateBoardFromPattern(compositePattern);
+
+    // Extract target positions from the generated board
+    const targetPositions = extractTargetPositions(generatedBoard);
+    // --- End Dynamic Generation ---
+
+    // Use the dynamically generated targetPositions, but format boardPatternIds for the client
+    // Extract the short ID (e.g., "A1") from the full boardId ("board_A1")
+    const boardPatternIdsForClient = selectedBoardPatterns.map(p => p.boardId.replace('board_', ''));
+    const gameManager = new GameManager([hostPlayer], boardPatternIdsForClient, targetPositions, DEFAULT_GAME_RULES);
     const room: Room = {
       id: roomId,
       name: options.name,

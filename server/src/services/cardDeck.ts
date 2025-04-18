@@ -1,8 +1,14 @@
-import { Card, Position, RobotColor, TargetSymbol } from '../types/game';
-import { SYMBOLS, ROBOT_COLORS, SYMBOL_MAP } from '../utils/constants';
+import { Card, Position, RobotColor } from '../types/game';
+// Import TargetSymbol from board.ts
+import { TargetSymbol } from '../types/board';
+import { SYMBOLS, ROBOT_COLORS } from '../utils/constants'; // SYMBOL_MAP is not used
 
 // サーバーサイド用のカード定義。色は null (Vortex) の可能性がある
-type ServerCard = Omit<Card, 'position' | 'color'> & { color: RobotColor | null };
+// Use TargetSymbol from board.ts
+type ServerCard = {
+  color: RobotColor | null;
+  symbol: TargetSymbol;
+};
 // ターゲットの位置情報マップ: 'symbol-color' or 'symbol-null' -> Position
 type TargetPositions = Map<string, Position>;
 
@@ -24,10 +30,12 @@ export class CardDeck {
 
     // 通常のカード：各ロボットの色と通常シンボル（Vortex以外）の組み合わせ
     ROBOT_COLORS.forEach(color => {
-      SYMBOLS.filter(symbol => symbol !== TargetSymbol.VORTEX).forEach(symbol => {
+      // Use string literal 'vortex'
+      SYMBOLS.filter(symbol => symbol !== 'vortex').forEach(symbol => {
         // ターゲット位置が存在するか確認
         const targetKey = `${symbol}-${color}`;
         if (this.targetPositions.has(targetKey)) {
+            // Ensure the pushed object matches ServerCard type
             cards.push({ color, symbol });
         } else {
             console.warn(`Target position not found for ${targetKey}, skipping card generation.`);
@@ -36,11 +44,13 @@ export class CardDeck {
     });
 
     // 特殊カード：Vortexシンボル (色は null)
-    const vortexKey = `${TargetSymbol.VORTEX}-null`;
+    // Use string literal 'vortex'
+    const vortexKey = `vortex-null`;
     if (this.targetPositions.has(vortexKey)) {
         cards.push({
           color: null, // Vortexカードは色を持たない
-          symbol: TargetSymbol.VORTEX
+          // Use string literal 'vortex'
+          symbol: 'vortex'
         });
     } else {
         console.warn(`Target position not found for ${vortexKey}, skipping vortex card generation.`);
@@ -77,6 +87,7 @@ export class CardDeck {
     }
 
     const cardBase = this.cards[this.currentIndex++];
+    // getTargetPosition expects symbol type from board.ts
     const position = this.getTargetPosition(cardBase.color, cardBase.symbol);
 
     if (!position) {
@@ -86,11 +97,12 @@ export class CardDeck {
     }
 
     // Card 型に合わせる (color が null の場合はどうするか？ -> Card 型の color を RobotColor | null にすべきか？)
-    // 一旦、Vortex の場合は color を特定の RobotColor (e.g., RED) にしてしまうか、Card 型を変更するか。
-    // ここでは Card 型を変更せず、便宜的に RED を使うことにする。（要検討）
+    // Card 型は color: RobotColor | null を許容するので、そのまま渡す
+    // Construct the final Card object for the game state.
+    // Card type from game.ts uses TargetSymbol from board.ts now.
     const finalCard: Card = {
-      ...cardBase,
-      color: cardBase.color ?? RobotColor.RED, // Vortex の場合は RED とする (要検討)
+      color: cardBase.color, // null の場合は null のまま
+      symbol: cardBase.symbol, // Should be compatible now
       position
     };
 

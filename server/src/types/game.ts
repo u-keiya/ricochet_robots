@@ -1,4 +1,6 @@
 import { Player } from './player';
+// Import TargetSymbol from board.ts
+import { TargetSymbol as BoardTargetSymbol } from './board';
 
 export interface Position {
   x: number;
@@ -14,14 +16,14 @@ export enum RobotColor {
   // COLORS = 'colors' // Example, adjust if needed
 }
 
-// Define TargetSymbol enum based on client-side src/types/board.ts
-export enum TargetSymbol {
-  GEAR = 'gear',
-  MOON = 'moon',
-  PLANET = 'planet',
-  STAR = 'star',
-  VORTEX = 'vortex',
-}
+// Remove the conflicting TargetSymbol enum definition
+// export enum TargetSymbol {
+//   GEAR = 'gear',
+//   MOON = 'moon',
+//   PLANET = 'planet',
+//   STAR = 'star',
+//   VORTEX = 'vortex',
+// }
 
 export enum GamePhase {
   WAITING = 'waiting', // Waiting for players to join/ready
@@ -34,7 +36,8 @@ export enum GamePhase {
 export interface Card {
   // Allow null for color to represent vortex or multi-color targets
   color: RobotColor | null;
-  symbol: TargetSymbol; // Use the TargetSymbol enum
+  // Use the TargetSymbol type imported from board.ts
+  symbol: BoardTargetSymbol;
   position: Position;
 }
 
