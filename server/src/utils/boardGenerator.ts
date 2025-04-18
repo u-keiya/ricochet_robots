@@ -1,5 +1,33 @@
-import { Board, Cell, Robot, Position, RobotColor } from '../types/game';
-import { BoardPattern, TargetSymbol, WallDirection } from '../types/board';
+// Assuming Board, Cell, Robot, Position might be defined in board.ts or need creation/copying
+// For now, let's assume they might be related to board types or need adjustment later.
+// We will import necessary types primarily from board.ts and enums.ts
+import { Position } from '../types/game'; // Keep Position from game.ts for now
+import { BoardPattern, TargetSymbol, WallDirection, TargetColor } from '../types/board';
+import { RobotColor } from '../types/enums'; // Import RobotColor from enums - Temporarily commented out
+
+// Define Cell and Robot types locally if not available elsewhere, based on usage
+// This is a temporary measure until the correct source is identified or created.
+interface Cell {
+  type: string;
+  walls: Record<WallDirection, boolean>;
+  isTarget?: boolean;
+  targetColor?: TargetColor;
+  targetSymbol?: TargetSymbol; // Use TargetSymbol type alias
+  reflector?: { color: RobotColor; direction: string }; // Assuming ReflectorDirection is string for now
+}
+
+interface Robot {
+  color: RobotColor;
+  position: Position;
+}
+
+// Define Board type locally based on usage
+interface Board {
+  cells: Cell[][];
+  robots: Robot[];
+  size: number;
+}
+
 
 const createEmptyCell = (): Cell => ({
   type: 'empty',
@@ -69,8 +97,9 @@ const placeTargets = (board: Board, pattern: BoardPattern): void => {
   pattern.targets.forEach(target => {
     const cell = board.cells[target.y][target.x];
     cell.isTarget = true;
+    // Store the original TargetColor and TargetSymbol
     cell.targetColor = target.color;
-    cell.targetSymbol = getTargetSymbol(target.symbol);
+    cell.targetSymbol = target.symbol; // Store the symbol directly
   });
 };
 
@@ -122,4 +151,24 @@ export const generateBoardFromPattern = (pattern: BoardPattern): Board => {
   placeRobots(board);
 
   return board;
+};
+// Function to extract target positions into the required Map format
+export const extractTargetPositions = (board: Board): Map<string, Position> => {
+  const targetPositions = new Map<string, Position>();
+
+  for (let y = 0; y < board.size; y++) {
+    for (let x = 0; x < board.size; x++) {
+      const cell = board.cells[y][x];
+      if (cell.isTarget && cell.targetSymbol) {
+        // Determine the color key part: use the specific RobotColor or 'null' for 'colors' (vortex)
+        const colorKey = cell.targetColor === 'colors' ? 'null' : cell.targetColor;
+        // Construct the key using the TargetSymbol type alias value
+        const targetKey = `${cell.targetSymbol}-${colorKey}`;
+        targetPositions.set(targetKey, { x, y });
+      }
+    }
+  }
+
+  console.log("[boardGenerator] Extracted Target Positions:", targetPositions);
+  return targetPositions;
 };

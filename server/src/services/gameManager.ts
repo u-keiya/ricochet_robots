@@ -1,5 +1,8 @@
 import { EventEmitter } from 'events';
-import { Card, Declaration, GamePhase, GameRules, MultiplayerGameState, PlayerGameState, Position, RobotColor, DEFAULT_GAME_RULES, TargetSymbol } from '../types/game';
+// Remove TargetSymbol from this import
+import { Card, Declaration, GamePhase, GameRules, MultiplayerGameState, PlayerGameState, Position, RobotColor, DEFAULT_GAME_RULES } from '../types/game';
+// Import TargetSymbol from board types
+import { TargetSymbol } from '../types/board';
 import { Player } from '../types/player';
 import { CardDeck } from './cardDeck'; // Import CardDeck
 import { ROBOT_COLORS } from '../utils/constants'; // Import ROBOT_COLORS

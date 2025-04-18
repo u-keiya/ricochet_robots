@@ -11,4 +11,5 @@ export const SYMBOL_MAP: Record<TargetSymbol, string> = {
 };
 
 export const SYMBOLS: TargetSymbol[] = ['moon', 'gear', 'saturn', 'cross', 'vortex'];
-export const ROBOT_COLORS: RobotColor[] = ['red', 'blue', 'yellow', 'green'];
+// Initialize with enum members from game.ts RobotColor
+export const ROBOT_COLORS: RobotColor[] = [RobotColor.RED, RobotColor.BLUE, RobotColor.YELLOW, RobotColor.GREEN];

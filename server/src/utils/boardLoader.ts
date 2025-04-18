@@ -1,6 +1,6 @@
 import { BoardPattern, RawBoardSet, RawBoardPattern } from '../types/board';
 import { BoardValidator } from './boardValidator';
-import boardData from '../assets/boards.json';
+import boardData from '../../assets/boards.json';
 
 export class BoardLoader {
   private static instance: BoardLoader;
@@ -62,6 +62,22 @@ export class BoardLoader {
     }
 
     return board;
+  }
+
+  // 指定されたIDの配列に対応するボードパターンを取得
+  public getBoardPatternsByIds(boardIds: string[]): BoardPattern[] {
+    const patterns: BoardPattern[] = [];
+    boardIds.forEach(id => {
+      const board = this.getBoardById(id);
+      if (board) {
+        patterns.push(board);
+      } else {
+        console.warn(`Board pattern with ID ${id} not found.`);
+        // エラー処理: 見つからない場合に例外を投げるか、空配列を返すかなど
+        // ここでは見つかったものだけを返す
+      }
+    });
+    return patterns;
   }
 
   // 各パターンから1つずつランダムに選んで組み合わせる
