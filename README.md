@@ -1,54 +1,135 @@
-# React + TypeScript + Vite
+# Ricochet Robots
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## まえがき
 
-Currently, two official plugins are available:
+このリポジトリはAIによって作られました。
+指示出しを含むAIの扱いに不慣れであったこともあり、最終的にできたコードも無駄が多かったり、きれいではない部分があるのではないかなと思います。
+リファクタリングによってきれいにすることも可能だと思いますが、あえて手を加えずにそのまま残しておくことにします。
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+=== ここからAI ===
 
-## Expanding the ESLint configuration
+## 概要
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+これは、オンラインで複数プレイヤーが対戦できるリコシェロボットゲームのリポジトリです。
+このプロジェクトの目的は、複数のプレイヤーがリアルタイムでリコシェロボットをプレイできるようにし、ゲームの競技性と社交性を高めることです。プレイヤーはルームを作成・参加し、同じ盤面とターゲットで最小手数を競い合います。
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## 機能
+
+- **ルーム管理:**
+    - ルーム作成（名前、パスワード設定可能）
+    - ルーム参加（パスワード認証）
+    - ルーム一覧表示（現在のプレイヤー数表示）
+    - 最大8プレイヤーまで参加可能
+- **ゲームフロー:**
+    - ホストプレイヤーによるゲーム開始制御
+    - 全プレイヤー共通のボードとターゲットカード
+    - 同時手数宣言フェーズ
+    - 最小手数宣言者による解法提示
+    - 解法失敗時の権利移行
+- **スコアリング:**
+    - 正解時のポイント獲得（宣言手数に基づく）
+    - 失敗時のペナルティ
+    - ゲーム終了時の最高得点者が勝利
+- **プレイヤー管理:**
+    - プレイヤー名の設定
+    - プレイヤーリスト表示（スコア、オンライン状態）
+    - 接続状態の監視
+    - 途中参加・離脱への対応
+
+## 技術スタック
+
+- **フロントエンド:** React, TypeScript, Tailwind CSS, Vite, Zustand, Socket.IO Client
+- **バックエンド:** Node.js, Express, TypeScript, Socket.IO, Winston
+- **データベース:** なし（インメモリ状態管理）
+
+## セットアップと実行
+
+### 1. リポジトリのクローン
+
+```bash
+git clone https://github.com/your-username/ricochet_robots.git
+cd ricochet_robots
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. 依存関係のインストール
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+**フロントエンド:**
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+```bash
+npm install
 ```
+
+**バックエンド:**
+
+```bash
+cd server
+npm install
+cd ..
+```
+
+### 3. 環境変数の設定
+
+プロジェクトルートと `server` ディレクトリに `.env.development` ファイルが存在します。必要に応じてこれらのファイルを編集してください。通常、開発環境用の設定が含まれています。
+
+例:
+- `server/.env.development` にはサーバーのポート番号などが含まれる可能性があります。
+
+### 4. 開発サーバーの起動
+
+**バックエンドサーバー:**
+
+```bash
+cd server
+npm run dev
+```
+
+**フロントエンド開発サーバー:**
+
+(別のターミナルを開いて)
+
+```bash
+npm run dev
+```
+
+これにより、フロントエンドが `http://localhost:5173` (デフォルトのViteポート) などで、バックエンドサーバーが指定されたポート (例: `server/.env.development` で設定されたポート) で起動します。ブラウザでフロントエンドのURLにアクセスしてゲームを開始できます。
+
+## ビルド
+
+フロントエンドのプロダクションビルドを作成するには:
+
+```bash
+npm run build
+```
+
+バックエンドのビルドを作成するには:
+
+```bash
+cd server
+npm run build
+```
+
+## テスト
+
+バックエンドのテストを実行するには:
+
+```bash
+cd server
+npm run test
+```
+
+## Lint と Format
+
+コードの Lint チェックとフォーマットを行うには:
+
+**フロントエンド:**
+
+```bash
+npm run lint
+```
+
+**バックエンド:**
+
+```bash
+cd server
+npm run lint
+npm run format
