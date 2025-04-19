@@ -117,3 +117,20 @@
   - function name: GamePage (playersArray creation logic)
   - short description: (Issue #77 Fix) Modified the logic for creating `playersArray` to generate the list from `currentRoom.players` even when `game.playersInfo` is not yet available (before game start), ensuring the player list is visible upon joining the room.
   - input / output: N/A
+---
+file name: server/src/utils/boardGenerator.ts
+function name: extractTargetPositions
+short description: Extracts target positions from a generated Board object and returns them as a Map.
+input / output: input: Board object, output: Map<string, Position> (key: 'symbol-color' or 'symbol-null')
+
+---
+file name: server/src/utils/boardLoader.ts
+function name: getBoardPatternsByIds
+short description: Retrieves an array of BoardPattern objects corresponding to the provided array of board IDs.
+input / output: input: string[] (array of board IDs like "board_A1"), output: BoardPattern[]
+---
+file name: src/pages/GamePage.tsx
+classname: N/A (Function Component)
+function name: GamePage
+short description: (Issue #87) Modified the display condition for the "Draw Card" button. It is now displayed only for the host player when the game phase is 'waiting', ensuring only the host can initiate the next round.
+input / output: N/A
