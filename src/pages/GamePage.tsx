@@ -513,7 +513,8 @@ const GamePage: FC = () => {
                   </button>
                 )}
                 {/* カードをめくるボタン (宣言フェーズで、まだカードがめくられていない場合) */}
-                {currentRoom.hostId === currentPlayer?.id && game && game.phase === 'waiting' && !game.currentCard && (
+                {/* カードをめくるボタン (ホスト用, waiting フェーズ) */}
+                {currentRoom.hostId === currentPlayer?.id && game && game.phase === 'waiting' && (
                   <button
                     className="btn btn-primary w-full disabled:opacity-50"
                     onClick={handleDrawCard}
