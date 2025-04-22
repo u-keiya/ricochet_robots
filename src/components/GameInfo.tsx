@@ -79,13 +79,13 @@ const GameInfo: FC<GameInfoProps> = ({
           <div className="bg-white shadow-lg rounded-lg p-4 flex items-center justify-center">
             <div className={`
               w-14 h-14 rounded-md 
-              ${currentCard.color === 'colors' 
-                ? 'bg-gradient-to-r from-purple-500 via-pink-500 to-red-500' 
+              ${currentCard.color === null // Vortexカードの判定
+                ? 'bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 animate-pulse' // ゲームボードと同じグラデーションとアニメーションを適用
                 : `bg-${currentCard.color}-500`
               }
               flex items-center justify-center
             `}>
-              <span className="text-6xl text-white font-bold">
+              <span className={`text-6xl ${currentCard.color === null ? 'text-white' : 'text-white'} font-bold`}> {/* 文字色は白のまま */}
                 {SYMBOL_MAP[currentCard.symbol]}
               </span>
             </div>
