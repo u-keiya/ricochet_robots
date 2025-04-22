@@ -363,7 +363,7 @@ const GamePage: FC = () => {
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex justify-between items-center">
             <h1 className="text-xl font-bold text-gray-800">
-              ルーム: {decodeURIComponent(roomId || '')}
+              ルーム: {currentRoom?.name} {/* ルームIDの代わりにルーム名を表示 */}
             </h1>
             <button
               className="btn bg-gray-300 text-gray-700 hover:bg-gray-400 disabled:opacity-50"
