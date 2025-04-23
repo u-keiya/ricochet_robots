@@ -51,7 +51,7 @@ const SinglePlayerPage: FC = () => {
         >
           <GameBoard 
             board={gameState.board}
-            isPlayerTurn={gameState.phase === 'playing'}
+            isPlayerTurn={gameState.phase === 'solution'} // フェーズ名を 'solution' に修正
             onRobotMove={moveRobot}
           />
         </div>
@@ -63,7 +63,9 @@ const SinglePlayerPage: FC = () => {
         style={{ width: `${SIDE_PANEL_WIDTH}px` }}
       >
         <GameInfo
-          score={gameState.singlePlayer.score}
+          // score プロパティを削除
+          scores={{ player1: gameState.singlePlayer.score }} // scores プロパティを追加
+          players={{ player1: { name: 'あなた' } }} // players プロパティを追加
           moveCount={gameState.singlePlayer.moveCount}
           declaredMoves={gameState.singlePlayer.declaredMoves}
           timer={gameState.singlePlayer.timer}
@@ -74,9 +76,19 @@ const SinglePlayerPage: FC = () => {
           phase={gameState.phase}
         />
 
+        {/* カードをめくるボタン */}
+        {(gameState.phase === 'waiting' || gameState.phase === 'finished') && remainingCards > 0 && (
+          <button
+            className="mt-auto mb-4 py-2 px-4 rounded bg-blue-500 hover:bg-blue-600 text-white transition-colors" // mt-auto で一番下に配置
+            onClick={drawNextCard}
+          >
+            カードをめくる ({remainingCards})
+          </button>
+        )}
+
         {/* ホームに戻るボタン */}
         <button
-          className="mt-6 py-2 px-4 rounded bg-gray-200 hover:bg-gray-300 transition-colors"
+          className="py-2 px-4 rounded bg-gray-200 hover:bg-gray-300 transition-colors" // mt-6 を削除
           onClick={() => navigate('/')}
         >
           ホームに戻る
