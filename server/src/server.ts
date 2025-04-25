@@ -367,6 +367,46 @@ io.on('connection', (socket: Socket) => {
       socket.emit('error', { message });
     }
   });
+// resetGame イベントハンドラを追加
+  socket.on('resetGame', ({ roomId }: { roomId: string }) => {
+    try {
+      const playerId = socket.id;
+      const player = sessions.get(playerId);
+
+      if (!player) {
+        throw new Error('Player session not found.');
+      }
+
+      const room = roomManager.getRoom(roomId);
+      if (!room) {
+        throw new Error('Room not found');
+      }
+
+      // ホストのみがリセットを実行可能
+      if (room.hostId !== playerId) {
+        throw new Error('Only the host can reset the game');
+      }
+
+      // ゲームが終了フェーズ (FINISHED) であることを確認 (任意だが推奨)
+      // if (room.gameState?.phase !== GamePhase.FINISHED) {
+      //   throw new Error('Game must be finished before resetting');
+      // }
+
+      logger.info(`resetGame event received for room ${roomId} from host ${player.name}`);
+
+      const gameManager = room.gameManager;
+      gameManager.resetGame(); // GameManager の resetGame メソッドを呼び出す
+
+      // gameStateUpdated は GameManager の resetGame 内部で emit される
+
+      logger.info(`Game reset successfully in room ${roomId}.`);
+
+    } catch (error) {
+      logger.error(`Error in resetGame for room ${roomId}:`, error);
+      const message = error instanceof Error ? error.message : 'Failed to reset game';
+      socket.emit('error', { message });
+    }
+  });
 
 });
 

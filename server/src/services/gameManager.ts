@@ -605,4 +605,42 @@ export class GameManager extends EventEmitter { // EventEmitter を継承
       this.timerInterval = undefined;
     }
   }
+public resetGame(): void {
+    console.log("[GameManager] Resetting game...");
+    this.cleanup(); // Clear any existing timers
+
+    // 1. Generate new initial robot positions
+    this.initialRobotPositions = this.generateRandomRobotPositions();
+    console.log("[GameManager] Generated new initial robot positions:", this.initialRobotPositions);
+
+    // 2. Create a new card deck with the existing target positions (re-shuffles)
+    this.cardDeck = new CardDeck(this.targetPositions);
+    console.log(`[GameManager] Created new card deck. Total cards: ${this.cardDeck.getTotalCards()}`);
+
+    // 3. Reset player scores and states
+    Object.values(this.gameState.playerStates).forEach(state => {
+      state.score = 0;
+      state.declarations = []; // Clear previous declarations
+      state.isReady = false;   // Reset readiness if used
+    });
+    console.log("[GameManager] Player scores and states reset.");
+
+    // 4. Reset game state properties
+    this.gameState.phase = GamePhase.WAITING;
+    this.gameState.currentCard = undefined;
+    this.gameState.remainingCards = this.cardDeck.getRemaining();
+    this.gameState.totalCards = this.cardDeck.getTotalCards();
+    this.gameState.declarations = {};
+    this.gameState.declarationOrder = undefined;
+    this.gameState.currentPlayer = undefined;
+    this.gameState.robotPositions = { ...this.initialRobotPositions }; // Use new initial positions
+    this.gameState.moveHistory = [];
+    this.gameState.currentAttemptMoves = 0;
+    this.gameState.timer = 0; // Reset timer display
+    this.gameState.timerStartedAt = Date.now(); // Reset timer start time
+    this.gameState.rankings = undefined; // Clear rankings from previous game
+
+    console.log("[GameManager] Game reset complete. Emitting updated state.");
+    this.emit('gameStateUpdated', this.getGameState()); // Emit the reset state
+  }
 }
