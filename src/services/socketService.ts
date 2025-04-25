@@ -156,6 +156,10 @@ public leaveRoom(roomId: string): void {
     this.emit('drawCard', { roomId, playerId }); // playerId をペイロードに追加
   }
 
+  public resetGame(roomId: string): void { // ゲームリセットメソッドを追加
+    this.emit('resetGame', { roomId });
+  }
+
   // --- Event Listeners ---
   private registerEventListener<Event extends keyof ServerToClientEvents>(
     event: Event,

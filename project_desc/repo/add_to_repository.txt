@@ -172,3 +172,23 @@ classname: N/A
 function name: 'resetGame' event handler
 short description: Handles the 'resetGame' event from the client (host only). Calls the `resetGame` method on the corresponding GameManager instance to start a new game in the room.
 input / output: input: { roomId: string } / output: Emits 'gameStateUpdated' via GameManager, or 'error' on failure.
+---
+file name: src/components/GameResultDisplay.tsx
+function name: GameResultDisplay (Component)
+short description: Added a "Play Again" button to the game result screen. Clicking this button sends a game reset event to the server.
+input / output: None (Calls useGameStore.resetGame internally)
+---
+file name: src/stores/gameStore.ts
+function name: resetGame (Action)
+short description: Action to send a game reset request to the server via socketService.
+input / output: None
+---
+file name: src/services/socketService.ts
+function name: resetGame (Method)
+short description: Method to send the 'resetGame' event to the server.
+input / output: input: roomId (string), output: None
+---
+file name: src/types/socket.ts
+short description: Added 'resetGame' event definition to ClientToServerEvents.
+input / output: None
+---

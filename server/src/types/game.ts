@@ -87,7 +87,7 @@ export interface GameRules {
 
 export const DEFAULT_GAME_RULES: GameRules = {
   maxPlayers: 6,
-  declarationTimeLimit: 60,  // seconds
+  declarationTimeLimit: 6,  // seconds
   solutionTimeLimit: 120,     // seconds
   minMoves: 1,
   maxMoves: 99,

@@ -1,14 +1,21 @@
 import React, { FC } from 'react';
 import useGameStore from '../stores/gameStore';
 import { Player } from '../types/player'; // Player型をインポート
+import { Room } from '../types/room'; // Room型をインポート (追加)
 
 interface GameResultDisplayProps {
   players: Player[]; // ルーム内の全プレイヤー情報
   onLeaveRoom: () => void; // 退室処理用コールバック
+  currentPlayer: Player | null; // 現在のプレイヤー情報を追加
+  currentRoom: Room | null; // 現在のルーム情報を追加
 }
 
-const GameResultDisplay: FC<GameResultDisplayProps> = ({ players, onLeaveRoom }) => {
-  const { game } = useGameStore();
+const GameResultDisplay: FC<GameResultDisplayProps> = ({ players, onLeaveRoom, currentPlayer, currentRoom }) => {
+  // resetGame アクションを取得
+  const { game, resetGame } = useGameStore();
+
+  // ホストかどうかを判定
+  const isHost = !!currentPlayer && !!currentRoom && currentPlayer.id === currentRoom.hostId;
 
   if (!game || game.phase !== 'finished' || !game.rankings) {
     return null; // ゲーム終了フェーズでない、またはランキング情報がない場合は何も表示しない
@@ -48,12 +55,21 @@ const GameResultDisplay: FC<GameResultDisplayProps> = ({ players, onLeaveRoom })
         ))}
       </div>
 
-      <button
-        className="btn btn-secondary mt-6 w-full sm:w-auto"
-        onClick={onLeaveRoom}
-      >
-        ルームを出る
-      </button>
+      <div className="flex flex-col sm:flex-row justify-center gap-4 mt-6">
+        <button
+          className="btn btn-primary w-full sm:w-auto disabled:opacity-50" // disabled スタイルを追加
+          onClick={resetGame} // resetGame アクションを呼び出す
+          disabled={!isHost} // ホストでない場合は無効化
+        >
+          もう一度プレイ {isHost ? '' : '(ホストのみ)'} {/* ホストでない場合に注釈を追加 */}
+        </button>
+        <button
+          className="btn btn-secondary w-full sm:w-auto"
+          onClick={onLeaveRoom}
+        >
+          ルームを出る
+        </button>
+      </div>
     </div>
   );
 };

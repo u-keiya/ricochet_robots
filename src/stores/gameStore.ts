@@ -53,6 +53,7 @@ interface GameStore {
   declareMoves: (moves: number) => void;
   moveRobot: (robotColor: RobotColor, path: Position[]) => void; // pathを受け取るように変更
   drawCard: () => void; // カードを引くアクションを追加
+  resetGame: () => void; // ゲームをリセットするアクションを追加
   // --- ここまで ---
 }
 
@@ -432,6 +433,24 @@ const useGameStore = create<GameStore>((set, get) => ({
       socketService.drawCard(currentRoom.id, currentPlayer.id); // currentPlayer.id を追加
     } else {
       console.error('[GameStore] Cannot draw card without being in a room or having player info.');
+    }
+  },
+  // --- ここまで ---
+
+  // --- ゲームリセットアクションの実装 ---
+  resetGame: () => {
+    const { currentRoom, currentPlayer, isConnected } = get();
+    if (!isConnected) {
+      console.error('[GameStore] Cannot reset game: Socket is not connected.');
+      return;
+    }
+    if (currentRoom && currentPlayer) {
+      const socketService = SocketService.getInstance();
+      console.log(`[GameStore] Player ${currentPlayer.id} requesting game reset for room: ${currentRoom.id}`);
+      // TODO: socketService に resetGame メソッドを追加する
+      socketService.resetGame(currentRoom.id); // socketService のメソッドを呼び出す
+    } else {
+      console.error('[GameStore] Cannot reset game without being in a room or having player info.');
     }
   },
   // --- ここまで ---
