@@ -192,3 +192,8 @@ file name: src/types/socket.ts
 short description: Added 'resetGame' event definition to ClientToServerEvents.
 input / output: None
 ---
+file name: server/src/services/roomManager.ts
+function name: createRoom
+short description: Modified room creation to use randomly selected board patterns (one from each set A, B, C, D) instead of fixed ones.
+input / output: N/A (Internal logic change)
+---

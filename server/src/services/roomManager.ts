@@ -29,13 +29,13 @@ export class RoomManager {
     // GameManager を先にインスタンス化
     // --- Dynamic Board and Target Position Generation ---
     const loader = BoardLoader.getInstance(); // Assuming BoardLoader is a Singleton or similar
-    // TODO: Implement dynamic selection logic if needed
-    // Use the correct ID format expected by getBoardById (e.g., "board_A1")
-    const targetBoardIds = ['board_A1', 'board_B2', 'board_C3', 'board_D3']; // Placeholder IDs, adjust if needed
-    const selectedBoardPatterns = loader.getBoardPatternsByIds(targetBoardIds);
+    // Get random board patterns using getRandomGameBoards
+    const selectedBoardPatterns = loader.getRandomGameBoards(); // Use the random selection method
 
-    if (selectedBoardPatterns.length !== targetBoardIds.length) { // Check against the requested IDs count
-      throw new Error('Could not load all required board patterns.');
+    if (selectedBoardPatterns.length !== 4) { // Ensure 4 patterns were selected (A, B, C, D)
+      // Handle error: Maybe fallback or throw a more specific error
+      console.error("Could not load exactly 4 random board patterns. Loaded:", selectedBoardPatterns.length);
+      throw new Error('Could not load all required random board patterns.');
     }
 
     const compositePattern = createCompositeBoardPattern(
