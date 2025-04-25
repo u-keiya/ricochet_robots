@@ -34,6 +34,7 @@ export interface ClientToServerEvents {
   declareMoves: (payload: { roomId: string; playerId: string; moves: number }) => void; // playerId を追加
   moveRobot: (payload: { roomId: string; robotColor: RobotColor; path: Position[] }) => void; // payloadオブジェクトに変更
   drawCard: (payload: { roomId: string; playerId: string }) => void; // playerId を追加
+  resetGame: (payload: { roomId: string }) => void; // ゲームリセット要求
   // --- ここまで ---
 }
 

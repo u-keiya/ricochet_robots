@@ -531,6 +531,8 @@ const GamePage: FC = () => {
                <GameResultDisplay
                  players={playersArray} // playersArray を渡す
                  onLeaveRoom={handleLeaveRoom} // handleLeaveRoom を渡す
+                 currentPlayer={currentPlayer} // currentPlayer を渡す
+                 currentRoom={currentRoom} // currentRoom を渡す
                />
              )}
           </div>

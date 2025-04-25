@@ -130,6 +130,9 @@ export class RoomManager {
 
     // もし部屋が空になったら削除
     if (room.players.size === 0) {
+      // 部屋を削除する前に GameManager のリソースを解放
+      room.gameManager.cleanup();
+      room.gameManager.removeAllListeners('gameStateUpdated'); // 念のためリスナーも解除
       this.rooms.delete(roomId);
     }
     // もしホストが退出したら、最も古いプレイヤーを新しいホストにする
@@ -188,14 +191,17 @@ export class RoomManager {
     room.lastActivity = new Date(); // ルームのアクティビティも更新
   }
 
-  // 非アクティブなルームのクリーンアップ（30分以上アクティビティがないルーム）
+  // 非アクティブなルームのクリーンアップ（3分以上アクティビティがないルーム）
   cleanupInactiveRooms(): void {
-    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+    const threeMinutesAgo = new Date(Date.now() - 3 * 60 * 1000);
     for (const [roomId, room] of this.rooms.entries()) {
       // プレイヤーが誰も接続していない、かつ最終アクティビティが古いルームを削除
       const allDisconnected = Array.from(room.players.values()).every(p => !p.connected);
-      if (allDisconnected && room.lastActivity < thirtyMinutesAgo) {
+      if (allDisconnected && room.lastActivity < threeMinutesAgo) {
         console.log(`Cleaning up inactive room: ${roomId}`);
+        // 部屋を削除する前に GameManager のリソースを解放
+        room.gameManager.cleanup();
+        room.gameManager.removeAllListeners('gameStateUpdated'); // 念のためリスナーも解除
         this.rooms.delete(roomId);
       }
     }

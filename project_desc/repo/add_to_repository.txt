@@ -134,3 +134,61 @@ classname: N/A (Function Component)
 function name: GamePage
 short description: (Issue #87) Modified the display condition for the "Draw Card" button. It is now displayed only for the host player when the game phase is 'waiting', ensuring only the host can initiate the next round.
 input / output: N/A
+---
+file name: src/components/GameInfo.tsx
+classname: N/A (Function Component)
+function name: GameInfo
+short description: (Issue #90) Changed the background style of the Vortex card in the sidebar to match the style used on the game board (gradient + pulse animation) for better visibility and consistency. Updated the condition to check for `currentCard.color === null` based on server-side type definition.
+input / output: N/A
+---
+file name: src/pages/GamePage.tsx
+classname: N/A (Function Component)
+function name: GamePage
+short description: (Issue #91) Changed the header display on the game page to show the room name (`currentRoom.name`) instead of the room ID.
+input / output: N/A
+---
+file name: src/pages/SinglePlayerPage.tsx, src/components/DeclarationCard.tsx, src/hooks/useGameState.ts
+classname: N/A (Function Components and Hook)
+function name: SinglePlayerPage, DeclarationCardList, useGameState, checkGoal, moveRobot
+short description: (Issue #93) Resolved multiple issues in single-player mode:
+- Fixed page rendering by passing correct props (`scores`, `players`) to `GameInfo`.
+- Added the missing "Draw Card" button.
+- Fixed `DeclarationCardList` logic to allow clicking cards when `declaredMoves` is 0.
+- Implemented smooth robot movement animation using `requestAnimationFrame`.
+- Corrected game phase transitions and move count logic to enforce declared move limits.
+- Fixed score calculation logic to correctly award points on successful goal completion.
+- Corrected `checkGoal` function to compare target symbols correctly using `SYMBOL_MAP`.
+input / output: N/A
+---
+file name: server/src/services/gameManager.ts
+classname: GameManager
+function name: resetGame
+short description: Resets the game state for a new round within the same room. Generates new initial robot positions, creates a new card deck, resets player scores, and sets the game phase to WAITING. Emits the updated game state.
+input / output: input: None / output: void
+
+---
+file name: server/src/server.ts
+classname: N/A
+function name: 'resetGame' event handler
+short description: Handles the 'resetGame' event from the client (host only). Calls the `resetGame` method on the corresponding GameManager instance to start a new game in the room.
+input / output: input: { roomId: string } / output: Emits 'gameStateUpdated' via GameManager, or 'error' on failure.
+---
+file name: src/components/GameResultDisplay.tsx
+function name: GameResultDisplay (Component)
+short description: Added a "Play Again" button to the game result screen. Clicking this button sends a game reset event to the server.
+input / output: None (Calls useGameStore.resetGame internally)
+---
+file name: src/stores/gameStore.ts
+function name: resetGame (Action)
+short description: Action to send a game reset request to the server via socketService.
+input / output: None
+---
+file name: src/services/socketService.ts
+function name: resetGame (Method)
+short description: Method to send the 'resetGame' event to the server.
+input / output: input: roomId (string), output: None
+---
+file name: src/types/socket.ts
+short description: Added 'resetGame' event definition to ClientToServerEvents.
+input / output: None
+---
