@@ -25,6 +25,12 @@ const logger = winston.createLogger({
 });
 
 const app = express();
+
+// ヘルスチェックエンドポイント
+app.get('/', (req, res) => {
+  res.send('OK');
+});
+
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
