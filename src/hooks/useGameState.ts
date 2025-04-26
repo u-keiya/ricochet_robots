@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'; // useRef を追加
-import { GameState, Direction, Robot, Position, Card, RobotColor, Board, GamePhase } from '../types/game'; // Board, GamePhase をインポート
+import { GameState, Direction, Robot, Position, RobotColor, GamePhase } from '../types/game'; // Board, GamePhase をインポート
 import { generateBoardFromPattern } from '../utils/boardGenerator';
 import { createCompositeBoardPattern } from '../utils/boardRotation';
 import BoardLoader from '../utils/boardLoader';
@@ -16,7 +16,7 @@ interface MovingRobotInfo {
   currentSegment: number; // 現在アニメーション中のセグメントインデックス (0から開始)
 }
 
-export const useGameState = (mode: 'single' | 'multi') => {
+export const useGameState = () => {
   const [gameState, setGameState] = useState<GameState>(() => {
     const loader = BoardLoader.getInstance();
     const selectedBoards = loader.getRandomGameBoards();
@@ -51,10 +51,9 @@ export const useGameState = (mode: 'single' | 'multi') => {
     };
   });
 
-  const [cardDeck, setCardDeck] = useState(() => new CardDeck(gameState.board));
+  const [cardDeck] = useState(() => new CardDeck(gameState.board));
   // アニメーション状態の型を変更
   const [movingRobots, setMovingRobots] = useState<Record<RobotColor, MovingRobotInfo | null>>({} as Record<RobotColor, MovingRobotInfo | null>);
-  const [goalAchievedInAnimation, setGoalAchievedInAnimation] = useState(false); // アニメーション完了後のゴール状態
   const animationFrameRef = useRef<number | null>(null);
   const prevGameStateRef = useRef<GameState>(gameState); // 前回の gameState を保持
 
@@ -112,8 +111,6 @@ export const useGameState = (mode: 'single' | 'multi') => {
       let boardNeedsUpdate = false;
       const nextMovingRobotsState: Record<RobotColor, MovingRobotInfo | null> = {} as Record<RobotColor, MovingRobotInfo | null>; // キャストを追加
       const updatedRobotPositions: Partial<Record<RobotColor, Position>> = {};
-
-      const currentBoard = gameState.board;
 
       for (const color in movingRobots) {
         const robotColor = color as RobotColor;
@@ -357,11 +354,6 @@ export const useGameState = (mode: 'single' | 'multi') => {
         isDeclarationPhase: resetBoard ? false : nextIsDeclarationPhase,
         moveCount: resetBoard ? 0 : nextMoveCount, // リセット時のみ0
       };
-
-      // ボードリセットが必要な場合はロボットを初期位置に戻す
-      const nextRobots = resetBoard
-        ? prev.board.robots.map(r => ({ ...r, position: r.initialPosition ?? r.position }))
-        : prev.board.robots; // リセットしない場合はそのまま
 
       return {
         ...prev,

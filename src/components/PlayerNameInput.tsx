@@ -5,7 +5,7 @@ interface PlayerNameInputProps {
   onRegistered?: () => void; // Optional callback after registration
 }
 
-const PlayerNameInput: React.FC<PlayerNameInputProps> = ({ onRegistered }) => {
+const PlayerNameInput: React.FC<PlayerNameInputProps> = () => {
   const [name, setName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

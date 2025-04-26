@@ -1,4 +1,4 @@
-import { BoardPattern, RawBoardSet, RawBoardPattern } from '../types/board';
+import { BoardPattern, RawBoardSet } from '../types/board';
 import { BoardValidator } from './boardValidator';
 import boardData from '../assets/boards.json';
 

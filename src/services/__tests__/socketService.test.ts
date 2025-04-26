@@ -1,7 +1,6 @@
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import SocketService from '../socketService';
 import { io, Socket } from 'socket.io-client';
-import type { GameSocket } from '../../types/socket';
 
 type SocketCallback = (...args: any[]) => void;
 
@@ -140,7 +139,7 @@ describe('SocketService', () => {
 
     it('プレイヤー登録イベントを処理できること', () => {
       const callback = vi.fn();
-      socketService.onPlayerRegistered(callback);
+      socketService.onRegistered(callback);
       expect(mockSocket.on).toHaveBeenCalledWith('playerRegistered', callback);
     });
 

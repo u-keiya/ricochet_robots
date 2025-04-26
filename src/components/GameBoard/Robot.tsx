@@ -16,7 +16,7 @@ const DirectionArrow: FC<{
   direction: Direction;
   onClick: () => void;
   position: 'top' | 'right' | 'bottom' | 'left';
-}> = ({ direction, onClick, position }) => {
+}> = ({ onClick, position }) => {
   const arrowClasses = {
     top: 'top-0 left-1/2 -translate-x-1/2 -translate-y-full rotate-0',
     right: 'right-0 top-1/2 translate-x-full -translate-y-1/2 rotate-90',

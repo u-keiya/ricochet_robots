@@ -1,4 +1,4 @@
-import { Board, Cell, Robot, Position, RobotColor } from '../types/game';
+import { Board, Cell, Position } from '../types/game';
 import { BoardPattern, TargetSymbol, WallDirection } from '../types/board';
 
 const createEmptyCell = (): Cell => ({

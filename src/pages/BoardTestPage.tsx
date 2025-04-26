@@ -127,7 +127,7 @@ const BoardTestPage: FC = () => {
                   <option value="">選択してください</option>
                   {Object.entries(boardPatterns).map(([pattern, boards]) => (
                     <optgroup key={pattern} label={`Pattern ${pattern}`}>
-                      {boards.map((board, index) => (
+                      {boards.map((index) => (
                         <option key={`${pattern}-${index}`} value={`${pattern}-${index}`}>
                           {`${pattern}-${index}`}
                         </option>

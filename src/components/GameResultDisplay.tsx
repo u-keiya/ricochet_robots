@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 import useGameStore from '../stores/gameStore';
 import { Player } from '../types/player'; // Player型をインポート
 import { Room } from '../types/room'; // Room型をインポート (追加)

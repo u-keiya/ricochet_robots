@@ -1,8 +1,7 @@
 import { io } from 'socket.io-client';
 import { GameSocket, ServerToClientEvents, ClientToServerEvents } from '../types/socket'; // 型をインポート
 import { Player } from '../types/player'; // Playerをインポート
-import { Room, RoomSummary } from '../types/room'; // Room, RoomSummaryをインポート
-import { MultiplayerGameState } from '../types/game'; // Import from types/game instead of stores/gameStore
+import { Room } from '../types/room'; // Room, RoomSummaryをインポート
 import { RobotColor, Position } from '../types/game'; // RobotColor, Positionをインポート
 
 class SocketService {

@@ -2,30 +2,11 @@ import { create } from 'zustand';
 import { Player } from '../types/player';
 import { Room, RoomSummary } from '../types/room';
 import SocketService from '../services/socketService';
-import { Board, Card, GamePhase, Position, RobotColor, GameState, MultiplayerGameState, Declaration, Robot } from '../types/game'; // Import MultiplayerGameState, Declaration, Robot
+import { Board, Position, RobotColor, MultiplayerGameState } from '../types/game'; // Import MultiplayerGameState, Declaration, Robot
 import BoardLoader from '../utils/boardLoader'; // Import BoardLoader
 import { generateBoardFromPattern } from '../utils/boardGenerator'; // Import board generator
 import { createCompositeBoardPattern } from '../utils/boardRotation'; // Import composite board creator
 import { BoardPattern } from '../types/board'; // Import BoardPattern
-// --- 型ガード関数 ---
-function isMultiplayerGameState(state: any): state is MultiplayerGameState {
-  return (
-    state !== null &&
-    typeof state === 'object' &&
-    'board' in state && // board が null の可能性もあるが、プロパティ自体は存在するはず
-    'currentCard' in state &&
-    'phase' in state &&
-    'timer' in state &&
-    'declarations' in state &&
-    'currentPlayerTurn' in state &&
-    'scores' in state &&
-    'moveHistory' in state &&
-    'remainingCards' in state &&
-    'totalCards' in state
-    // winner, declarationOrder, rankings はオプショナルなのでチェック不要
-  );
-}
-// --- ここまで ---
 
 
 // Remove internal duplicate definitions of Declaration and MultiplayerGameState

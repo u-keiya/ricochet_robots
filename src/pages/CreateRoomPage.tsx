@@ -12,10 +12,8 @@ const CreateRoomPage: React.FC = () => {
     isConnected,
     isConnecting,
     connectionError,
-    currentRoom,
     // registerPlayer, // No longer needed directly here
     currentPlayer, // currentPlayer を取得
-    socketId, // socketId を取得
   } = useGameStore();
 
   useEffect(() => {

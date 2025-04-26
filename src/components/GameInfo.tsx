@@ -2,8 +2,6 @@ import { FC } from 'react';
 import { Card } from '../types/game';
 import { SYMBOL_MAP } from '../utils/constants';
 
-import { Player } from '../types/player'; // Player 型をインポート
-
 interface GameInfoProps {
   scores: Record<string, number>; // score を scores に変更し、型を Record<string, number> に
   players: Record<string, { name: string }>; // players プロパティの型を playersInfo に合わせる
@@ -25,9 +23,6 @@ const GameInfo: FC<GameInfoProps> = ({
   timer,
   isDeclarationPhase,
   currentCard,
-  remainingCards,
-  onDrawCard,
-  phase,
 }) => {
   return (
     <div className="flex flex-col h-full">

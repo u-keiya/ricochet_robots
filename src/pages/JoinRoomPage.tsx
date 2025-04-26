@@ -15,7 +15,6 @@ const JoinRoomPage: React.FC = () => {
     availableRooms,
     // registerPlayer, // No longer needed directly here
     currentPlayer, // currentPlayer を取得
-    socketId, // socketId を取得
   } = useGameStore();
 
   useEffect(() => {

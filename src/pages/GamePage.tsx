@@ -1,19 +1,12 @@
 import { FC, useEffect, useState, useRef } from 'react'; // useState, useRefを追加
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import GameBoard from '../components/GameBoard/GameBoard';
 import useGameStore from '../stores/gameStore'; // useGameStoreをインポート
 import GameInfo from '../components/GameInfo'; // GameInfo をインポート
 import { DeclarationCardList } from '../components/DeclarationCard'; // DeclarationCardListをインポート
 import GameResultDisplay from '../components/GameResultDisplay'; // GameResultDisplayをインポート
-import { Player } from '../types/player'; // Player型をインポート
-// Direction と Card['color'] (CardColorの代わり) をインポート
-import { RobotColor, Position, GamePhase, Direction, Card, Board } from '../types/game'; // Board をインポート
-import { calculatePath } from '../utils/robotMovement'; // calculatePathをインポート
-
-// レイアウト定数 (SinglePlayerPageから移植・調整)
-const LEFT_SIDEBAR_WIDTH = 288; // 左サイドバーの幅 (仮、Tailwindのcol-span-1とgap-6から推測) - grid-cols-4 gap-6 -> 1/4幅 - gap分
-const RIGHT_SIDEBAR_WIDTH = 288; // 右サイドバーの幅 (仮)
-const DECLARATION_HEIGHT = 140; // 宣言エリアの高さ (仮) - GamePageでは未使用だが念のため
+import { RobotColor, Position, Direction, Board } from '../types/game';
+import { calculatePath } from '../utils/robotMovement';
 const BOARD_SCALE_FACTOR = 0.9; // ボードのスケーリング係数 (調整)
 
 // アニメーション中のロボット情報
@@ -23,32 +16,8 @@ interface MovingRobotInfo {
   segmentDuration: number; // 1セグメントあたりのアニメーション時間 (ms)
   currentSegment: number; // 現在アニメーション中のセグメントインデックス (0から開始)
 }
-// --- ヘルパー関数 ---
-const getPhaseText = (phase: GamePhase): string => {
-  switch (phase) {
-    case 'waiting': return '待機中';
-    case 'declaration': return '宣言フェーズ';
-    case 'solution': return '解法提示フェーズ';
-    case 'finished': return 'ゲーム終了';
-    default: return phase;
-  }
-};
-
-const getTargetColorClass = (color: Card['color']): string => { // Card['color'] を使用
-  switch (color) {
-    case 'red': return 'text-red-600';
-    case 'blue': return 'text-blue-600';
-    case 'green': return 'text-green-600';
-    case 'yellow': return 'text-yellow-600';
-    case 'colors': return 'bg-gradient-to-r from-red-500 via-blue-500 to-green-500 text-transparent bg-clip-text'; // 仮の多色表示
-    default: return 'text-gray-600';
-  }
-};
-// --- ここまで ---
-
 
 const GamePage: FC = () => {
-  const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
   // useGameStoreから必要な状態とアクションを取得
   const {

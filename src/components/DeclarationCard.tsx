@@ -56,9 +56,7 @@ interface DeclarationCardListProps {
 
 export const DeclarationCardList: FC<DeclarationCardListProps> = ({
   selectedNumber,
-  maxNumber,
   onSelect,
-  isDisabled = false, // デフォルトは false
   className = '',
 }) => {
   const [startIndex, setStartIndex] = useState(0);
