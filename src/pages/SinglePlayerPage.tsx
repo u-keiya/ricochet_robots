@@ -17,7 +17,7 @@ const SinglePlayerPage: FC = () => {
     declareMoves,
     drawNextCard,
     remainingCards,
-  } = useGameState('single');
+  } = useGameState();
 
   // 盤面のスケーリングを計算
   const getBoardScale = () => {
