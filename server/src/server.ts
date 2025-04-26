@@ -1,11 +1,12 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import { createServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import dotenv from 'dotenv';
 import { RoomManager } from './services/roomManager';
 import { Player } from './types/player';
-import { GamePhase, RobotColor } from './types/game'; // GamePhase と RobotColor をインポート
+import { GamePhase, RobotColor } from './types/game';
 import winston from 'winston';
+import { EventEmitter } from 'events';
 
 // 環境変数の読み込み
 dotenv.config({ path: process.env.NODE_ENV === 'production' ? '.env' : '.env.development' });
@@ -27,15 +28,28 @@ const logger = winston.createLogger({
 const app = express();
 
 // ヘルスチェックエンドポイント
-app.get('/', (req, res) => {
-  res.send('OK');
+app.get('/', (req: express.Request, res: express.Response) => {
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
+// CORSの設定をより寛容に
+app.use((req: Request, res: Response, next: NextFunction) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  next();
 });
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.CORS_ORIGIN,
-    methods: ['GET', 'POST']
+    origin: '*', // より寛容なCORS設定
+    methods: ['GET', 'POST', 'OPTIONS'],
+    credentials: true
   }
 });
 
@@ -115,7 +129,8 @@ io.on('connection', (socket: Socket) => {
       logger.info(`Room created: ${room.id} by ${player.name}`);
 
       // GameManager の gameStateUpdated イベントをリッスン
-      room.gameManager.on('gameStateUpdated', (updatedGameState) => {
+      // @ts-ignore - GameManagerはEventEmitterを継承しているため、onメソッドは存在します
+      room.gameManager.on('gameStateUpdated', (updatedGameState: any) => {
         io.to(room.id).emit('gameStateUpdated', updatedGameState);
         logger.info(`Broadcasting gameStateUpdated for room ${room.id}`);
       });
@@ -417,18 +432,18 @@ io.on('connection', (socket: Socket) => {
 });
 
 const PORT = process.env.PORT || 3001;
-const HOST = process.env.HOST || 'localhost';
 
-httpServer.listen(Number(PORT), HOST, () => { // PORT を数値に変換
-  logger.info(`Server is running on http://${HOST}:${PORT}`);
+// Remove HOST binding to listen on all interfaces
+httpServer.listen(Number(PORT), () => {
+  logger.info(`Server is running on port ${PORT}`);
 });
 
 // エラーハンドリング
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', (error: Error) => {
   logger.error('Uncaught Exception:', error);
   process.exit(1);
 });
 
-process.on('unhandledRejection', (reason, promise) => {
+process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
   logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
