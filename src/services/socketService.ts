@@ -27,11 +27,14 @@ class SocketService {
       }
       try {
         // VITE_WS_URL を VITE_SOCKET_URL に修正 (環境変数名合わせ)
-        this.socket = io(import.meta.env.VITE_SOCKET_URL, {
+        this.socket = io(import.meta.env.VITE_SERVER_URL, {
           reconnectionAttempts: this.maxReconnectAttempts,
           reconnectionDelay: 1000,
           autoConnect: true,
-          transports: ['websocket'], // websocketを優先
+          transports: ['websocket', 'polling'],
+          path: '/socket.io/',
+          withCredentials: true,
+          timeout: 60000
         });
 
         this.socket.on('connect', () => {

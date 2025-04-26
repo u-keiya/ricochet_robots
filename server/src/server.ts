@@ -47,10 +47,15 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: '*', // より寛容なCORS設定
+    origin: '*',
     methods: ['GET', 'POST', 'OPTIONS'],
-    credentials: true
-  }
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization']
+  },
+  path: '/socket.io/',
+  transports: ['websocket', 'polling'],
+  pingTimeout: 60000,
+  pingInterval: 25000
 });
 
 const roomManager = new RoomManager();
